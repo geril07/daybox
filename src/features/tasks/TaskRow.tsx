@@ -1,8 +1,9 @@
 import { Check, Target, Trash2, Calendar, GripVertical } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
-import { useAppStore } from '@/app/store'
-import { useTimerStore } from '@/app/timerStore'
+import { useGroupStore } from '@/features/groups/store'
+import { useTaskStore } from '@/features/tasks/store'
+import { useTimerStore } from '@/features/timer/store'
 import { isOverdue, formatDate } from '@/shared/dates'
 import type { Task } from '@/shared/types'
 import { Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
@@ -17,12 +18,12 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   const [editTitle, setEditTitle] = useState(task.title)
   const [hovering, setHovering] = useState(false)
   const editRef = useRef<HTMLInputElement>(null)
-  const toggleTask = useAppStore((s) => s.toggleTask)
-  const updateTask = useAppStore((s) => s.updateTask)
-  const deleteTask = useAppStore((s) => s.deleteTask)
-  const setFocusedTaskId = useAppStore((s) => s.setFocusedTaskId)
-  const groups = useAppStore((s) => s.groups)
-  const focusedTaskId = useAppStore((s) => s.focusedTaskId)
+  const toggleTask = useTaskStore((s) => s.toggleTask)
+  const updateTask = useTaskStore((s) => s.updateTask)
+  const deleteTask = useTaskStore((s) => s.deleteTask)
+  const groups = useGroupStore((s) => s.groups)
+  const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
+  const setFocusedTaskId = useTimerStore((s) => s.setFocusedTaskId)
   const timerSetPhase = useTimerStore((s) => s.setPhase)
   const timerReset = useTimerStore((s) => s.reset)
   const timerStart = useTimerStore((s) => s.start)
@@ -219,7 +220,7 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
 }
 
 function PomoArea({ task }: { task: Task }) {
-  const updateTask = useAppStore((s) => s.updateTask)
+  const updateTask = useTaskStore((s) => s.updateTask)
 
   return (
     <Popover>
@@ -292,7 +293,7 @@ function PomoArea({ task }: { task: Task }) {
 const tomorrowDate = Date.now() + 86400000
 
 function DatePickerButton({ task }: { task: Task }) {
-  const updateTask = useAppStore((s) => s.updateTask)
+  const updateTask = useTaskStore((s) => s.updateTask)
 
   return (
     <Popover>

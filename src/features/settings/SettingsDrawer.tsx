@@ -1,8 +1,10 @@
 import { useState } from 'react'
 
 import { exportData, downloadExport, parseImport } from '@/app/localStorage'
-import { useAppStore } from '@/app/store'
 import GroupSettings from '@/features/groups/GroupSettings'
+import { useGroupStore } from '@/features/groups/store'
+import { useSettingsStore } from '@/features/settings/store'
+import { useTaskStore } from '@/features/tasks/store'
 import {
   Sheet,
   SheetContent,
@@ -42,17 +44,20 @@ export default function SettingsDrawer({
   open: boolean
   onClose: () => void
 }) {
-  const settings = useAppStore((s) => s.settings)
+  const settings = useSettingsStore((s) => s.settings)
   console.log('settings :', settings)
-  const updateTimerSettings = useAppStore((s) => s.updateTimerSettings)
-  const updateSettings = useAppStore((s) => s.updateSettings)
+  const updateTimerSettings = useSettingsStore((s) => s.updateTimerSettings)
+  const updateSettings = useSettingsStore((s) => s.updateSettings)
 
   const [importConfirmOpen, setImportConfirmOpen] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
 
   const handleExport = () => {
-    const state = useAppStore.getState()
-    const json = exportData(state)
+    const json = exportData(
+      useTaskStore.getState().tasks,
+      useGroupStore.getState().groups,
+      useSettingsStore.getState().settings,
+    )
     downloadExport(json)
   }
 
@@ -73,10 +78,11 @@ export default function SettingsDrawer({
           return
         }
         if (result.data) {
-          useAppStore.setState({
-            tasks: result.data.tasks ?? [],
-            groups: result.data.groups ?? [],
-            settings: result.data.settings ?? useAppStore.getState().settings,
+          useTaskStore.setState({ tasks: result.data.tasks ?? [] })
+          useGroupStore.setState({ groups: result.data.groups ?? [] })
+          useSettingsStore.setState({
+            settings:
+              result.data.settings ?? useSettingsStore.getState().settings,
           })
         }
       } catch {

@@ -1,12 +1,12 @@
-import { useAppStore } from '@/app/store'
 import TaskList from '@/features/tasks/TaskList'
+import { useTaskStore } from '@/features/tasks/store'
 import EmptyState from '@/shared/EmptyState'
 import { formatDate } from '@/shared/dates'
 
 const tomorrowTimestamp = Date.now() + 86400000
 
 export default function TomorrowView() {
-  const tasks = useAppStore((s) => s.tasks)
+  const tasks = useTaskStore((s) => s.tasks)
   const tomorrow = formatDate(new Date(tomorrowTimestamp))
   const tomorrowTasks = tasks
     .filter((t) => t.date === tomorrow)

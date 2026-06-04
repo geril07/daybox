@@ -1,11 +1,12 @@
-import { useAppStore } from '@/app/store'
+import { useSettingsStore } from '@/features/settings/store'
 import TaskList from '@/features/tasks/TaskList'
+import { useTaskStore } from '@/features/tasks/store'
 import EmptyState from '@/shared/EmptyState'
 import { getWeekDays, getFormattedDate, formatDate } from '@/shared/dates'
 
 export default function WeekView() {
-  const weekStartDay = useAppStore((s) => s.settings.weekStartDay)
-  const tasks = useAppStore((s) => s.tasks)
+  const weekStartDay = useSettingsStore((s) => s.settings.weekStartDay)
+  const tasks = useTaskStore((s) => s.tasks)
 
   const days = getWeekDays(weekStartDay)
   const today = formatDate(new Date())

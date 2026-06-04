@@ -1,8 +1,4 @@
-## Purpose
-
-Persist all user data (tasks, groups, settings) to localStorage across three independent keys, and provide export/import as JSON files for manual backup. Timer runtime state is ephemeral and not persisted.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: All state persisted to localStorage
 
@@ -30,7 +26,7 @@ The system SHALL save tasks, groups, and settings to localStorage in three indep
 
 ### Requirement: User can export data as JSON
 
-The system SHALL allow users to download all app data (tasks, groups, settings) as a JSON file. View state and timer runtime state SHALL NOT be included in the export.
+The system SHALL allow users to download all app data (tasks, groups, settings) as a JSON file. The exported file format SHALL be identical to the current format (flat `tasks`, `groups`, `settings` keys). View state and timer runtime state SHALL NOT be included in the export.
 
 #### Scenario: Export data
 
@@ -50,6 +46,8 @@ The system SHALL allow users to upload a previously exported JSON file to restor
 
 - **WHEN** user clicks "Import"
 - **THEN** a confirmation dialog warns that current data will be replaced
+
+## ADDED Requirements
 
 ### Requirement: One-shot migration from single store
 

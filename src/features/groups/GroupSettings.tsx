@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
-import { useAppStore } from '@/app/store'
+import { useGroupStore } from '@/features/groups/store'
+import { useTaskStore } from '@/features/tasks/store'
 import type { Group } from '@/shared/types'
 import {
   AlertDialog,
@@ -13,10 +14,10 @@ import {
 } from '@/shared/ui'
 
 export default function GroupSettings() {
-  const groups = useAppStore((s) => s.groups)
-  const addGroup = useAppStore((s) => s.addGroup)
-  const renameGroup = useAppStore((s) => s.renameGroup)
-  const deleteGroup = useAppStore((s) => s.deleteGroup)
+  const groups = useGroupStore((s) => s.groups)
+  const addGroup = useGroupStore((s) => s.addGroup)
+  const renameGroup = useGroupStore((s) => s.renameGroup)
+  const deleteGroup = useGroupStore((s) => s.deleteGroup)
   const [newGroupName, setNewGroupName] = useState('')
 
   const handleAddGroup = () => {
@@ -24,6 +25,24 @@ export default function GroupSettings() {
     if (!name) return
     addGroup(name)
     setNewGroupName('')
+  }
+
+  const handleDeleteGroup = (groupId: string, reassignToDefault: boolean) => {
+    const tasks = useTaskStore.getState().tasks
+    if (reassignToDefault) {
+      const taskIds = tasks
+        .filter((t) => t.groupId === groupId)
+        .map((t) => t.id)
+      taskIds.forEach((id) =>
+        useTaskStore.getState().updateTask(id, { groupId: 'default' }),
+      )
+    } else {
+      const taskIds = tasks
+        .filter((t) => t.groupId === groupId)
+        .map((t) => t.id)
+      taskIds.forEach((id) => useTaskStore.getState().deleteTask(id))
+    }
+    deleteGroup(groupId)
   }
 
   return (
@@ -34,7 +53,7 @@ export default function GroupSettings() {
             key={g.id}
             group={g}
             onRename={renameGroup}
-            onDelete={deleteGroup}
+            onDelete={handleDeleteGroup}
             isLast={groups.length <= 1}
           />
         ))}

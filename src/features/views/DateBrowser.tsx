@@ -1,14 +1,15 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-import { useAppStore } from '@/app/store'
+import { useUIStore } from '@/app/uiStore'
 import TaskList from '@/features/tasks/TaskList'
+import { useTaskStore } from '@/features/tasks/store'
 import EmptyState from '@/shared/EmptyState'
 import { formatDate } from '@/shared/dates'
 
 export default function DateBrowser() {
-  const browseDate = useAppStore((s) => s.browseDate)
-  const setBrowseDate = useAppStore((s) => s.setBrowseDate)
-  const tasks = useAppStore((s) => s.tasks)
+  const browseDate = useUIStore((s) => s.browseDate)
+  const setBrowseDate = useUIStore((s) => s.setBrowseDate)
+  const tasks = useTaskStore((s) => s.tasks)
 
   const dateTasks = browseDate
     ? tasks

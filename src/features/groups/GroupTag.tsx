@@ -1,11 +1,11 @@
-import { useAppStore } from '@/app/store'
+import { useGroupStore } from '@/features/groups/store'
 
 interface GroupTagProps {
   groupId: string
 }
 
 export default function GroupTag({ groupId }: GroupTagProps) {
-  const groups = useAppStore((s) => s.groups)
+  const groups = useGroupStore((s) => s.groups)
   const group = groups.find((g) => g.id === groupId)
 
   if (!group || groups.length <= 1) return null

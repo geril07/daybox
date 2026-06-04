@@ -3,8 +3,8 @@ import { DragDropProvider, useDraggable, useDroppable } from '@dnd-kit/react'
 import type { DragEndEvent } from '@dnd-kit/react'
 import { useRef } from 'react'
 
-import { useAppStore } from '@/app/store'
 import TaskRow from '@/features/tasks/TaskRow'
+import { useTaskStore } from '@/features/tasks/store'
 import type { Task } from '@/shared/types'
 
 interface TaskListProps {
@@ -13,7 +13,7 @@ interface TaskListProps {
 }
 
 export default function TaskList({ tasks, emptyMessage }: TaskListProps) {
-  const reorderTasks = useAppStore((s) => s.reorderTasks)
+  const reorderTasks = useTaskStore((s) => s.reorderTasks)
 
   const handleDragEnd = (event: DragEndEvent) => {
     const sourceId = event.operation.source?.id

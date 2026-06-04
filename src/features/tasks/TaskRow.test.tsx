@@ -1,13 +1,14 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { useAppStore } from '@/app/store'
+import { useGroupStore } from '@/features/groups/store'
 import TaskRow from '@/features/tasks/TaskRow'
+import { useTaskStore } from '@/features/tasks/store'
+import { useTimerStore } from '@/features/timer/store'
 
 beforeEach(() => {
-  useAppStore.setState({
-    version: 1,
-    tasks: [],
+  useTaskStore.setState({ tasks: [] })
+  useGroupStore.setState({
     groups: [
       {
         id: 'default',
@@ -16,25 +17,15 @@ beforeEach(() => {
         createdAt: new Date().toISOString(),
       },
     ],
-    settings: {
-      timer: {
-        focusDuration: 25,
-        shortBreakDuration: 5,
-        longBreakDuration: 15,
-        longBreakInterval: 4,
-        autoStartBreaks: false,
-        autoStartPomodoros: false,
-        alarmSound: 'bell',
-        alarmVolume: 0.5,
-        alarmRepeat: 3,
-      },
-      theme: 'light',
-      weekStartDay: 1,
-    },
-    view: 'today',
-    browseDate: null,
-    focusedTaskId: null,
     stickyGroupId: null,
+  })
+  useTimerStore.setState({
+    phase: 'focus',
+    startedAt: null,
+    elapsed: 0,
+    sessionPomoCount: 0,
+    isRunning: false,
+    focusedTaskId: null,
   })
 })
 
@@ -63,19 +54,21 @@ describe('TaskRow', () => {
 
   it('toggles completion on checkbox click', () => {
     const task = createMockTask()
-    useAppStore.setState({ tasks: [task] })
+    useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
     const checkbox = document.querySelector(
       '.rounded-full.border',
     ) as HTMLButtonElement
     fireEvent.click(checkbox)
-    const storeTask = useAppStore.getState().tasks.find((t) => t.id === task.id)
+    const storeTask = useTaskStore
+      .getState()
+      .tasks.find((t) => t.id === task.id)
     expect(storeTask?.completed).toBe(true)
   })
 
   it('enters and exits edit mode', () => {
     const task = createMockTask()
-    useAppStore.setState({ tasks: [task] })
+    useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
     const title = screen.getAllByText('Test Task')[0]
     fireEvent.click(title)
@@ -85,31 +78,33 @@ describe('TaskRow', () => {
     expect(input).not.toBeNull()
     fireEvent.change(input, { target: { value: 'Edited' } })
     fireEvent.keyDown(input, { key: 'Enter' })
-    const storeTask = useAppStore.getState().tasks.find((t) => t.id === task.id)
+    const storeTask = useTaskStore
+      .getState()
+      .tasks.find((t) => t.id === task.id)
     expect(storeTask?.title).toBe('Edited')
   })
 
   it('deletes task on delete button click', () => {
     const task = createMockTask()
-    useAppStore.setState({ tasks: [task] })
+    useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
     const deleteBtn = document.querySelector(
       '[title="Delete"]',
     ) as HTMLButtonElement
     fireEvent.click(deleteBtn)
     expect(
-      useAppStore.getState().tasks.find((t) => t.id === task.id),
+      useTaskStore.getState().tasks.find((t) => t.id === task.id),
     ).toBeUndefined()
   })
 
   it('focuses task on focus button click', () => {
     const task = createMockTask()
-    useAppStore.setState({ tasks: [task] })
+    useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
     const focusBtn = document.querySelector(
       '[title="Focus"]',
     ) as HTMLButtonElement
     fireEvent.click(focusBtn)
-    expect(useAppStore.getState().focusedTaskId).toBe('test-1')
+    expect(useTimerStore.getState().focusedTaskId).toBe('test-1')
   })
 })

@@ -8,6 +8,7 @@ interface TimerState {
   elapsed: number
   sessionPomoCount: number
   isRunning: boolean
+  focusedTaskId: string | null
 }
 
 interface TimerActions {
@@ -17,6 +18,7 @@ interface TimerActions {
   skip: () => void
   setPhase: (phase: TimerPhase) => void
   tick: () => void
+  setFocusedTaskId: (id: string | null) => void
   getRemainingSeconds: (
     focusDuration: number,
     shortBreakDuration: number,
@@ -37,6 +39,7 @@ export const useTimerStore = create<TimerStore>()((set, get) => ({
   elapsed: 0,
   sessionPomoCount: 0,
   isRunning: false,
+  focusedTaskId: null,
 
   start: () =>
     set({
@@ -90,6 +93,8 @@ export const useTimerStore = create<TimerStore>()((set, get) => ({
       startedAt: now,
     })
   },
+
+  setFocusedTaskId: (id) => set({ focusedTaskId: id }),
 
   getRemainingSeconds: (
     focusDuration,

@@ -1,7 +1,8 @@
 import { Plus, ChevronDown } from 'lucide-react'
 import { useState, useRef, useCallback } from 'react'
 
-import { useAppStore } from '@/app/store'
+import { useGroupStore } from '@/features/groups/store'
+import { useTaskStore } from '@/features/tasks/store'
 import type { Group } from '@/shared/types'
 import { Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
@@ -13,11 +14,11 @@ export default function AddTaskRow({ defaultDate }: AddTaskRowProps) {
   const [title, setTitle] = useState('')
   const [showTypeahead, setShowTypeahead] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const groups = useAppStore((s) => s.groups)
-  const addTask = useAppStore((s) => s.addTask)
-  const addGroup = useAppStore((s) => s.addGroup)
-  const stickyGroupId = useAppStore((s) => s.stickyGroupId)
-  const setStickyGroupId = useAppStore((s) => s.setStickyGroupId)
+  const groups = useGroupStore((s) => s.groups)
+  const addTask = useTaskStore((s) => s.addTask)
+  const addGroup = useGroupStore((s) => s.addGroup)
+  const stickyGroupId = useGroupStore((s) => s.stickyGroupId)
+  const setStickyGroupId = useGroupStore((s) => s.setStickyGroupId)
 
   const showGroupUi = groups.length > 1
   const currentGroup =

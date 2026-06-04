@@ -1,4 +1,4 @@
-import { useAppStore } from '@/app/store'
+import { useGroupStore } from '@/features/groups/store'
 import {
   Select,
   SelectTrigger,
@@ -16,7 +16,7 @@ export default function GroupLens({
   selectedGroupId,
   onSelect,
 }: GroupLensProps) {
-  const groups = useAppStore((s) => s.groups)
+  const groups = useGroupStore((s) => s.groups)
 
   if (groups.length <= 1) return null
 

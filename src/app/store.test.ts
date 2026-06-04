@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import { exportData, parseImport } from '@/app/localStorage'
-import { useAppStore } from '@/app/store'
-import { useTimerStore, getNextPhase } from '@/app/timerStore'
+import { useGroupStore } from '@/features/groups/store'
+import { useSettingsStore } from '@/features/settings/store'
+import { useTaskStore } from '@/features/tasks/store'
+import { useTimerStore, getNextPhase } from '@/features/timer/store'
 
 beforeEach(() => {
-  useAppStore.setState({
-    tasks: [],
+  useTaskStore.setState({ tasks: [] })
+  useGroupStore.setState({
     groups: [
       {
         id: 'default',
@@ -15,6 +17,9 @@ beforeEach(() => {
         createdAt: new Date().toISOString(),
       },
     ],
+    stickyGroupId: null,
+  })
+  useSettingsStore.setState({
     settings: {
       timer: {
         focusDuration: 25,
@@ -30,76 +35,83 @@ beforeEach(() => {
       theme: 'light',
       weekStartDay: 1,
     },
-    view: 'today',
-    browseDate: null,
+  })
+  useTimerStore.setState({
+    phase: 'focus',
+    startedAt: null,
+    elapsed: 0,
+    sessionPomoCount: 0,
+    isRunning: false,
     focusedTaskId: null,
-    stickyGroupId: null,
   })
 })
 
-describe('App Store - Task CRUD', () => {
+describe('Task Store - CRUD', () => {
   it('adds a task', () => {
-    useAppStore.getState().addTask('Test task')
-    const tasks = useAppStore.getState().tasks
+    useTaskStore.getState().addTask('Test task')
+    const tasks = useTaskStore.getState().tasks
     expect(tasks).toHaveLength(1)
     expect(tasks[0].title).toBe('Test task')
   })
 
   it('updates a task', () => {
-    const task = useAppStore.getState().addTask('Test')
-    useAppStore.getState().updateTask(task.id, { title: 'Updated' })
-    expect(useAppStore.getState().tasks[0].title).toBe('Updated')
+    const task = useTaskStore.getState().addTask('Test')
+    useTaskStore.getState().updateTask(task.id, { title: 'Updated' })
+    expect(useTaskStore.getState().tasks[0].title).toBe('Updated')
   })
 
   it('deletes a task', () => {
-    const task = useAppStore.getState().addTask('Test')
-    useAppStore.getState().deleteTask(task.id)
-    expect(useAppStore.getState().tasks).toHaveLength(0)
+    const task = useTaskStore.getState().addTask('Test')
+    useTaskStore.getState().deleteTask(task.id)
+    expect(useTaskStore.getState().tasks).toHaveLength(0)
   })
 
   it('toggles task completion', () => {
-    const task = useAppStore.getState().addTask('Test')
-    useAppStore.getState().toggleTask(task.id)
-    expect(useAppStore.getState().tasks[0].completed).toBe(true)
-    useAppStore.getState().toggleTask(task.id)
-    expect(useAppStore.getState().tasks[0].completed).toBe(false)
+    const task = useTaskStore.getState().addTask('Test')
+    useTaskStore.getState().toggleTask(task.id)
+    expect(useTaskStore.getState().tasks[0].completed).toBe(true)
+    useTaskStore.getState().toggleTask(task.id)
+    expect(useTaskStore.getState().tasks[0].completed).toBe(false)
   })
 })
 
-describe('App Store - Group CRUD', () => {
+describe('Group Store - CRUD', () => {
   it('adds a group', () => {
-    useAppStore.getState().addGroup('Work')
-    const groups = useAppStore.getState().groups
+    useGroupStore.getState().addGroup('Work')
+    const groups = useGroupStore.getState().groups
     expect(groups).toHaveLength(2)
     expect(groups.some((g) => g.name === 'Work')).toBe(true)
   })
 
   it('renames a group', () => {
-    const group = useAppStore.getState().groups[0]
-    useAppStore.getState().renameGroup(group.id, 'Renamed')
-    expect(useAppStore.getState().groups[0].name).toBe('Renamed')
+    const group = useGroupStore.getState().groups[0]
+    useGroupStore.getState().renameGroup(group.id, 'Renamed')
+    expect(useGroupStore.getState().groups[0].name).toBe('Renamed')
   })
 
   it('deletes a group and reassigns tasks', () => {
-    const group = useAppStore.getState().addGroup('Work')
-    const task = useAppStore.getState().addTask('Test', group.id)
-    useAppStore.getState().deleteGroup(group.id, true)
-    const storedTask = useAppStore
+    const group = useGroupStore.getState().addGroup('Work')
+    const task = useTaskStore.getState().addTask('Test', group.id)
+    useGroupStore.getState().deleteGroup(group.id)
+    useTaskStore
+      .getState()
+      .reassignTasks(group.id, useGroupStore.getState().getDefaultGroup()!.id)
+    const storedTask = useTaskStore
       .getState()
       .tasks.find((t) => t.id === task.id)
     expect(storedTask?.groupId).toBe('default')
   })
 })
 
-describe('App Store - Settings updates', () => {
+describe('Settings Store', () => {
   it('updates settings', () => {
-    useAppStore.getState().updateSettings({ theme: 'dark' })
-    expect(useAppStore.getState().settings.theme).toBe('dark')
+    useSettingsStore.getState().updateSettings({ theme: 'dark' })
+    expect(useSettingsStore.getState().settings.theme).toBe('dark')
   })
 
   it('updates timer settings', () => {
-    useAppStore.getState().updateTimerSettings({ focusDuration: 30 })
-    expect(useAppStore.getState().settings.timer.focusDuration).toBe(30)
+    useSettingsStore.getState().updateTimerSettings({ focusDuration: 30 })
+    expect(useSettingsStore.getState().settings.timer.focusDuration).toBe(30)
   })
 })
 
@@ -118,6 +130,13 @@ describe('Timer Store', () => {
     store.reset()
     expect(useTimerStore.getState().isRunning).toBe(false)
     expect(useTimerStore.getState().elapsed).toBe(0)
+  })
+
+  it('sets focusedTaskId', () => {
+    useTimerStore.getState().setFocusedTaskId('task-1')
+    expect(useTimerStore.getState().focusedTaskId).toBe('task-1')
+    useTimerStore.getState().setFocusedTaskId(null)
+    expect(useTimerStore.getState().focusedTaskId).toBeNull()
   })
 })
 
@@ -141,42 +160,43 @@ describe('getNextPhase', () => {
 
 describe('Export/Import', () => {
   it('exports data', () => {
-    useAppStore.getState().addTask('Test')
-    const state = useAppStore.getState()
-    const json = exportData(state)
+    useTaskStore.getState().addTask('Test')
+    const json = exportData(
+      useTaskStore.getState().tasks,
+      useGroupStore.getState().groups,
+      useSettingsStore.getState().settings,
+    )
     const parsed = JSON.parse(json)
     expect(parsed.version).toBe(1)
-    expect(parsed.appStore.tasks).toHaveLength(1)
+    expect(parsed.tasks).toHaveLength(1)
   })
 
   it('imports valid data', () => {
     const data = JSON.stringify({
       version: 1,
       exportedAt: new Date().toISOString(),
-      appStore: {
-        tasks: [
-          {
-            id: '1',
-            title: 'Imported',
-            groupId: 'default',
-            date: null,
-            pomoEstimate: 0,
-            pomoCompleted: 0,
-            sortOrder: 0,
-            completed: false,
-            completedAt: null,
-            createdAt: new Date().toISOString(),
-          },
-        ],
-        groups: [
-          {
-            id: 'default',
-            name: 'General',
-            color: 'oklch(0.545 0.185 28)',
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      },
+      tasks: [
+        {
+          id: '1',
+          title: 'Imported',
+          groupId: 'default',
+          date: null,
+          pomoEstimate: 0,
+          pomoCompleted: 0,
+          sortOrder: 0,
+          completed: false,
+          completedAt: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      groups: [
+        {
+          id: 'default',
+          name: 'General',
+          color: 'oklch(0.545 0.185 28)',
+          createdAt: new Date().toISOString(),
+        },
+      ],
     })
     const result = parseImport(data)
     expect(result.success).toBe(true)

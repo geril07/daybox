@@ -1,10 +1,10 @@
-import { useAppStore } from '@/app/store'
 import TaskList from '@/features/tasks/TaskList'
+import { useTaskStore } from '@/features/tasks/store'
 import EmptyState from '@/shared/EmptyState'
 import { isOverdue, formatDate } from '@/shared/dates'
 
 export default function TodayView() {
-  const tasks = useAppStore((s) => s.tasks)
+  const tasks = useTaskStore((s) => s.tasks)
   const today = formatDate(new Date())
 
   const overdueTasks = tasks

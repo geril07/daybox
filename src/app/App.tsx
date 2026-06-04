@@ -1,10 +1,13 @@
 import { Settings } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-import { useAppStore } from '@/app/store'
+import { useUIStore } from '@/app/uiStore'
 import GroupLens from '@/features/groups/GroupLens'
+import { useGroupStore } from '@/features/groups/store'
 import SettingsDrawer from '@/features/settings/SettingsDrawer'
+import { useSettingsStore } from '@/features/settings/store'
 import AddTaskRow from '@/features/tasks/AddTaskRow'
+import { useTaskStore } from '@/features/tasks/store'
 import TimerBar from '@/features/timer/TimerBar'
 import BacklogView from '@/features/views/BacklogView'
 import DateBrowser from '@/features/views/DateBrowser'
@@ -17,10 +20,12 @@ import type { View } from '@/shared/types'
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui'
 
 export default function App() {
-  const view = useAppStore((s) => s.view)
-  const setView = useAppStore((s) => s.setView)
-  const theme = useAppStore((s) => s.settings.theme)
-  const browseDate = useAppStore((s) => s.browseDate)
+  const view = useUIStore((s) => s.view)
+  const setView = useUIStore((s) => s.setView)
+  const theme = useSettingsStore((s) => s.settings.theme)
+  const browseDate = useUIStore((s) => s.browseDate)
+
+  const migrationDone = useRef(false)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -61,6 +66,27 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
+
+  useEffect(() => {
+    if (migrationDone.current) return
+    const oldData = localStorage.getItem('daybox-app-store')
+    if (oldData) {
+      try {
+        const parsed = JSON.parse(oldData)
+        const state = parsed.state || parsed
+        const tasks = state.tasks ?? []
+        const groups = state.groups ?? []
+        const settings = state.settings ?? null
+        if (tasks.length > 0) useTaskStore.setState({ tasks })
+        if (groups.length > 0) useGroupStore.setState({ groups })
+        if (settings) useSettingsStore.setState({ settings })
+        localStorage.removeItem('daybox-app-store')
+      } catch {
+        // ignore corrupted old store
+      }
+    }
+    migrationDone.current = true
+  }, [])
 
   const tabs: { label: string; value: View }[] = [
     { label: 'Today', value: 'today' },
