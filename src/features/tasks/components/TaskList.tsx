@@ -3,7 +3,7 @@ import { DragDropProvider, useDraggable, useDroppable } from '@dnd-kit/react'
 import type { DragEndEvent } from '@dnd-kit/react'
 import { useRef } from 'react'
 
-import TaskRow from '@/features/tasks/TaskRow'
+import TaskRow from '@/features/tasks/components/TaskRow'
 import { useTaskStore } from '@/features/tasks/store'
 import type { Task } from '@/shared/types'
 

@@ -1,5 +1,6 @@
-import { useSettingsStore } from '@/features/settings/store'
-import TaskList from '@/features/tasks/TaskList'
+import { useSettingsStore } from '@/app/settingsStore'
+import TaskList from '@/features/tasks/components/TaskList'
+import { selectForDate } from '@/features/tasks/queries'
 import { useTaskStore } from '@/features/tasks/store'
 import EmptyState from '@/shared/EmptyState'
 import { getWeekDays, getFormattedDate, formatDate } from '@/shared/dates'
@@ -29,9 +30,7 @@ export default function WeekView() {
     <div>
       {days.map((day) => {
         const dateStr = formatDate(day)
-        const dayTasks = tasks
-          .filter((t) => t.date === dateStr)
-          .sort((a, b) => a.sortOrder - b.sortOrder)
+        const dayTasks = selectForDate(tasks, dateStr)
 
         if (dayTasks.length === 0) return null
 

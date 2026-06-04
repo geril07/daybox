@@ -1,23 +1,13 @@
-import TaskList from '@/features/tasks/TaskList'
+import TaskList from '@/features/tasks/components/TaskList'
+import { selectOverdue, selectTodayTasks } from '@/features/tasks/queries'
 import { useTaskStore } from '@/features/tasks/store'
 import EmptyState from '@/shared/EmptyState'
-import { isOverdue, formatDate } from '@/shared/dates'
 
 export default function TodayView() {
   const tasks = useTaskStore((s) => s.tasks)
-  const today = formatDate(new Date())
 
-  const overdueTasks = tasks
-    .filter((t) => !t.completed && t.date !== null && isOverdue(t.date))
-    .sort((a, b) => {
-      if (a.date! < b.date!) return -1
-      if (a.date! > b.date!) return 1
-      return a.sortOrder - b.sortOrder
-    })
-
-  const todayTasks = tasks
-    .filter((t) => t.date === today)
-    .sort((a, b) => a.sortOrder - b.sortOrder)
+  const overdueTasks = selectOverdue(tasks)
+  const todayTasks = selectTodayTasks(tasks)
 
   if (overdueTasks.length === 0 && todayTasks.length === 0) {
     return (

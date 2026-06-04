@@ -1,7 +1,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { useUIStore } from '@/app/uiStore'
-import TaskList from '@/features/tasks/TaskList'
+import TaskList from '@/features/tasks/components/TaskList'
+import { selectForDate } from '@/features/tasks/queries'
 import { useTaskStore } from '@/features/tasks/store'
 import EmptyState from '@/shared/EmptyState'
 import { formatDate } from '@/shared/dates'
@@ -11,11 +12,7 @@ export default function DateBrowser() {
   const setBrowseDate = useUIStore((s) => s.setBrowseDate)
   const tasks = useTaskStore((s) => s.tasks)
 
-  const dateTasks = browseDate
-    ? tasks
-        .filter((t) => t.date === browseDate)
-        .sort((a, b) => a.sortOrder - b.sortOrder)
-    : []
+  const dateTasks = browseDate ? selectForDate(tasks, browseDate) : []
 
   const goBack = () => {
     const current = browseDate ? new Date(browseDate) : new Date()
