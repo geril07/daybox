@@ -180,7 +180,7 @@ src/
 | Build tooling | Vite + React + TypeScript + Tailwind v4 | Production-ready stack; fast dev server, type safety, utility-first CSS |
 | State management | Zustand (two stores: app + timer) | 0.5KB gzip, selector-based re-render isolation (critical for 1Hz timer ticks), built-in persist middleware, trivial export/import
 | Timer precision | Store "startedAt" timestamp, compute remaining on tick | Avoids setInterval drift; accurate even after tab-away |
-| Task ordering | sortOrder number per-date, updated on drag | Lightweight; no complex DnD library needed |
+| Task ordering | @dnd-kit/react sortable + sortOrder renumber on drop | ~5KB, touch/keyboard/auto-scroll built-in, simplest API (DragDropProvider + useSortable hook) |
 | Persistence | localStorage with full-state serialize/deserialize | Simplest local-first approach; export/import as JSON file |
 | ID generation | crypto.randomUUID() | Native, no dependency, available in all modern browsers |
 | Theme | CSS custom properties swapped via Tailwind dark mode | Built-in Tailwind support; clean separation |
@@ -188,6 +188,40 @@ src/
 | Styling | Tailwind utility classes + CSS variables for design tokens | Zero runtime; design tokens from HTML prototype map to Tailwind theme extension |
 | LocalStorage versioning | Integer version field at root of stored blob, checked on load | Enables forward-compatible schema migrations; unknown-version → wipe rather than corrupt |
 | Keyboard shortcuts | Global handler via keydown listener on mount | Enter=add, Space=start/pause timer, N=focus add-task, Escape=close/cancel |
+
+## Testing Strategy
+
+**Stack:** Vitest + React Testing Library + jsdom.
+
+```
+npm install -D vitest @testing-library/react @testing-library/jest-dom jsdom
+```
+
+**What to unit test (pure logic):**
+- `shared/dates.ts` — isToday, isOverdue, getWeekRange, getWeekDays (parameterize weekStartDay)
+- `app/store.ts` — task CRUD actions, group CRUD, settings updates, migration functions, version check, export/import serialization
+- `app/timerStore.ts` — start, pause, reset, skip, cycle transitions, drift math
+- `features/timer/alarm.ts` — sound generation with varying volume/repeat
+
+**What to component test (interactions):**
+- `TaskRow` — complete toggle, inline edit, delete, focus click, reschedule
+- `AddTaskRow` — Enter creates task, #group parsing
+- `TimerBar` — display formats, play/pause/reset button clicks
+- `PomoPopup` — estimate selection updates store
+- `DatePickerPopup` — preset buttons set date
+
+**What NOT to test in v1:**
+- Visual regression (screenshot tests)
+- E2E flows (add in a later pass when the app stabilizes)
+- Base UI internals (they test their own)
+- Tailwind styles (trust the framework)
+
+**Convention:** Test files side-by-side with source:
+```
+shared/dates.ts          → shared/dates.test.ts
+app/store.ts             → app/store.test.ts
+features/tasks/TaskRow.tsx → features/tasks/TaskRow.test.tsx
+```
 
 ## Risks / Trade-offs
 
