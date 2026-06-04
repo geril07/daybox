@@ -1,5 +1,6 @@
 import { useAppStore } from '../../app/store'
 import EmptyState from '../../shared/EmptyState'
+import AddTaskRow from '../tasks/AddTaskRow'
 import TaskList from '../tasks/TaskList'
 
 export default function BacklogView() {
@@ -10,10 +11,13 @@ export default function BacklogView() {
 
   if (backlogTasks.length === 0) {
     return (
-      <EmptyState
-        title="No unscheduled tasks."
-        description="Capture whatever comes to mind."
-      />
+      <>
+        <AddTaskRow />
+        <EmptyState
+          title="No unscheduled tasks."
+          description="Capture whatever comes to mind."
+        />
+      </>
     )
   }
 
