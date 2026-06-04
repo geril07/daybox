@@ -8,7 +8,8 @@
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin; tokens in `src/index.css` `@theme`; dark mode via `.dark` class on `<html>`
 - **Zustand** — two stores: `src/app/store.ts` (persisted, app state) and `src/app/timerStore.ts` (non-persisted, 1Hz tick kept separate to avoid task list re-renders)
 - **@base-ui/react v1.5** — headless UI primitives used via `src/shared/ui/` wrappers only
-- **Shared UI (`src/shared/ui/`)** — wrappers isolating base-ui: `NumberInput`, `Toggle`, `RangeSlider`, `SelectMenu`, `AlertDialog`, `SidePanel`, `PopoverCard`. Consumer code never imports base-ui directly.
+- **Shared UI (`src/shared/ui/`)** — shadcn/ui-style wrappers isolating base-ui: `Button` (cva variants), `NumberInput`, `Toggle`, `RangeSlider`, `SelectMenu` (compound: `.Trigger`, `.Content`, `.Item`), `AlertDialog` (compound: `.Overlay`, `.Content`, `.Title`, `.Description`), `SidePanel` (compound: `.Overlay`, `.Content`, `.Header`), `Popover` (compound: `.Trigger`, `.Positioner`, `.Content`). Consumer code never imports base-ui directly.
+- **Shadcn utilities** — `cn()` in `src/shared/lib/utils.ts` (clsx + tailwind-merge); `cva` via `class-variance-authority` for variant components.
 - **@dnd-kit/react** — drag-to-reorder in `src/features/tasks/TaskList.tsx`
 
 ## Commands
@@ -51,7 +52,8 @@ src/
   app/        — Shell, stores, localStorage export/import
   features/   — tasks/, timer/, groups/, settings/, views/
   shared/
-    ui/       — base-ui wrappers: NumberInput, Toggle, RangeSlider, SelectMenu, AlertDialog, SidePanel, PopoverCard
+    lib/      — cn() utility (clsx + tailwind-merge)
+    ui/       — shadcn-style base-ui wrappers: Button, NumberInput, Toggle, RangeSlider, SelectMenu, AlertDialog, SidePanel, Popover
     types, dates, keyboard, notifications, EmptyState
 ```
 

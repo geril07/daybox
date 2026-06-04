@@ -1,15 +1,20 @@
 import { Select } from '@base-ui/react'
-import { forwardRef } from 'react'
 import type { ReactNode } from 'react'
 
 import { cn } from '../lib/utils'
 
 const SelectRoot = Select.Root
 
-const SelectTrigger = forwardRef<HTMLDivElement, { children?: ReactNode; className?: string }>(
-  ({ className, children, ...props }, ref) => (
+function SelectTrigger({
+  className,
+  children,
+  ...props
+}: {
+  children?: ReactNode
+  className?: string
+}) {
+  return (
     <Select.Trigger
-      ref={ref}
       className={cn(
         'flex items-center gap-1 rounded-[4px] px-2 py-1 text-xs',
         className,
@@ -39,26 +44,24 @@ const SelectTrigger = forwardRef<HTMLDivElement, { children?: ReactNode; classNa
         </>
       )}
     </Select.Trigger>
-  ),
-)
-SelectTrigger.displayName = 'Select.Trigger'
-
-const SelectValue = Select.Value
-
-const SelectIcon = Select.Icon
-
-const SelectPortal = Select.Portal
-
-const SelectPositioner = Select.Positioner
-
-interface SelectContentProps extends ComponentPropsWithRef<'div'> {
-  children: ReactNode
+  )
 }
 
-const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
-  ({ className, children, ...props }, ref) => (
+const SelectValue = Select.Value
+const SelectIcon = Select.Icon
+const SelectPortal = Select.Portal
+const SelectPositioner = Select.Positioner
+
+function SelectContent({
+  className,
+  children,
+  ...props
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
     <Select.Popup
-      ref={ref}
       className={cn(
         'min-w-[100px] rounded-[6px] py-1 shadow-lg',
         'data-starting-style:scale-[0.98] data-starting-style:opacity-0',
@@ -73,19 +76,20 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
     >
       {children}
     </Select.Popup>
-  ),
-)
-SelectContent.displayName = 'Select.Content'
-
-interface SelectItemProps extends ComponentPropsWithRef<'div'> {
-  value: string
-  children?: ReactNode
+  )
 }
 
-const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
-  ({ className, children, ...props }, ref) => (
+function SelectItem({
+  className,
+  children,
+  ...props
+}: {
+  children?: ReactNode
+  value: string
+  className?: string
+}) {
+  return (
     <Select.Item
-      ref={ref}
       className={cn(
         'flex cursor-pointer items-center gap-2 px-3 py-1.5 text-xs',
         className,
@@ -95,9 +99,8 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
     >
       {children}
     </Select.Item>
-  ),
-)
-SelectItem.displayName = 'Select.Item'
+  )
+}
 
 const SelectItemText = Select.ItemText
 

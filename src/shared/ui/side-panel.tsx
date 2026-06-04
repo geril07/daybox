@@ -10,27 +10,26 @@ const SidePanelTrigger = Drawer.Trigger
 
 const SidePanelPortal = Drawer.Portal
 
-interface SidePanelOverlayProps extends ComponentPropsWithRef<'div'> {}
-
-const SidePanelOverlay = forwardRef<HTMLDivElement, SidePanelOverlayProps>(
-  ({ className, ...props }, ref) => (
-    <Drawer.Backdrop
-      ref={ref}
-      className={cn(
-        'fixed inset-0 min-h-dvh',
-        'transition-opacity duration-300 ease-out',
-        'data-ending-style:opacity-0 data-starting-style:opacity-0 data-swiping:duration-0',
-        className,
-      )}
-      style={{
-        backgroundColor: 'black',
-        opacity: 'calc(0.25*(1-var(--drawer-swipe-progress)))',
-        backdropFilter: 'blur(2px)',
-      }}
-      {...props}
-    />
-  ),
-)
+const SidePanelOverlay = forwardRef<
+  HTMLDivElement,
+  ComponentPropsWithRef<'div'>
+>(({ className, ...props }, ref) => (
+  <Drawer.Backdrop
+    ref={ref}
+    className={cn(
+      'fixed inset-0 min-h-dvh',
+      'transition-opacity duration-300 ease-out',
+      'data-ending-style:opacity-0 data-starting-style:opacity-0 data-swiping:duration-0',
+      className,
+    )}
+    style={{
+      backgroundColor: 'black',
+      opacity: 'calc(0.25*(1-var(--drawer-swipe-progress)))',
+      backdropFilter: 'blur(2px)',
+    }}
+    {...props}
+  />
+))
 SidePanelOverlay.displayName = 'SidePanel.Overlay'
 
 interface SidePanelContentProps extends ComponentPropsWithRef<'div'> {

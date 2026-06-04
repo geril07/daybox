@@ -1,5 +1,6 @@
-export { Button, buttonVariants } from './button'
+export { Button } from './button'
 export type { ButtonProps } from './button'
+export { buttonVariants } from './button-variants'
 
 export { NumberInput } from './number-input'
 export type { NumberInputProps } from './number-input'

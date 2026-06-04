@@ -10,22 +10,21 @@ const AlertDialogTrigger = AlertDialogPrimitive.Trigger
 
 const AlertDialogPortal = AlertDialogPrimitive.Portal
 
-interface AlertDialogOverlayProps extends ComponentPropsWithRef<'div'> {}
-
-const AlertDialogOverlay = forwardRef<HTMLDivElement, AlertDialogOverlayProps>(
-  ({ className, ...props }, ref) => (
-    <AlertDialogPrimitive.Backdrop
-      ref={ref}
-      className={cn(
-        'fixed inset-0 z-50',
-        'data-ending-style:opacity-0 data-starting-style:opacity-0',
-        className,
-      )}
-      style={{ background: 'oklch(0 0 0 / 0.25)' }}
-      {...props}
-    />
-  ),
-)
+const AlertDialogOverlay = forwardRef<
+  HTMLDivElement,
+  ComponentPropsWithRef<'div'>
+>(({ className, ...props }, ref) => (
+  <AlertDialogPrimitive.Backdrop
+    ref={ref}
+    className={cn(
+      'fixed inset-0 z-50',
+      'data-ending-style:opacity-0 data-starting-style:opacity-0',
+      className,
+    )}
+    style={{ background: 'oklch(0 0 0 / 0.25)' }}
+    {...props}
+  />
+))
 AlertDialogOverlay.displayName = 'AlertDialog.Overlay'
 
 interface AlertDialogContentProps extends ComponentPropsWithRef<'div'> {

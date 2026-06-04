@@ -8,7 +8,7 @@ interface ToggleProps extends ComponentPropsWithRef<typeof Switch.Root> {
 }
 
 const Toggle = forwardRef<HTMLSpanElement, ToggleProps>(
-  ({ checked, onCheckedChange, className, ...props }, ref) => {
+  ({ checked, onCheckedChange, ...props }, ref) => {
     return (
       <Switch.Root
         ref={ref}
