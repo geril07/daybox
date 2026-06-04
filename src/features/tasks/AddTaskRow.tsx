@@ -1,3 +1,4 @@
+import { Plus, ChevronDown } from 'lucide-react'
 import { useState, useRef, useCallback } from 'react'
 
 import { useAppStore } from '@/app/store'
@@ -71,18 +72,7 @@ export default function AddTaskRow({ defaultDate }: AddTaskRowProps) {
           className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed transition-[border-color,color] duration-140"
           style={{ borderColor: 'var(--border-strong)', color: 'var(--fg-3)' }}
         >
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
+          <Plus size={10} strokeWidth={3} />
         </div>
         <input
           ref={inputRef}
@@ -135,16 +125,7 @@ function GroupChip({
             style={{ background: group.color }}
           />
           {group.name}
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+          <ChevronDown size={10} />
         </span>
       </PopoverTrigger>
       <PopoverContent className="z-50 min-w-[140px] p-2">

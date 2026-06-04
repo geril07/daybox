@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
 import { useAppStore } from '@/app/store'
 import TaskList from '@/features/tasks/TaskList'
 import EmptyState from '@/shared/EmptyState'
@@ -51,16 +53,7 @@ export default function DateBrowser() {
             e.currentTarget.style.background = 'transparent'
           }}
         >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+          <ChevronLeft size={12} />
         </button>
         <span
           className="min-w-[120px] text-center text-xs font-medium"
@@ -81,16 +74,7 @@ export default function DateBrowser() {
             e.currentTarget.style.background = 'transparent'
           }}
         >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <ChevronRight size={12} />
         </button>
       </div>
       <TaskList tasks={dateTasks} />

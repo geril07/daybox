@@ -1,3 +1,4 @@
+import { RotateCcw, Pause, Play, SkipForward } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
 import { useAppStore } from '@/app/store'
@@ -229,19 +230,7 @@ export default function TimerBar() {
                 }}
                 title="Reset"
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="23 4 23 10 17 10" />
-                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                </svg>
+                <RotateCcw size={14} />
               </button>
               <button
                 className="flex h-[40px] w-[40px] items-center justify-center rounded-full transition-all duration-140"
@@ -262,24 +251,9 @@ export default function TimerBar() {
                 title={isRunning ? 'Pause' : 'Start'}
               >
                 {isRunning ? (
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <rect x="6" y="4" width="4" height="16" />
-                    <rect x="14" y="4" width="4" height="16" />
-                  </svg>
+                  <Pause size={16} fill="currentColor" />
                 ) : (
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
+                  <Play size={16} fill="currentColor" />
                 )}
               </button>
               <button
@@ -296,19 +270,7 @@ export default function TimerBar() {
                 }}
                 title="Skip"
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polygon points="5 4 15 12 5 20 5 4" />
-                  <line x1="19" y1="5" x2="19" y2="19" />
-                </svg>
+                <SkipForward size={14} />
               </button>
               <div className="flex min-w-[40px] shrink-0 items-center gap-[3px]">
                 {sessionDots.map((i) => (
