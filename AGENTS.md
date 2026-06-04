@@ -7,7 +7,8 @@
 - **Vite + React 19 + TypeScript 6** — entry: `src/main.tsx` → `src/app/App.tsx` (note: `src/App.tsx` is a stale Vite scaffold, not used)
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin; tokens in `src/index.css` `@theme`; dark mode via `.dark` class on `<html>`
 - **Zustand** — two stores: `src/app/store.ts` (persisted, app state) and `src/app/timerStore.ts` (non-persisted, 1Hz tick kept separate to avoid task list re-renders)
-- **@base-ui/react v1.5** — headless UI: Popover, Drawer, AlertDialog, NumberField, Switch, Select, Slider
+- **@base-ui/react v1.5** — headless UI primitives used via `src/shared/ui/` wrappers only
+- **Shared UI (`src/shared/ui/`)** — wrappers isolating base-ui: `NumberInput`, `Toggle`, `RangeSlider`, `SelectMenu`, `AlertDialog`, `SidePanel`, `PopoverCard`. Consumer code never imports base-ui directly.
 - **@dnd-kit/react** — drag-to-reorder in `src/features/tasks/TaskList.tsx`
 
 ## Commands
@@ -49,7 +50,9 @@ Main specs at `openspec/specs/`, delta specs at `openspec/changes/<name>/specs/`
 src/
   app/        — Shell, stores, localStorage export/import
   features/   — tasks/, timer/, groups/, settings/, views/
-  shared/     — types, dates, keyboard, notifications, EmptyState
+  shared/
+    ui/       — base-ui wrappers: NumberInput, Toggle, RangeSlider, SelectMenu, AlertDialog, SidePanel, PopoverCard
+    types, dates, keyboard, notifications, EmptyState
 ```
 
 - **Two Zustand stores**: `app/store.ts` (persisted with migrate-on-read) and `app/timerStore.ts` (isolated — 1Hz tick doesn't re-render task list)

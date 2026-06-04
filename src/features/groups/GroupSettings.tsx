@@ -1,8 +1,8 @@
-import { AlertDialog } from '@base-ui/react'
 import { useState } from 'react'
 
 import { useAppStore } from '../../app/store'
 import type { Group } from '../../shared/types'
+import { AlertDialog } from '../../shared/ui'
 
 export default function GroupSettings() {
   const groups = useAppStore((s) => s.groups)
@@ -116,69 +116,32 @@ function GroupItem({
           {group.name}
         </span>
       )}
-      <AlertDialog.Root>
-        <AlertDialog.Trigger
-          disabled={isLast}
-          className="rounded-[4px] px-[7px] py-[3px] text-xs transition-all duration-120 disabled:cursor-not-allowed disabled:opacity-30"
-          style={{ color: isLast ? 'var(--fg-3)' : 'var(--fg-3)' }}
-        >
-          Delete
-        </AlertDialog.Trigger>
-        <AlertDialog.Portal>
-          <AlertDialog.Backdrop
-            className="fixed inset-0 z-50"
-            style={{ background: 'oklch(0 0 0 / 0.25)' }}
-          />
-          <AlertDialog.Popup
-            className="fixed top-1/2 left-1/2 z-50 max-w-[85vw] -translate-x-1/2 -translate-y-1/2 rounded-[10px] p-5 shadow-lg"
-            style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-            }}
+      <AlertDialog
+        title={`Delete "${group.name}"`}
+        description="What should happen to tasks in this group?"
+        trigger={
+          <button
+            disabled={isLast}
+            className="rounded-[4px] px-[7px] py-[3px] text-xs transition-all duration-120 disabled:cursor-not-allowed disabled:opacity-30"
+            style={{ color: 'var(--fg-3)' }}
           >
-            <AlertDialog.Title
-              className="mb-2 text-sm font-semibold"
-              style={{ color: 'var(--fg)' }}
-            >
-              Delete &quot;{group.name}&quot;
-            </AlertDialog.Title>
-            <AlertDialog.Description
-              className="mb-4 text-xs"
-              style={{ color: 'var(--fg-2)' }}
-            >
-              What should happen to tasks in this group?
-            </AlertDialog.Description>
-            <div className="flex flex-col gap-2">
-              <AlertDialog.Close
-                className="w-full rounded-[6px] py-2 text-xs font-medium transition-all duration-120"
-                style={{ background: 'var(--accent)', color: 'white' }}
-                onClick={() => onDelete(group.id, true)}
-              >
-                Move tasks to General
-              </AlertDialog.Close>
-              <AlertDialog.Close
-                className="w-full rounded-[6px] py-2 text-xs transition-all duration-120"
-                style={{
-                  border: '1px solid var(--overdue-border)',
-                  color: 'var(--overdue)',
-                }}
-                onClick={() => onDelete(group.id, false)}
-              >
-                Delete all tasks
-              </AlertDialog.Close>
-              <AlertDialog.Close
-                className="w-full rounded-[6px] py-2 text-xs transition-all duration-120"
-                style={{
-                  border: '1px solid var(--border)',
-                  color: 'var(--fg-3)',
-                }}
-              >
-                Cancel
-              </AlertDialog.Close>
-            </div>
-          </AlertDialog.Popup>
-        </AlertDialog.Portal>
-      </AlertDialog.Root>
+            Delete
+          </button>
+        }
+        actions={[
+          {
+            label: 'Move tasks to General',
+            onClick: () => onDelete(group.id, true),
+            variant: 'primary',
+          },
+          {
+            label: 'Delete all tasks',
+            onClick: () => onDelete(group.id, false),
+            variant: 'danger',
+          },
+          { label: 'Cancel', variant: 'secondary' },
+        ]}
+      />
     </div>
   )
 }
