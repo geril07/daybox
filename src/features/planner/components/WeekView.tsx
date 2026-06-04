@@ -39,17 +39,12 @@ export default function WeekView() {
         return (
           <div key={dateStr} className="mb-2">
             <div
-              className="flex items-center gap-2 px-1.5 py-2 text-xs font-semibold"
-              style={{ color: 'var(--fg-2)' }}
+              className="text-fg-2 flex items-center gap-2 px-1.5 py-2 text-xs font-semibold"
             >
               {getFormattedDate(day)}
               {isToday && (
                 <span
-                  className="text-accent rounded-full px-[7px] py-[1px] text-xs font-medium"
-                  style={{
-                    background: 'var(--accent-bg)',
-                    border: '1px solid var(--accent-border)',
-                  }}
+                  className="text-accent bg-accent-bg border-accent-border rounded-full border px-[7px] py-[1px] text-xs font-medium"
                 >
                   TODAY
                 </span>

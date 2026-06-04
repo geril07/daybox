@@ -3,6 +3,7 @@ import { useState, useRef, useCallback } from 'react'
 
 import { useGroupStore } from '@/features/groups/store'
 import { useTaskStore } from '@/features/tasks/store'
+import { cn } from '@/shared/lib/utils'
 import type { Group } from '@/shared/types'
 import { Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
@@ -67,8 +68,7 @@ export default function AddTaskRow({ defaultDate }: AddTaskRowProps) {
     <div className="add-task-wrap border-border border-b pt-3.5 pb-1.5">
       <div className="flex items-center gap-2.5">
         <div
-          className="text-muted-foreground flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed transition-[border-color,color] duration-140"
-          style={{ borderColor: 'var(--border-strong)' }}
+          className="text-muted-foreground border-border-strong flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed transition-[border-color,color] duration-140"
         >
           <Plus size={10} strokeWidth={3} />
         </div>
@@ -129,10 +129,10 @@ function GroupChip({
         {groups.map((g) => (
           <button
             key={g.id}
-            className="hover:bg-muted flex w-full items-center gap-2 rounded-[4px] px-3 py-2 text-left text-sm transition-colors duration-100"
-            style={{
-              color: g.id === group.id ? 'var(--accent)' : 'var(--fg-2)',
-            }}
+            className={cn(
+              'hover:bg-muted flex w-full items-center gap-2 rounded-[4px] px-3 py-2 text-left text-sm transition-colors duration-100',
+              g.id === group.id ? 'text-accent' : 'text-fg-2',
+            )}
             onClick={() => onSelect(g.id)}
           >
             <span
@@ -175,15 +175,8 @@ function GroupTypeahead({
       {matched.map((g) => (
         <button
           key={g.id}
-          className="transition-background flex w-full items-center gap-2 px-3 py-2 text-left text-sm duration-100"
-          style={{ color: 'var(--fg-2)' }}
+          className="text-fg-2 hover:bg-bg-hover flex w-full items-center gap-2 px-3 py-2 text-left text-sm duration-100"
           onClick={() => onSelect(g)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--bg-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent'
-          }}
         >
           <span
             className="h-[7px] w-[7px] shrink-0 rounded-full"

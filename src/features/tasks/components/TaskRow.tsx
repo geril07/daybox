@@ -5,6 +5,7 @@ import { useGroupStore } from '@/features/groups/store'
 import { useTaskStore } from '@/features/tasks/store'
 import { useTimerStore } from '@/features/timer/store'
 import { isOverdue, formatDate } from '@/shared/dates'
+import { cn } from '@/shared/lib/utils'
 import type { Task } from '@/shared/types'
 import { Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
@@ -69,46 +70,33 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
 
   return (
     <div
-      className="transition-background border-border flex min-h-[46px] items-center gap-2.5 rounded-[4px] border-b px-1.5 py-2 duration-120"
-      style={{
-        background: isFocused
-          ? 'var(--accent-bg)'
-          : overdue
-            ? 'var(--overdue-bg)'
-            : 'transparent',
-        opacity: task.completed ? 0.52 : 1,
-      }}
-      onMouseEnter={(e) => {
-        setHovering(true)
-        if (!isFocused) e.currentTarget.style.background = 'var(--bg-hover)'
-      }}
-      onMouseLeave={(e) => {
-        setHovering(false)
-        e.currentTarget.style.background = isFocused
-          ? 'var(--accent-bg)'
-          : overdue
-            ? 'var(--overdue-bg)'
-            : 'transparent'
-      }}
+      className={cn(
+        'transition-background border-border flex min-h-[46px] items-center gap-2.5 rounded-[4px] border-b px-1.5 py-2 duration-120',
+        isFocused && 'bg-accent-bg',
+        !isFocused && overdue && 'bg-overdue-bg',
+        task.completed && 'opacity-[0.52]',
+      )}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
     >
       <div
         ref={dragHandleRef}
-        className="text-muted-foreground shrink-0 cursor-grab p-0.5 transition-opacity duration-120 active:cursor-grabbing"
-        style={{ opacity: hovering ? 1 : 0 }}
+        className={cn(
+          'text-muted-foreground shrink-0 cursor-grab p-0.5 transition-opacity duration-120 active:cursor-grabbing',
+          hovering ? 'opacity-100' : 'opacity-0',
+        )}
         onClick={(e) => e.stopPropagation()}
       >
         <GripVertical size={12} />
       </div>
 
       <button
-        className="flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border transition-all duration-140"
-        style={{
-          borderColor: task.completed
-            ? 'var(--success)'
-            : 'var(--border-strong)',
-          background: task.completed ? 'var(--success)' : 'transparent',
-          color: task.completed ? 'white' : 'transparent',
-        }}
+        className={cn(
+          'flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border transition-all duration-140',
+          task.completed
+            ? 'border-success bg-success text-white'
+            : 'border-border-strong bg-transparent text-transparent',
+        )}
         onClick={() => toggleTask(task.id)}
       >
         {task.completed && <Check size={10} strokeWidth={3} />}
@@ -128,12 +116,10 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
           />
         ) : (
           <span
-            className="block cursor-text truncate text-[14.5px] font-[450]"
-            style={{
-              color: task.completed ? 'var(--fg-3)' : 'var(--fg)',
-              textDecoration: task.completed ? 'line-through' : 'none',
-              lineHeight: 1.4,
-            }}
+            className={cn(
+              'block cursor-text truncate text-[14.5px] leading-snug font-[450]',
+              task.completed ? 'text-fg-3 line-through' : 'text-fg',
+            )}
             onClick={handleStartEdit}
           >
             {task.title}
@@ -155,11 +141,7 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
 
       {overdue && (
         <span
-          className="text-destructive shrink-0 rounded-full px-[7px] py-[2px] text-xs font-medium"
-          style={{
-            background: 'var(--overdue-bg)',
-            border: '1px solid var(--overdue-border)',
-          }}
+          className="text-destructive bg-overdue-bg border-overdue-border shrink-0 rounded-full border px-[7px] py-[2px] text-xs font-medium"
         >
           OVERDUE
         </span>
@@ -169,16 +151,10 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       <DatePickerButton task={task} />
 
       <div
-        className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120"
-        onMouseEnter={(e) => {
-          ;(e.currentTarget as HTMLElement).style.opacity = '1'
-        }}
-        onMouseLeave={(e) => {
-          ;(e.currentTarget as HTMLElement).style.opacity = '0'
-        }}
+        className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 hover:opacity-100"
       >
         <button
-          className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
+          className="text-muted-foreground hover:text-accent flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
           onClick={() => {
             if (isFocused) {
               setFocusedTaskId(null)
@@ -189,27 +165,13 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
               if (timerIsRunning) timerStart()
             }
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--accent)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--fg-3)'
-          }}
           title="Focus"
         >
           <Target size={14} />
         </button>
         <button
-          className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
+          className="text-muted-foreground hover:text-overdue hover:bg-overdue-bg flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
           onClick={() => deleteTask(task.id)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--overdue)'
-            e.currentTarget.style.background = 'var(--overdue-bg)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--fg-3)'
-            e.currentTarget.style.background = 'transparent'
-          }}
           title="Delete"
         >
           <Trash2 size={14} />
@@ -231,15 +193,12 @@ function PomoArea({ task }: { task: Task }) {
               {Array.from({ length: task.pomoEstimate }, (_, i) => (
                 <span
                   key={i}
-                  className="h-[7px] w-[7px] rounded-full"
-                  style={{
-                    background:
-                      i < task.pomoCompleted ? 'var(--accent)' : 'transparent',
-                    border:
-                      i < task.pomoCompleted
-                        ? 'none'
-                        : '1.5px solid var(--border-strong)',
-                  }}
+                  className={cn(
+                    'h-[7px] w-[7px] rounded-full',
+                    i < task.pomoCompleted
+                      ? 'bg-accent border-none'
+                      : 'bg-transparent border border-border-strong',
+                  )}
                 />
               ))}
             </div>
@@ -258,15 +217,12 @@ function PomoArea({ task }: { task: Task }) {
           {Array.from({ length: 9 }, (_, i) => (
             <button
               key={i}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[4px] text-[12.5px] transition-all duration-120"
-              style={{
-                border: '1px solid var(--border)',
-                color: task.pomoEstimate === i ? 'white' : 'var(--fg-2)',
-                background:
-                  task.pomoEstimate === i ? 'var(--accent)' : 'transparent',
-                borderColor:
-                  task.pomoEstimate === i ? 'var(--accent)' : 'var(--border)',
-              }}
+              className={cn(
+                'flex h-[26px] w-[26px] items-center justify-center rounded-[4px] text-[12.5px] transition-all duration-120 border',
+                task.pomoEstimate === i
+                  ? 'bg-accent border-accent text-white'
+                  : 'border-border text-fg-2 bg-transparent',
+              )}
               onClick={() => updateTask(task.id, { pomoEstimate: i })}
               onMouseEnter={(e) => {
                 if (task.pomoEstimate !== i) {

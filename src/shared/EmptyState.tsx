@@ -12,7 +12,7 @@ export default function EmptyState({
       <div className="bg-border text-muted-foreground mb-1 flex h-12 w-12 items-center justify-center rounded-xl">
         <FilePlus size={20} />
       </div>
-      <div className="text-sm font-medium" style={{ color: 'var(--fg-2)' }}>
+      <div className="text-fg-2 text-sm font-medium">
         {title}
       </div>
       <div className="text-muted-foreground max-w-[260px] text-xs leading-relaxed">

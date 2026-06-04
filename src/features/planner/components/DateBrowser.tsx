@@ -39,36 +39,19 @@ export default function DateBrowser() {
     <div>
       <div className="flex items-center justify-center gap-1.5 pt-2 pb-3">
         <button
-          className="text-muted-foreground flex h-[22px] w-[22px] items-center justify-center rounded-[4px]"
+          className="text-muted-foreground hover:text-fg hover:bg-bg-hover flex h-[22px] w-[22px] items-center justify-center rounded-[4px]"
           onClick={goBack}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--fg)'
-            e.currentTarget.style.background = 'var(--bg-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--fg-3)'
-            e.currentTarget.style.background = 'transparent'
-          }}
         >
           <ChevronLeft size={12} />
         </button>
         <span
-          className="min-w-[120px] text-center text-xs font-medium"
-          style={{ color: 'var(--fg-2)' }}
+          className="text-fg-2 min-w-[120px] text-center text-xs font-medium"
         >
           {browseDate}
         </span>
         <button
-          className="text-muted-foreground flex h-[22px] w-[22px] items-center justify-center rounded-[4px]"
+          className="text-muted-foreground hover:text-fg hover:bg-bg-hover flex h-[22px] w-[22px] items-center justify-center rounded-[4px]"
           onClick={goForward}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'var(--fg)'
-            e.currentTarget.style.background = 'var(--bg-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'var(--fg-3)'
-            e.currentTarget.style.background = 'transparent'
-          }}
         >
           <ChevronRight size={12} />
         </button>

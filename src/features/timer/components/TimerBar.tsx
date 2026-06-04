@@ -5,6 +5,7 @@ import { useSettingsStore } from '@/app/settingsStore'
 import { useTaskStore } from '@/features/tasks/store'
 import { playAlarm } from '@/features/timer/alarm'
 import { useTimerStore, getNextPhase } from '@/features/timer/store'
+import { cn } from '@/shared/lib/utils'
 import { sendNotification } from '@/shared/notifications'
 
 export default function TimerBar() {
@@ -199,44 +200,28 @@ export default function TimerBar() {
         <div className="flex w-full shrink-0 items-center justify-between gap-2.5">
           <div className="flex items-center">
             <span
-              className="min-w-[80px] shrink-0 text-center font-mono text-[30px] font-medium tracking-[1px] transition-colors duration-300"
-              style={{
-                color: isIdle ? 'var(--fg-3)' : 'var(--fg)',
-              }}
+              className={cn(
+                'min-w-[80px] shrink-0 text-center font-mono text-[30px] font-medium tracking-[1px] transition-colors duration-300',
+                isIdle ? 'text-fg-3' : 'text-fg',
+              )}
             >
               {String(minutes).padStart(2, '0')}:
               {String(seconds).padStart(2, '0')}
             </span>
             <div className="flex items-center gap-1">
               <button
-                className="text-muted-foreground flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
+                className="text-muted-foreground hover:bg-bg-hover hover:text-fg flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
                 onClick={handleReset}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--bg-hover)'
-                  e.currentTarget.style.color = 'var(--fg)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'var(--fg-3)'
-                }}
                 title="Reset"
               >
                 <RotateCcw size={14} />
               </button>
               <button
-                className="flex h-[40px] w-[40px] items-center justify-center rounded-full text-white shadow-sm transition-all duration-140"
+                className="flex h-[40px] w-[40px] items-center justify-center rounded-full text-white shadow-sm transition-all duration-140 hover:scale-105 hover:opacity-90"
                 style={{
                   background: phaseColor,
                 }}
                 onClick={handlePlayPause}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.opacity = '0.88'
-                  e.currentTarget.style.transform = 'scale(1.04)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.opacity = '1'
-                  e.currentTarget.style.transform = 'scale(1)'
-                }}
                 title={isRunning ? 'Pause' : 'Start'}
               >
                 {isRunning ? (
@@ -246,16 +231,8 @@ export default function TimerBar() {
                 )}
               </button>
               <button
-                className="text-muted-foreground flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
+                className="text-muted-foreground hover:bg-bg-hover hover:text-fg flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
                 onClick={handleSkip}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--bg-hover)'
-                  e.currentTarget.style.color = 'var(--fg)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.color = 'var(--fg-3)'
-                }}
                 title="Skip"
               >
                 <SkipForward size={14} />
@@ -264,11 +241,11 @@ export default function TimerBar() {
                 {sessionDots.map((i) => (
                   <span
                     key={i}
-                    className="h-[6px] w-[6px] rounded-full"
-                    style={{
-                      background: phaseColor,
-                      opacity: i < sessionPomoCount ? 1 : 0.5,
-                    }}
+                    className={cn(
+                      'h-[6px] w-[6px] rounded-full',
+                      i < sessionPomoCount ? 'opacity-100' : 'opacity-50',
+                    )}
+                    style={{ background: phaseColor }}
                   />
                 ))}
               </div>
@@ -282,8 +259,10 @@ export default function TimerBar() {
               {phaseLabel}
             </span>
             <span
-              className="truncate text-[12.5px]"
-              style={{ color: focusedTask ? 'var(--fg-2)' : 'var(--fg-3)' }}
+              className={cn(
+                'truncate text-[12.5px]',
+                focusedTask ? 'text-fg-2' : 'text-fg-3',
+              )}
             >
               {focusedTask ? focusedTask.title : 'No task focused'}
             </span>

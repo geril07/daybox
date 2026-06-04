@@ -5,6 +5,7 @@ Current `src/features/` has structural issues after `store-split`: `features/vie
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Each `features/<domain>/` folder represents one coherent capability
 - `features/planner/` replaces `features/views/` as the planning domain
 - `features/tasks/queries.ts` extracts inline filter/sort logic from the 5 planner views
@@ -12,6 +13,7 @@ Current `src/features/` has structural issues after `store-split`: `features/vie
 - Every feature module gets a `components/` subfolder to flatten at the feature level
 
 **Non-Goals:**
+
 - No behavior/interface changes — every existing import path is updated but the exported APIs remain identical
 - No view collapse — the 5 individual planner view components stay separate (deferred to future change)
 - No test additions — existing 32 tests must pass unmodified after all path changes
