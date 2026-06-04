@@ -16,6 +16,7 @@ The current `src/shared/ui/` wrapper layer is hand-rolled with bugs, inconsisten
 ## Capabilities
 
 ### New Capabilities
+
 - `shared-ui`: Shared UI component library — shadcn v4 wrappers around base-ui primitives, available to all features
 
 ### Modified Capabilities

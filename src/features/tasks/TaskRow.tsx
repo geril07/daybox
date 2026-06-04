@@ -4,7 +4,7 @@ import { useAppStore } from '../../app/store'
 import { useTimerStore } from '../../app/timerStore'
 import { isOverdue, formatDate } from '../../shared/dates'
 import type { Task } from '../../shared/types'
-import { Popover } from '../../shared/ui'
+import { Popover, PopoverTrigger, PopoverContent } from '../../shared/ui'
 
 interface TaskRowProps {
   task: Task
@@ -272,7 +272,7 @@ function PomoArea({ task }: { task: Task }) {
 
   return (
     <Popover>
-      <Popover.Trigger>
+      <PopoverTrigger>
         <span className="relative flex min-w-[32px] shrink-0 cursor-pointer items-center">
           {task.pomoEstimate > 0 ? (
             <div className="flex items-center gap-[3px]">
@@ -292,57 +292,48 @@ function PomoArea({ task }: { task: Task }) {
               ))}
             </div>
           ) : (
-            <span className="text-[11.5px]" style={{ color: 'var(--fg-3)' }}>
+            <span className="text-muted-foreground text-[11.5px]">
               {task.pomoCompleted > 0 ? task.pomoCompleted : '0'}
             </span>
           )}
         </span>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Positioner className="z-40">
-          <Popover.Content className="p-3">
-            <div
-              className="mb-2 text-[11px] font-medium tracking-[0.5px] uppercase"
-              style={{ color: 'var(--fg-3)' }}
+      </PopoverTrigger>
+      <PopoverContent className="z-40 p-3">
+        <div className="text-muted-foreground mb-2 text-[11px] font-medium tracking-[0.5px] uppercase">
+          Pomodoros
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {Array.from({ length: 9 }, (_, i) => (
+            <button
+              key={i}
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[4px] text-[12.5px] transition-all duration-120"
+              style={{
+                border: '1px solid var(--border)',
+                color: task.pomoEstimate === i ? 'white' : 'var(--fg-2)',
+                background:
+                  task.pomoEstimate === i ? 'var(--accent)' : 'transparent',
+                borderColor:
+                  task.pomoEstimate === i ? 'var(--accent)' : 'var(--border)',
+              }}
+              onClick={() => updateTask(task.id, { pomoEstimate: i })}
+              onMouseEnter={(e) => {
+                if (task.pomoEstimate !== i) {
+                  e.currentTarget.style.borderColor = 'var(--accent)'
+                  e.currentTarget.style.color = 'var(--accent)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (task.pomoEstimate !== i) {
+                  e.currentTarget.style.borderColor = 'var(--border)'
+                  e.currentTarget.style.color = 'var(--fg-2)'
+                }
+              }}
             >
-              Pomodoros
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {Array.from({ length: 9 }, (_, i) => (
-                <button
-                  key={i}
-                  className="flex h-[26px] w-[26px] items-center justify-center rounded-[4px] text-[12.5px] transition-all duration-120"
-                  style={{
-                    border: '1px solid var(--border)',
-                    color: task.pomoEstimate === i ? 'white' : 'var(--fg-2)',
-                    background:
-                      task.pomoEstimate === i ? 'var(--accent)' : 'transparent',
-                    borderColor:
-                      task.pomoEstimate === i
-                        ? 'var(--accent)'
-                        : 'var(--border)',
-                  }}
-                  onClick={() => updateTask(task.id, { pomoEstimate: i })}
-                  onMouseEnter={(e) => {
-                    if (task.pomoEstimate !== i) {
-                      e.currentTarget.style.borderColor = 'var(--accent)'
-                      e.currentTarget.style.color = 'var(--accent)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (task.pomoEstimate !== i) {
-                      e.currentTarget.style.borderColor = 'var(--border)'
-                      e.currentTarget.style.color = 'var(--fg-2)'
-                    }
-                  }}
-                >
-                  {i}
-                </button>
-              ))}
-            </div>
-          </Popover.Content>
-        </Popover.Positioner>
-      </Popover.Portal>
+              {i}
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
     </Popover>
   )
 }
@@ -354,10 +345,9 @@ function DatePickerButton({ task }: { task: Task }) {
 
   return (
     <Popover>
-      <Popover.Trigger>
+      <PopoverTrigger>
         <span
-          className="flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
-          style={{ color: 'var(--fg-3)' }}
+          className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
           title="Schedule"
         >
           <svg
@@ -376,57 +366,34 @@ function DatePickerButton({ task }: { task: Task }) {
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
         </span>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Positioner className="z-40">
-          <Popover.Content className="min-w-[190px] p-2">
-            <div className="mb-2 flex gap-1">
-              {[
-                { label: 'Today', value: formatDate(new Date()) },
-                {
-                  label: 'Tomorrow',
-                  value: formatDate(new Date(tomorrowDate)),
-                },
-                { label: 'Unsched.', value: null },
-              ].map((preset) => (
-                <button
-                  key={preset.label}
-                  className="flex-1 rounded-[4px] px-1 py-1.5 text-center text-xs transition-all duration-120"
-                  style={{
-                    border: '1px solid var(--border)',
-                    color: 'var(--fg-2)',
-                  }}
-                  onClick={() => updateTask(task.id, { date: preset.value })}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent)'
-                    e.currentTarget.style.color = 'var(--accent)'
-                    e.currentTarget.style.background = 'var(--accent-bg)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border)'
-                    e.currentTarget.style.color = 'var(--fg-2)'
-                    e.currentTarget.style.background = 'transparent'
-                  }}
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-            <input
-              type="date"
-              className="transition-border w-full rounded-[4px] px-2 py-1.5 text-xs duration-140 outline-none"
-              style={{
-                border: '1px solid var(--border)',
-                color: 'var(--fg)',
-                background: 'var(--bg)',
-              }}
-              onChange={(e) =>
-                updateTask(task.id, { date: e.target.value || null })
-              }
-            />
-          </Popover.Content>
-        </Popover.Positioner>
-      </Popover.Portal>
+      </PopoverTrigger>
+      <PopoverContent className="z-40 min-w-[190px] p-2">
+        <div className="mb-2 flex gap-1">
+          {[
+            { label: 'Today', value: formatDate(new Date()) },
+            {
+              label: 'Tomorrow',
+              value: formatDate(new Date(tomorrowDate)),
+            },
+            { label: 'Unsched.', value: null },
+          ].map((preset) => (
+            <button
+              key={preset.label}
+              className="border-border text-muted-foreground hover:border-accent hover:text-accent hover:bg-accent-bg flex-1 rounded-[4px] border px-1 py-1.5 text-center text-xs transition-all duration-120"
+              onClick={() => updateTask(task.id, { date: preset.value })}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+        <input
+          type="date"
+          className="border-border bg-background text-foreground w-full rounded-[4px] border px-2 py-1.5 text-xs transition-colors duration-140 outline-none"
+          onChange={(e) =>
+            updateTask(task.id, { date: e.target.value || null })
+          }
+        />
+      </PopoverContent>
     </Popover>
   )
 }

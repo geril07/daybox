@@ -2,7 +2,15 @@ import { useState } from 'react'
 
 import { useAppStore } from '../../app/store'
 import type { Group } from '../../shared/types'
-import { AlertDialog } from '../../shared/ui'
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  Button,
+} from '../../shared/ui'
 
 export default function GroupSettings() {
   const groups = useAppStore((s) => s.groups)
@@ -38,20 +46,11 @@ export default function GroupSettings() {
           onChange={(e) => setNewGroupName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
           placeholder="Add group..."
-          className="transition-border flex-1 rounded-[6px] px-2.5 py-1.5 text-xs duration-140 outline-none"
-          style={{
-            border: '1px solid var(--border)',
-            color: 'var(--fg)',
-            background: 'var(--bg)',
-          }}
+          className="border-border bg-background text-foreground flex-1 rounded-[6px] border px-2.5 py-1.5 text-xs transition-colors duration-140 outline-none"
         />
-        <button
-          className="rounded-[6px] px-3.5 py-1.5 text-xs font-medium text-white transition-opacity duration-140"
-          style={{ background: 'var(--accent)' }}
-          onClick={handleAddGroup}
-        >
+        <Button variant="default" onClick={handleAddGroup}>
           Add
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -82,10 +81,7 @@ function GroupItem({
   }
 
   return (
-    <div
-      className="flex items-center gap-2 rounded-[6px] px-2.5 py-2"
-      style={{ border: '1px solid var(--border)', background: 'var(--bg)' }}
-    >
+    <div className="border-border bg-background flex items-center gap-2 rounded-[6px] border px-2.5 py-2">
       <span
         className="h-[10px] w-[10px] shrink-0 rounded-full"
         style={{ background: group.color }}
@@ -103,68 +99,41 @@ function GroupItem({
               setEditing(false)
             }
           }}
-          className="flex-1 border-none bg-transparent text-xs outline-none"
-          style={{ color: 'var(--fg)' }}
+          className="text-foreground flex-1 border-none bg-transparent text-xs outline-none"
           autoFocus
         />
       ) : (
         <span
-          className="flex-1 text-[13.5px]"
-          style={{ color: 'var(--fg)' }}
+          className="text-foreground flex-1 text-[13.5px]"
           onClick={() => setEditing(true)}
         >
           {group.name}
         </span>
       )}
       <AlertDialog>
-        <AlertDialog.Trigger>
-          <button
-            disabled={isLast}
-            className="rounded-[4px] px-[7px] py-[3px] text-xs transition-all duration-120 disabled:cursor-not-allowed disabled:opacity-30"
-            style={{ color: 'var(--fg-3)' }}
-          >
-            Delete
-          </button>
-        </AlertDialog.Trigger>
-        <AlertDialog.Portal>
-          <AlertDialog.Overlay />
-          <AlertDialog.Content>
-            <AlertDialog.Title>
-              Delete &quot;{group.name}&quot;
-            </AlertDialog.Title>
-            <AlertDialog.Description>
-              What should happen to tasks in this group?
-            </AlertDialog.Description>
-            <div className="flex flex-col gap-2">
-              <AlertDialog.Close
-                className="w-full rounded-[6px] py-2 text-xs font-medium text-white transition-all duration-120"
-                style={{ background: 'var(--accent)' }}
-                onClick={() => onDelete(group.id, true)}
-              >
-                Move tasks to General
-              </AlertDialog.Close>
-              <AlertDialog.Close
-                className="w-full rounded-[6px] py-2 text-xs transition-all duration-120"
-                style={{
-                  border: '1px solid var(--overdue-border)',
-                  color: 'var(--overdue)',
-                }}
-                onClick={() => onDelete(group.id, false)}
-              >
-                Delete all tasks
-              </AlertDialog.Close>
-              <AlertDialog.Close
-                className="w-full rounded-[6px] py-2 text-xs transition-all duration-120"
-                style={{
-                  border: '1px solid var(--border)',
-                  color: 'var(--fg-3)',
-                }}
-              >
-                Cancel
-              </AlertDialog.Close>
-            </div>
-          </AlertDialog.Content>
-        </AlertDialog.Portal>
+        <AlertDialogTrigger
+          render={<Button variant="ghost" size="xs" disabled={isLast} />}
+        >
+          Delete
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogTitle>Delete &quot;{group.name}&quot;</AlertDialogTitle>
+          <AlertDialogDescription>
+            What should happen to tasks in this group?
+          </AlertDialogDescription>
+          <div className="flex flex-col gap-2">
+            <AlertDialogCancel onClick={() => onDelete(group.id, true)}>
+              Move tasks to General
+            </AlertDialogCancel>
+            <AlertDialogCancel
+              variant="destructive"
+              onClick={() => onDelete(group.id, false)}
+            >
+              Delete all tasks
+            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          </div>
+        </AlertDialogContent>
       </AlertDialog>
     </div>
   )
