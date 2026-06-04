@@ -31,7 +31,7 @@ export default function TaskList({ tasks, emptyMessage }: TaskListProps) {
   return (
     <div>
       {tasks.length === 0 ? (
-        <div className="py-14 text-center" style={{ color: 'var(--fg-3)' }}>
+        <div className="text-muted-foreground py-14 text-center">
           {emptyMessage || 'No tasks yet.'}
         </div>
       ) : (

@@ -41,8 +41,7 @@ export default function DateBrowser() {
     <div>
       <div className="flex items-center justify-center gap-1.5 pt-2 pb-3">
         <button
-          className="flex h-[22px] w-[22px] items-center justify-center rounded-[4px]"
-          style={{ color: 'var(--fg-3)' }}
+          className="text-muted-foreground flex h-[22px] w-[22px] items-center justify-center rounded-[4px]"
           onClick={goBack}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = 'var(--fg)'
@@ -62,8 +61,7 @@ export default function DateBrowser() {
           {browseDate}
         </span>
         <button
-          className="flex h-[22px] w-[22px] items-center justify-center rounded-[4px]"
-          style={{ color: 'var(--fg-3)' }}
+          className="text-muted-foreground flex h-[22px] w-[22px] items-center justify-center rounded-[4px]"
           onClick={goForward}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = 'var(--fg)'

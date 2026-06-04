@@ -68,9 +68,8 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
 
   return (
     <div
-      className="transition-background flex min-h-[46px] items-center gap-2.5 rounded-[4px] px-1.5 py-2 duration-120"
+      className="transition-background border-border flex min-h-[46px] items-center gap-2.5 rounded-[4px] border-b px-1.5 py-2 duration-120"
       style={{
-        borderBottom: '1px solid var(--border)',
         background: isFocused
           ? 'var(--accent-bg)'
           : overdue
@@ -93,8 +92,8 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
     >
       <div
         ref={dragHandleRef}
-        className="shrink-0 cursor-grab p-0.5 transition-opacity duration-120 active:cursor-grabbing"
-        style={{ color: 'var(--fg-3)', opacity: hovering ? 1 : 0 }}
+        className="text-muted-foreground shrink-0 cursor-grab p-0.5 transition-opacity duration-120 active:cursor-grabbing"
+        style={{ opacity: hovering ? 1 : 0 }}
         onClick={(e) => e.stopPropagation()}
       >
         <GripVertical size={12} />
@@ -123,8 +122,8 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
             onChange={(e) => setEditTitle(e.target.value)}
             onBlur={handleSaveEdit}
             onKeyDown={handleKeyDown}
-            className="w-full border-none bg-transparent text-[14.5px] font-[450] outline-none"
-            style={{ color: 'var(--fg)', caretColor: 'var(--accent)' }}
+            className="text-foreground w-full border-none bg-transparent text-[14.5px] font-[450] outline-none"
+            style={{ caretColor: 'var(--accent)' }}
           />
         ) : (
           <span
@@ -148,18 +147,15 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
             style={{ background: group.color }}
           />
           {group.name !== 'General' && (
-            <span className="text-xs" style={{ color: 'var(--fg-3)' }}>
-              {group.name}
-            </span>
+            <span className="text-muted-foreground text-xs">{group.name}</span>
           )}
         </div>
       )}
 
       {overdue && (
         <span
-          className="shrink-0 rounded-full px-[7px] py-[2px] text-xs font-medium"
+          className="text-destructive shrink-0 rounded-full px-[7px] py-[2px] text-xs font-medium"
           style={{
-            color: 'var(--overdue)',
             background: 'var(--overdue-bg)',
             border: '1px solid var(--overdue-border)',
           }}
@@ -181,8 +177,7 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
         }}
       >
         <button
-          className="flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
-          style={{ color: 'var(--fg-3)' }}
+          className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
           onClick={() => {
             if (isFocused) {
               setFocusedTaskId(null)
@@ -204,8 +199,7 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
           <Target size={14} />
         </button>
         <button
-          className="flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
-          style={{ color: 'var(--fg-3)' }}
+          className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
           onClick={() => deleteTask(task.id)}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = 'var(--overdue)'

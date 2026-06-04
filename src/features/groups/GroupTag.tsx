@@ -16,9 +16,7 @@ export default function GroupTag({ groupId }: GroupTagProps) {
         className="h-[7px] w-[7px] shrink-0 rounded-full"
         style={{ background: group.color }}
       />
-      <span className="text-xs" style={{ color: 'var(--fg-3)' }}>
-        {group.name}
-      </span>
+      <span className="text-muted-foreground text-xs">{group.name}</span>
     </div>
   )
 }

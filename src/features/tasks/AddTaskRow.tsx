@@ -63,14 +63,11 @@ export default function AddTaskRow({ defaultDate }: AddTaskRowProps) {
   }
 
   return (
-    <div
-      className="add-task-wrap"
-      style={{ padding: '14px 0 6px', borderBottom: '1px solid var(--border)' }}
-    >
+    <div className="add-task-wrap border-border border-b pt-3.5 pb-1.5">
       <div className="flex items-center gap-2.5">
         <div
-          className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed transition-[border-color,color] duration-140"
-          style={{ borderColor: 'var(--border-strong)', color: 'var(--fg-3)' }}
+          className="text-muted-foreground flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed transition-[border-color,color] duration-140"
+          style={{ borderColor: 'var(--border-strong)' }}
         >
           <Plus size={10} strokeWidth={3} />
         </div>
@@ -81,8 +78,7 @@ export default function AddTaskRow({ defaultDate }: AddTaskRowProps) {
           onChange={handleInput}
           onKeyDown={handleKeyDown}
           placeholder="Add a task — type #group to assign..."
-          className="flex-1 border-none bg-transparent text-[14.5px] outline-none"
-          style={{ color: 'var(--fg)', padding: '8px 0' }}
+          className="text-foreground flex-1 border-none bg-transparent py-2 text-[14.5px] outline-none"
         />
         {showGroupUi && (
           <GroupChip
@@ -167,20 +163,14 @@ function GroupTypeahead({
 
   if (matched.length === 0 && query) {
     return (
-      <div className="mt-1 ml-7 text-xs" style={{ color: 'var(--fg-3)' }}>
+      <div className="text-muted-foreground mt-1 ml-7 text-xs">
         Press Enter to create group &quot;{query}&quot;
       </div>
     )
   }
 
   return (
-    <div
-      className="mt-1 ml-7 overflow-hidden rounded-[6px] shadow-sm"
-      style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-      }}
-    >
+    <div className="bg-card border-border mt-1 ml-7 overflow-hidden rounded-[6px] border shadow-sm">
       {matched.map((g) => (
         <button
           key={g.id}

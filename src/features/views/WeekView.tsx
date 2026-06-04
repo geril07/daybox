@@ -45,9 +45,8 @@ export default function WeekView() {
               {getFormattedDate(day)}
               {isToday && (
                 <span
-                  className="rounded-full px-[7px] py-[1px] text-xs font-medium"
+                  className="text-accent rounded-full px-[7px] py-[1px] text-xs font-medium"
                   style={{
-                    color: 'var(--accent)',
                     background: 'var(--accent-bg)',
                     border: '1px solid var(--accent-border)',
                   }}

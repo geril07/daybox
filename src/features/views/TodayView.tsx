@@ -32,19 +32,13 @@ export default function TodayView() {
     <div>
       {overdueTasks.length > 0 && (
         <div>
-          <div
-            className="section-label pt-5 pb-2 text-[10.5px] font-semibold tracking-[0.9px] uppercase"
-            style={{ color: 'var(--overdue)' }}
-          >
+          <div className="section-label text-destructive pt-5 pb-2 text-[10.5px] font-semibold tracking-[0.9px] uppercase">
             Overdue
           </div>
           <TaskList tasks={overdueTasks} />
         </div>
       )}
-      <div
-        className="section-label pt-5 pb-2 text-[10.5px] font-semibold tracking-[0.9px] uppercase"
-        style={{ color: 'var(--fg-3)' }}
-      >
+      <div className="section-label text-muted-foreground pt-5 pb-2 text-[10.5px] font-semibold tracking-[0.9px] uppercase">
         Today
       </div>
       <TaskList tasks={todayTasks} />

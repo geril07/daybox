@@ -23,29 +23,15 @@ const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(
       >
         <NumberField.Group className={cn('flex items-center gap-0', className)}>
           <NumberField.Decrement
-            className="flex h-7 w-7 items-center justify-center rounded-l-[4px] text-[14px]"
-            style={{
-              border: '1px solid var(--border)',
-              color: 'var(--fg-2)',
-            }}
+            className="border-border flex h-7 w-7 items-center justify-center rounded-l-[4px] border text-[14px]"
+            style={{ color: 'var(--fg-2)' }}
           >
             −
           </NumberField.Decrement>
-          <NumberField.Input
-            className="h-7 w-[44px] text-center text-xs outline-none"
-            style={{
-              borderTop: '1px solid var(--border)',
-              borderBottom: '1px solid var(--border)',
-              color: 'var(--fg)',
-              background: 'var(--bg)',
-            }}
-          />
+          <NumberField.Input className="border-border text-foreground bg-background h-7 w-[44px] border-y text-center text-xs outline-none" />
           <NumberField.Increment
-            className="flex h-7 w-7 items-center justify-center rounded-r-[4px] text-[14px]"
-            style={{
-              border: '1px solid var(--border)',
-              color: 'var(--fg-2)',
-            }}
+            className="border-border flex h-7 w-7 items-center justify-center rounded-r-[4px] border text-[14px]"
+            style={{ color: 'var(--fg-2)' }}
           >
             +
           </NumberField.Increment>

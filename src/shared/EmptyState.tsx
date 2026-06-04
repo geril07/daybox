@@ -9,19 +9,13 @@ export default function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center gap-2.5 py-14 text-center">
-      <div
-        className="mb-1 flex h-12 w-12 items-center justify-center rounded-xl"
-        style={{ background: 'var(--border)', color: 'var(--fg-3)' }}
-      >
+      <div className="bg-border text-muted-foreground mb-1 flex h-12 w-12 items-center justify-center rounded-xl">
         <FilePlus size={20} />
       </div>
       <div className="text-sm font-medium" style={{ color: 'var(--fg-2)' }}>
         {title}
       </div>
-      <div
-        className="max-w-[260px] text-xs leading-relaxed"
-        style={{ color: 'var(--fg-3)' }}
-      >
+      <div className="text-muted-foreground max-w-[260px] text-xs leading-relaxed">
         {description}
       </div>
     </div>

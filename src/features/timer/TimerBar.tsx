@@ -187,16 +187,8 @@ export default function TimerBar() {
   )
 
   return (
-    <div
-      style={{
-        background: 'var(--bg-card)',
-        borderTop: '1px solid var(--border)',
-      }}
-    >
-      <div
-        className="h-[2px] overflow-hidden"
-        style={{ background: 'var(--border)' }}
-      >
+    <div className="bg-card border-border border-t">
+      <div className="bg-border h-[2px] overflow-hidden">
         <div
           className="linear h-full rounded-r-[2px] transition-[width] duration-900"
           style={{ width: `${progress * 100}%`, background: phaseColor }}
@@ -206,10 +198,9 @@ export default function TimerBar() {
         <div className="flex w-full shrink-0 items-center justify-between gap-2.5">
           <div className="flex items-center">
             <span
-              className="min-w-[80px] shrink-0 text-center text-[30px] font-medium tracking-[1px] transition-colors duration-300"
+              className="min-w-[80px] shrink-0 text-center font-mono text-[30px] font-medium tracking-[1px] transition-colors duration-300"
               style={{
                 color: isIdle ? 'var(--fg-3)' : 'var(--fg)',
-                fontFamily: 'var(--font-mono)',
               }}
             >
               {String(minutes).padStart(2, '0')}:
@@ -217,8 +208,7 @@ export default function TimerBar() {
             </span>
             <div className="flex items-center gap-1">
               <button
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
-                style={{ color: 'var(--fg-3)' }}
+                className="text-muted-foreground flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
                 onClick={handleReset}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'var(--bg-hover)'
@@ -233,11 +223,9 @@ export default function TimerBar() {
                 <RotateCcw size={14} />
               </button>
               <button
-                className="flex h-[40px] w-[40px] items-center justify-center rounded-full transition-all duration-140"
+                className="flex h-[40px] w-[40px] items-center justify-center rounded-full text-white shadow-sm transition-all duration-140"
                 style={{
                   background: phaseColor,
-                  color: 'white',
-                  boxShadow: 'var(--shadow-sm)',
                 }}
                 onClick={handlePlayPause}
                 onMouseEnter={(e) => {
@@ -257,8 +245,7 @@ export default function TimerBar() {
                 )}
               </button>
               <button
-                className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
-                style={{ color: 'var(--fg-3)' }}
+                className="text-muted-foreground flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
                 onClick={handleSkip}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'var(--bg-hover)'
