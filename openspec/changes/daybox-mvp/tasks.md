@@ -1,37 +1,37 @@
 ## 1. Project Scaffold
 
-- [ ] 1.1 Scaffold Vite project with React + TypeScript template, create module dirs (app/, features/*/, shared/)
-- [ ] 1.2 Install and configure Tailwind CSS v4
-- [ ] 1.3 Install @base-ui/react
-- [ ] 1.4 Install @dnd-kit/react @dnd-kit/helpers
-- [ ] 1.5 Install and configure vitest + @testing-library/react + @testing-library/jest-dom + jsdom
-- [ ] 1.6 Set up Tailwind dark mode (class strategy)
-- [ ] 1.7 Move design tokens from design.html into src/index.css as CSS custom properties
-- [ ] 1.8 Configure Tailwind to use custom design tokens (colors, fonts, radius, shadows)
-- [ ] 1.9 Add Google Fonts (DM Sans + JetBrains Mono) via CSS import
-- [ ] 1.10 Build app shell layout in app/App.tsx (flex column, min-h-screen, isolation:isolate on root for Base UI portaled popups, sticky header, fixed bottom timer)
+- [x] 1.1 Scaffold Vite project with React + TypeScript template, create module dirs (app/, features/*/, shared/)
+- [x] 1.2 Install and configure Tailwind CSS v4
+- [x] 1.3 Install @base-ui/react
+- [x] 1.4 Install @dnd-kit/react @dnd-kit/helpers
+- [x] 1.5 Install and configure vitest + @testing-library/react + @testing-library/jest-dom + jsdom
+- [x] 1.6 Set up Tailwind dark mode (class strategy)
+- [x] 1.7 Move design tokens from design.html into src/index.css as CSS custom properties
+- [x] 1.8 Configure Tailwind to use custom design tokens (colors, fonts, radius, shadows)
+- [x] 1.9 Add Google Fonts (DM Sans + JetBrains Mono) via CSS import
+- [x] 1.10 Build app shell layout in app/App.tsx (flex column, min-h-screen, isolation:isolate on root for Base UI portaled popups, sticky header, fixed bottom timer)
 
 ## 2. Types & Utilities — shared/
 
-- [ ] 2.1 Define all TypeScript interfaces in shared/types.ts (Task, Group, TimerSettings, AppSettings, View, TimerPhase)
-- [ ] 2.2 Implement crypto.randomUUID() ID generator helper
-- [ ] 2.3 Build date helpers in shared/dates.ts: formatDate, isToday, isTomorrow, isOverdue, getWeekDays, getWeekRange
-- [ ] 2.4 Implement alarm sounds in features/timer/alarm.ts: bell, digital, gentle, ping via Web Audio API with configurable volume and repeat count
-- [ ] 2.5 Implement browser Notification helper in shared/notifications.ts with permission request
-- [ ] 2.6 Implement keyboard shortcut handler in shared/keyboard.ts (Enter=add, Space=start/pause timer, N=focus add-task, Escape=close/cancel — suppress all shortcuts when focus is in INPUT/TEXTAREA)
-- [ ] 2.7 Test date helpers: isToday, isOverdue, getWeekRange with various weekStartDay values
+- [x] 2.1 Define all TypeScript interfaces in shared/types.ts (Task, Group, TimerSettings, AppSettings, View, TimerPhase)
+- [x] 2.2 Implement crypto.randomUUID() ID generator helper
+- [x] 2.3 Build date helpers in shared/dates.ts: formatDate, isToday, isTomorrow, isOverdue, getWeekDays, getWeekRange
+- [x] 2.4 Implement alarm sounds in features/timer/alarm.ts: bell, digital, gentle, ping via Web Audio API with configurable volume and repeat count
+- [x] 2.5 Implement browser Notification helper in shared/notifications.ts with permission request
+- [x] 2.6 Implement keyboard shortcut handler in shared/keyboard.ts (Enter=add, Space=start/pause timer, N=focus add-task, Escape=close/cancel — suppress all shortcuts when focus is in INPUT/TEXTAREA)
+- [x] 2.7 Test date helpers: isToday, isOverdue, getWeekRange with various weekStartDay values
 
 ## 3. Store & Data Layer — app/
 
-- [ ] 3.1 Create appStore with Zustand: tasks, groups, settings, UI state (view, browseDate, focusedTaskId)
-- [ ] 3.2 Create timerStore with Zustand: phase, startedAt, elapsed, sessionPomoCount, isRunning (kept separate to avoid task re-renders)
-- [ ] 3.3 Wire Zustand persist middleware on appStore with version field in the stored blob
-- [ ] 3.4 Add migration registry: each version shift gets a function for forward-migrating state shape
-- [ ] 3.5 Implement load-time version check: match → hydrate, older → migrate, newer → wipe, missing → fresh install
-- [ ] 3.6 Seed default group on fresh install
-- [ ] 3.7 Implement export data as JSON file download (shape: { version, exportedAt, appStore: { tasks, groups, settings, ... } })
-- [ ] 3.8 Implement import with Base UI AlertDialog confirmation + version handling: older → migrate up, newer → import known fields + ignore extras, corrupted → error message, orphan group IDs → reassign to default with warning
-- [ ] 3.9 Test store: task CRUD, group CRUD, settings updates, version check, migrations, export/import roundtrip
+- [x] 3.1 Create appStore with Zustand: tasks, groups, settings, UI state (view, browseDate, focusedTaskId)
+- [x] 3.2 Create timerStore with Zustand: phase, startedAt, elapsed, sessionPomoCount, isRunning (kept separate to avoid task re-renders)
+- [x] 3.3 Wire Zustand persist middleware on appStore with version field in the stored blob
+- [x] 3.4 Add migration registry: each version shift gets a function for forward-migrating state shape
+- [x] 3.5 Implement load-time version check: match → hydrate, older → migrate, newer → wipe, missing → fresh install
+- [x] 3.6 Seed default group on fresh install
+- [x] 3.7 Implement export data as JSON file download (shape: { version, exportedAt, appStore: { tasks, groups, settings, ... } })
+- [x] 3.8 Implement import with Base UI AlertDialog confirmation + version handling: older → migrate up, newer → import known fields + ignore extras, corrupted → error message, orphan group IDs → reassign to default with warning
+- [x] 3.9 Test store: task CRUD, group CRUD, settings updates, version check, migrations, export/import roundtrip
 
 ## 4. Task Management — features/tasks/
 
