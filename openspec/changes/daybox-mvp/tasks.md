@@ -1,6 +1,6 @@
 ## 1. Project Scaffold
 
-- [x] 1.1 Scaffold Vite project with React + TypeScript template, create module dirs (app/, features/*/, shared/)
+- [x] 1.1 Scaffold Vite project with React + TypeScript template, create module dirs (app/, features/\*/, shared/)
 - [x] 1.2 Install and configure Tailwind CSS v4
 - [x] 1.3 Install @base-ui/react
 - [x] 1.4 Install @dnd-kit/react @dnd-kit/helpers

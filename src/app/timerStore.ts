@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+
 import type { TimerPhase } from '../shared/types'
 
 interface TimerState {
@@ -16,8 +17,16 @@ interface TimerActions {
   skip: () => void
   setPhase: (phase: TimerPhase) => void
   tick: () => void
-  getRemainingSeconds: (focusDuration: number, shortBreakDuration: number, longBreakDuration: number) => number
-  getDuration: (focusDuration: number, shortBreakDuration: number, longBreakDuration: number) => number
+  getRemainingSeconds: (
+    focusDuration: number,
+    shortBreakDuration: number,
+    longBreakDuration: number,
+  ) => number
+  getDuration: (
+    focusDuration: number,
+    shortBreakDuration: number,
+    longBreakDuration: number,
+  ) => number
 }
 
 export type TimerStore = TimerState & TimerActions
@@ -36,7 +45,7 @@ export const useTimerStore = create<TimerStore>()((set, get) => ({
     }),
 
   pause: () =>
-    set(state => ({
+    set((state) => ({
       isRunning: false,
       elapsed: state.elapsed + (Date.now() - (state.startedAt ?? Date.now())),
       startedAt: null,
@@ -64,7 +73,7 @@ export const useTimerStore = create<TimerStore>()((set, get) => ({
     })
   },
 
-  setPhase: phase =>
+  setPhase: (phase) =>
     set({
       phase,
       startedAt: null,
@@ -82,15 +91,31 @@ export const useTimerStore = create<TimerStore>()((set, get) => ({
     })
   },
 
-  getRemainingSeconds: (focusDuration, shortBreakDuration, longBreakDuration) => {
+  getRemainingSeconds: (
+    focusDuration,
+    shortBreakDuration,
+    longBreakDuration,
+  ) => {
     const state = get()
-    const duration = getPhaseDuration(state.phase, focusDuration, shortBreakDuration, longBreakDuration)
+    const duration = getPhaseDuration(
+      state.phase,
+      focusDuration,
+      shortBreakDuration,
+      longBreakDuration,
+    )
     const elapsedSeconds = state.elapsed / 1000
     return Math.max(0, duration * 60 - elapsedSeconds)
   },
 
   getDuration: (focusDuration, shortBreakDuration, longBreakDuration) => {
-    return getPhaseDuration(get().phase, focusDuration, shortBreakDuration, longBreakDuration) * 60
+    return (
+      getPhaseDuration(
+        get().phase,
+        focusDuration,
+        shortBreakDuration,
+        longBreakDuration,
+      ) * 60
+    )
   },
 }))
 

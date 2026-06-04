@@ -18,6 +18,7 @@ This is the initial build of the entire DayBox app. It introduces:
 ## Capabilities
 
 ### New Capabilities
+
 - `task-management`: Create, edit, delete, reorder, and complete tasks. Each task has a title, group assignment, optional date, pomodoro estimate, and completion status.
 - `group-management`: Create, rename, and delete groups (with task resolution). One default group on install; group UI hidden until a second group exists.
 - `time-views`: Today, Tomorrow, This Week (rolling 7 days), Backlog (unscheduled), and date browser. Each view filters tasks by date. Overdue tasks surface in Today.

@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
 import { Popover } from '@base-ui/react'
+import { useState, useRef, useEffect } from 'react'
+
 import { useAppStore } from '../../app/store'
 import { useTimerStore } from '../../app/timerStore'
-import type { Task } from '../../shared/types'
 import { isOverdue, formatDate } from '../../shared/dates'
+import type { Task } from '../../shared/types'
 
 interface TaskRowProps {
   task: Task
@@ -15,18 +16,18 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   const [editTitle, setEditTitle] = useState(task.title)
   const [hovering, setHovering] = useState(false)
   const editRef = useRef<HTMLInputElement>(null)
-  const toggleTask = useAppStore(s => s.toggleTask)
-  const updateTask = useAppStore(s => s.updateTask)
-  const deleteTask = useAppStore(s => s.deleteTask)
-  const setFocusedTaskId = useAppStore(s => s.setFocusedTaskId)
-  const groups = useAppStore(s => s.groups)
-  const focusedTaskId = useAppStore(s => s.focusedTaskId)
-  const timerSetPhase = useTimerStore(s => s.setPhase)
-  const timerReset = useTimerStore(s => s.reset)
-  const timerStart = useTimerStore(s => s.start)
-  const timerIsRunning = useTimerStore(s => s.isRunning)
+  const toggleTask = useAppStore((s) => s.toggleTask)
+  const updateTask = useAppStore((s) => s.updateTask)
+  const deleteTask = useAppStore((s) => s.deleteTask)
+  const setFocusedTaskId = useAppStore((s) => s.setFocusedTaskId)
+  const groups = useAppStore((s) => s.groups)
+  const focusedTaskId = useAppStore((s) => s.focusedTaskId)
+  const timerSetPhase = useTimerStore((s) => s.setPhase)
+  const timerReset = useTimerStore((s) => s.reset)
+  const timerStart = useTimerStore((s) => s.start)
+  const timerIsRunning = useTimerStore((s) => s.isRunning)
 
-  const group = groups.find(g => g.id === task.groupId)
+  const group = groups.find((g) => g.id === task.groupId)
   const showGroupUi = groups.length > 1
   const isFocused = focusedTaskId === task.id
   const overdue = !task.completed && task.date !== null && isOverdue(task.date)
@@ -66,59 +67,87 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
 
   return (
     <div
-      className="flex items-center gap-2.5 px-1.5 py-2 min-h-[46px] rounded-[4px] transition-background duration-120"
+      className="transition-background flex min-h-[46px] items-center gap-2.5 rounded-[4px] px-1.5 py-2 duration-120"
       style={{
         borderBottom: '1px solid var(--border)',
-        background: isFocused ? 'var(--accent-bg)' : overdue ? 'var(--overdue-bg)' : 'transparent',
+        background: isFocused
+          ? 'var(--accent-bg)'
+          : overdue
+            ? 'var(--overdue-bg)'
+            : 'transparent',
         opacity: task.completed ? 0.52 : 1,
       }}
-      onMouseEnter={e => { setHovering(true); if (!isFocused) e.currentTarget.style.background = 'var(--bg-hover)' }}
-      onMouseLeave={e => { setHovering(false); e.currentTarget.style.background = isFocused ? 'var(--accent-bg)' : overdue ? 'var(--overdue-bg)' : 'transparent' }}
+      onMouseEnter={(e) => {
+        setHovering(true)
+        if (!isFocused) e.currentTarget.style.background = 'var(--bg-hover)'
+      }}
+      onMouseLeave={(e) => {
+        setHovering(false)
+        e.currentTarget.style.background = isFocused
+          ? 'var(--accent-bg)'
+          : overdue
+            ? 'var(--overdue-bg)'
+            : 'transparent'
+      }}
     >
       <div
         ref={dragHandleRef}
-        className="shrink-0 cursor-grab active:cursor-grabbing p-0.5 transition-opacity duration-120"
+        className="shrink-0 cursor-grab p-0.5 transition-opacity duration-120 active:cursor-grabbing"
         style={{ color: 'var(--fg-3)', opacity: hovering ? 1 : 0 }}
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="9" cy="5" r="2" /><circle cx="15" cy="5" r="2" />
-          <circle cx="9" cy="12" r="2" /><circle cx="15" cy="12" r="2" />
-          <circle cx="9" cy="19" r="2" /><circle cx="15" cy="19" r="2" />
+          <circle cx="9" cy="5" r="2" />
+          <circle cx="15" cy="5" r="2" />
+          <circle cx="9" cy="12" r="2" />
+          <circle cx="15" cy="12" r="2" />
+          <circle cx="9" cy="19" r="2" />
+          <circle cx="15" cy="19" r="2" />
         </svg>
       </div>
 
       <button
-        className="w-[19px] h-[19px] rounded-full border flex items-center justify-center shrink-0 transition-all duration-140"
+        className="flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border transition-all duration-140"
         style={{
-          borderColor: task.completed ? 'var(--success)' : 'var(--border-strong)',
+          borderColor: task.completed
+            ? 'var(--success)'
+            : 'var(--border-strong)',
           background: task.completed ? 'var(--success)' : 'transparent',
           color: task.completed ? 'white' : 'transparent',
         }}
         onClick={() => toggleTask(task.id)}
       >
         {task.completed && (
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <polyline points="20 6 9 17 4 12" />
           </svg>
         )}
       </button>
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         {editing ? (
           <input
             ref={editRef}
             type="text"
             value={editTitle}
-            onChange={e => setEditTitle(e.target.value)}
+            onChange={(e) => setEditTitle(e.target.value)}
             onBlur={handleSaveEdit}
             onKeyDown={handleKeyDown}
-            className="w-full bg-transparent border-none outline-none text-[14.5px] font-[450]"
+            className="w-full border-none bg-transparent text-[14.5px] font-[450] outline-none"
             style={{ color: 'var(--fg)', caretColor: 'var(--accent)' }}
           />
         ) : (
           <span
-            className="block text-[14.5px] font-[450] truncate cursor-text"
+            className="block cursor-text truncate text-[14.5px] font-[450]"
             style={{
               color: task.completed ? 'var(--fg-3)' : 'var(--fg)',
               textDecoration: task.completed ? 'line-through' : 'none',
@@ -132,16 +161,28 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       </div>
 
       {showGroupUi && group && (
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: group.color }} />
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span
+            className="h-[7px] w-[7px] shrink-0 rounded-full"
+            style={{ background: group.color }}
+          />
           {group.name !== 'General' && (
-            <span className="text-xs" style={{ color: 'var(--fg-3)' }}>{group.name}</span>
+            <span className="text-xs" style={{ color: 'var(--fg-3)' }}>
+              {group.name}
+            </span>
           )}
         </div>
       )}
 
       {overdue && (
-        <span className="text-xs font-medium px-[7px] py-[2px] rounded-full shrink-0" style={{ color: 'var(--overdue)', background: 'var(--overdue-bg)', border: '1px solid var(--overdue-border)' }}>
+        <span
+          className="shrink-0 rounded-full px-[7px] py-[2px] text-xs font-medium"
+          style={{
+            color: 'var(--overdue)',
+            background: 'var(--overdue-bg)',
+            border: '1px solid var(--overdue-border)',
+          }}
+        >
           OVERDUE
         </span>
       )}
@@ -149,11 +190,17 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       <PomoArea task={task} />
       <DatePickerButton task={task} />
 
-      <div className="flex items-center gap-0.5 shrink-0 opacity-0 transition-opacity duration-120"
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '0' }}>
+      <div
+        className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120"
+        onMouseEnter={(e) => {
+          ;(e.currentTarget as HTMLElement).style.opacity = '1'
+        }}
+        onMouseLeave={(e) => {
+          ;(e.currentTarget as HTMLElement).style.opacity = '0'
+        }}
+      >
         <button
-          className="w-7 h-7 rounded-[4px] flex items-center justify-center transition-all duration-120"
+          className="flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
           style={{ color: 'var(--fg-3)' }}
           onClick={() => {
             if (isFocused) {
@@ -165,24 +212,52 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
               if (timerIsRunning) timerStart()
             }
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)' }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--fg-3)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'var(--accent)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--fg-3)'
+          }}
           title="Focus"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="12" cy="12" r="10" />
             <circle cx="12" cy="12" r="3" />
           </svg>
         </button>
         <button
-          className="w-7 h-7 rounded-[4px] flex items-center justify-center transition-all duration-120"
+          className="flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
           style={{ color: 'var(--fg-3)' }}
           onClick={() => deleteTask(task.id)}
-          onMouseEnter={e => { e.currentTarget.style.color = 'var(--overdue)'; e.currentTarget.style.background = 'var(--overdue-bg)' }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--fg-3)'; e.currentTarget.style.background = 'transparent' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'var(--overdue)'
+            e.currentTarget.style.background = 'var(--overdue-bg)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--fg-3)'
+            e.currentTarget.style.background = 'transparent'
+          }}
           title="Delete"
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <polyline points="3 6 5 6 21 6" />
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
           </svg>
@@ -193,20 +268,24 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
 }
 
 function PomoArea({ task }: { task: Task }) {
-  const updateTask = useAppStore(s => s.updateTask)
+  const updateTask = useAppStore((s) => s.updateTask)
 
   return (
     <Popover.Root>
-      <Popover.Trigger className="relative shrink-0 flex items-center min-w-[32px] cursor-pointer">
+      <Popover.Trigger className="relative flex min-w-[32px] shrink-0 cursor-pointer items-center">
         {task.pomoEstimate > 0 ? (
-          <div className="flex gap-[3px] items-center">
+          <div className="flex items-center gap-[3px]">
             {Array.from({ length: task.pomoEstimate }, (_, i) => (
               <span
                 key={i}
-                className="w-[7px] h-[7px] rounded-full"
+                className="h-[7px] w-[7px] rounded-full"
                 style={{
-                  background: i < task.pomoCompleted ? 'var(--accent)' : 'transparent',
-                  border: i < task.pomoCompleted ? 'none' : '1.5px solid var(--border-strong)',
+                  background:
+                    i < task.pomoCompleted ? 'var(--accent)' : 'transparent',
+                  border:
+                    i < task.pomoCompleted
+                      ? 'none'
+                      : '1.5px solid var(--border-strong)',
                 }}
               />
             ))}
@@ -221,25 +300,45 @@ function PomoArea({ task }: { task: Task }) {
         <Popover.Positioner className="z-40">
           <Popover.Popup
             className="rounded-[10px] p-3 shadow-lg"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+            }}
           >
-            <div className="text-[11px] font-medium uppercase tracking-[0.5px] mb-2" style={{ color: 'var(--fg-3)' }}>
+            <div
+              className="mb-2 text-[11px] font-medium tracking-[0.5px] uppercase"
+              style={{ color: 'var(--fg-3)' }}
+            >
               Pomodoros
             </div>
-            <div className="flex gap-1 flex-wrap">
+            <div className="flex flex-wrap gap-1">
               {Array.from({ length: 9 }, (_, i) => (
                 <button
                   key={i}
-                  className="w-[26px] h-[26px] rounded-[4px] text-[12.5px] flex items-center justify-center transition-all duration-120"
+                  className="flex h-[26px] w-[26px] items-center justify-center rounded-[4px] text-[12.5px] transition-all duration-120"
                   style={{
                     border: '1px solid var(--border)',
                     color: task.pomoEstimate === i ? 'white' : 'var(--fg-2)',
-                    background: task.pomoEstimate === i ? 'var(--accent)' : 'transparent',
-                    borderColor: task.pomoEstimate === i ? 'var(--accent)' : 'var(--border)',
+                    background:
+                      task.pomoEstimate === i ? 'var(--accent)' : 'transparent',
+                    borderColor:
+                      task.pomoEstimate === i
+                        ? 'var(--accent)'
+                        : 'var(--border)',
                   }}
                   onClick={() => updateTask(task.id, { pomoEstimate: i })}
-                  onMouseEnter={e => { if (task.pomoEstimate !== i) { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' } }}
-                  onMouseLeave={e => { if (task.pomoEstimate !== i) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--fg-2)' } }}
+                  onMouseEnter={(e) => {
+                    if (task.pomoEstimate !== i) {
+                      e.currentTarget.style.borderColor = 'var(--accent)'
+                      e.currentTarget.style.color = 'var(--accent)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (task.pomoEstimate !== i) {
+                      e.currentTarget.style.borderColor = 'var(--border)'
+                      e.currentTarget.style.color = 'var(--fg-2)'
+                    }
+                  }}
                 >
                   {i}
                 </button>
@@ -253,16 +352,25 @@ function PomoArea({ task }: { task: Task }) {
 }
 
 function DatePickerButton({ task }: { task: Task }) {
-  const updateTask = useAppStore(s => s.updateTask)
+  const updateTask = useAppStore((s) => s.updateTask)
 
   return (
     <Popover.Root>
       <Popover.Trigger
-        className="w-7 h-7 rounded-[4px] flex items-center justify-center transition-all duration-120"
+        className="flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
         style={{ color: 'var(--fg-3)' }}
         title="Schedule"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
           <line x1="16" y1="2" x2="16" y2="6" />
           <line x1="8" y1="2" x2="8" y2="6" />
@@ -272,22 +380,39 @@ function DatePickerButton({ task }: { task: Task }) {
       <Popover.Portal>
         <Popover.Positioner className="z-40">
           <Popover.Popup
-            className="rounded-[10px] p-2 shadow-lg min-w-[190px]"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+            className="min-w-[190px] rounded-[10px] p-2 shadow-lg"
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+            }}
           >
-            <div className="flex gap-1 mb-2">
+            <div className="mb-2 flex gap-1">
               {[
                 { label: 'Today', value: formatDate(new Date()) },
-                { label: 'Tomorrow', value: formatDate(new Date(Date.now() + 86400000)) },
+                {
+                  label: 'Tomorrow',
+                  value: formatDate(new Date(Date.now() + 86400000)),
+                },
                 { label: 'Unsched.', value: null },
-              ].map(preset => (
+              ].map((preset) => (
                 <button
                   key={preset.label}
-                  className="flex-1 px-1 py-1.5 text-xs rounded-[4px] text-center transition-all duration-120"
-                  style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}
+                  className="flex-1 rounded-[4px] px-1 py-1.5 text-center text-xs transition-all duration-120"
+                  style={{
+                    border: '1px solid var(--border)',
+                    color: 'var(--fg-2)',
+                  }}
                   onClick={() => updateTask(task.id, { date: preset.value })}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.background = 'var(--accent-bg)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--fg-2)'; e.currentTarget.style.background = 'transparent' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--accent)'
+                    e.currentTarget.style.color = 'var(--accent)'
+                    e.currentTarget.style.background = 'var(--accent-bg)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border)'
+                    e.currentTarget.style.color = 'var(--fg-2)'
+                    e.currentTarget.style.background = 'transparent'
+                  }}
                 >
                   {preset.label}
                 </button>
@@ -295,13 +420,15 @@ function DatePickerButton({ task }: { task: Task }) {
             </div>
             <input
               type="date"
-              className="w-full px-2 py-1.5 text-xs rounded-[4px] outline-none transition-border duration-140"
+              className="transition-border w-full rounded-[4px] px-2 py-1.5 text-xs duration-140 outline-none"
               style={{
                 border: '1px solid var(--border)',
                 color: 'var(--fg)',
                 background: 'var(--bg)',
               }}
-              onChange={e => updateTask(task.id, { date: e.target.value || null })}
+              onChange={(e) =>
+                updateTask(task.id, { date: e.target.value || null })
+              }
             />
           </Popover.Popup>
         </Popover.Positioner>

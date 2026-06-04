@@ -1,13 +1,27 @@
+import {
+  Drawer,
+  NumberField,
+  Switch,
+  Select,
+  Slider,
+  AlertDialog,
+} from '@base-ui/react'
 import { useState } from 'react'
-import { Drawer, NumberField, Switch, Select, Slider, AlertDialog } from '@base-ui/react'
-import { useAppStore } from '../../app/store'
+
 import { exportData, downloadExport, parseImport } from '../../app/localStorage'
+import { useAppStore } from '../../app/store'
 import GroupSettings from '../groups/GroupSettings'
 
-export default function SettingsDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const settings = useAppStore(s => s.settings)
-  const updateTimerSettings = useAppStore(s => s.updateTimerSettings)
-  const updateSettings = useAppStore(s => s.updateSettings)
+export default function SettingsDrawer({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) {
+  const settings = useAppStore((s) => s.settings)
+  const updateTimerSettings = useAppStore((s) => s.updateTimerSettings)
+  const updateSettings = useAppStore((s) => s.updateSettings)
 
   const [importConfirmOpen, setImportConfirmOpen] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -49,44 +63,97 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
   }
 
   return (
-    <Drawer.Root open={open} onOpenChange={o => !o && onClose()}>
+    <Drawer.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Drawer.Portal>
         <Drawer.Backdrop
           className="fixed inset-0 z-50"
-          style={{ background: 'oklch(0 0 0 / 0.25)', backdropFilter: 'blur(2px)' }}
+          style={{
+            background: 'oklch(0 0 0 / 0.25)',
+            backdropFilter: 'blur(2px)',
+          }}
         />
         <Drawer.Popup
-          className="fixed top-0 right-0 bottom-0 z-50 flex flex-col overflow-hidden animate-slide-in"
+          className="animate-slide-in fixed top-0 right-0 bottom-0 z-50 flex flex-col overflow-hidden"
           style={{
             width: 310,
             background: 'var(--bg-card)',
             borderLeft: '1px solid var(--border)',
           }}
         >
-          <div className="flex items-center justify-between px-5 py-[18px] shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-            <span className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>Settings</span>
-            <Drawer.Close className="w-7 h-7 rounded-[4px] flex items-center justify-center" style={{ color: 'var(--fg-3)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+          <div
+            className="flex shrink-0 items-center justify-between px-5 py-[18px]"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
+            <span
+              className="text-sm font-semibold"
+              style={{ color: 'var(--fg)' }}
+            >
+              Settings
+            </span>
+            <Drawer.Close
+              className="flex h-7 w-7 items-center justify-center rounded-[4px]"
+              style={{ color: 'var(--fg-3)' }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </Drawer.Close>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-7">
+          <div className="flex flex-1 flex-col gap-7 overflow-y-auto p-5">
             <div className="flex flex-col gap-3">
-              <div className="section text-[10.5px] font-semibold uppercase tracking-[0.9px]" style={{ color: 'var(--fg-3)' }}>
+              <div
+                className="section text-[10.5px] font-semibold tracking-[0.9px] uppercase"
+                style={{ color: 'var(--fg-3)' }}
+              >
                 Timer
               </div>
 
               <SettingRow label="Focus duration">
                 <NumberField.Root
                   value={settings.timer.focusDuration}
-                  onValueChange={v => updateTimerSettings({ focusDuration: v })}
+                  onValueChange={(v) =>
+                    updateTimerSettings({ focusDuration: v })
+                  }
                   min={1}
                   max={120}
                 >
                   <NumberField.Group className="flex items-center gap-0">
-                    <NumberField.Decrement className="w-7 h-7 flex items-center justify-center rounded-l-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>−</NumberField.Decrement>
-                    <NumberField.Input className="w-[44px] h-7 text-center text-xs outline-none" style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', color: 'var(--fg)', background: 'var(--bg)' }} />
-                    <NumberField.Increment className="w-7 h-7 flex items-center justify-center rounded-r-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>+</NumberField.Increment>
+                    <NumberField.Decrement
+                      className="flex h-7 w-7 items-center justify-center rounded-l-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      −
+                    </NumberField.Decrement>
+                    <NumberField.Input
+                      className="h-7 w-[44px] text-center text-xs outline-none"
+                      style={{
+                        borderTop: '1px solid var(--border)',
+                        borderBottom: '1px solid var(--border)',
+                        color: 'var(--fg)',
+                        background: 'var(--bg)',
+                      }}
+                    />
+                    <NumberField.Increment
+                      className="flex h-7 w-7 items-center justify-center rounded-r-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      +
+                    </NumberField.Increment>
                   </NumberField.Group>
                 </NumberField.Root>
               </SettingRow>
@@ -94,14 +161,40 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
               <SettingRow label="Short break">
                 <NumberField.Root
                   value={settings.timer.shortBreakDuration}
-                  onValueChange={v => updateTimerSettings({ shortBreakDuration: v })}
+                  onValueChange={(v) =>
+                    updateTimerSettings({ shortBreakDuration: v })
+                  }
                   min={1}
                   max={30}
                 >
                   <NumberField.Group className="flex items-center gap-0">
-                    <NumberField.Decrement className="w-7 h-7 flex items-center justify-center rounded-l-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>−</NumberField.Decrement>
-                    <NumberField.Input className="w-[44px] h-7 text-center text-xs outline-none" style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', color: 'var(--fg)', background: 'var(--bg)' }} />
-                    <NumberField.Increment className="w-7 h-7 flex items-center justify-center rounded-r-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>+</NumberField.Increment>
+                    <NumberField.Decrement
+                      className="flex h-7 w-7 items-center justify-center rounded-l-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      −
+                    </NumberField.Decrement>
+                    <NumberField.Input
+                      className="h-7 w-[44px] text-center text-xs outline-none"
+                      style={{
+                        borderTop: '1px solid var(--border)',
+                        borderBottom: '1px solid var(--border)',
+                        color: 'var(--fg)',
+                        background: 'var(--bg)',
+                      }}
+                    />
+                    <NumberField.Increment
+                      className="flex h-7 w-7 items-center justify-center rounded-r-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      +
+                    </NumberField.Increment>
                   </NumberField.Group>
                 </NumberField.Root>
               </SettingRow>
@@ -109,14 +202,40 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
               <SettingRow label="Long break">
                 <NumberField.Root
                   value={settings.timer.longBreakDuration}
-                  onValueChange={v => updateTimerSettings({ longBreakDuration: v })}
+                  onValueChange={(v) =>
+                    updateTimerSettings({ longBreakDuration: v })
+                  }
                   min={1}
                   max={60}
                 >
                   <NumberField.Group className="flex items-center gap-0">
-                    <NumberField.Decrement className="w-7 h-7 flex items-center justify-center rounded-l-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>−</NumberField.Decrement>
-                    <NumberField.Input className="w-[44px] h-7 text-center text-xs outline-none" style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', color: 'var(--fg)', background: 'var(--bg)' }} />
-                    <NumberField.Increment className="w-7 h-7 flex items-center justify-center rounded-r-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>+</NumberField.Increment>
+                    <NumberField.Decrement
+                      className="flex h-7 w-7 items-center justify-center rounded-l-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      −
+                    </NumberField.Decrement>
+                    <NumberField.Input
+                      className="h-7 w-[44px] text-center text-xs outline-none"
+                      style={{
+                        borderTop: '1px solid var(--border)',
+                        borderBottom: '1px solid var(--border)',
+                        color: 'var(--fg)',
+                        background: 'var(--bg)',
+                      }}
+                    />
+                    <NumberField.Increment
+                      className="flex h-7 w-7 items-center justify-center rounded-r-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      +
+                    </NumberField.Increment>
                   </NumberField.Group>
                 </NumberField.Root>
               </SettingRow>
@@ -124,65 +243,154 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
               <SettingRow label="Long break interval">
                 <NumberField.Root
                   value={settings.timer.longBreakInterval}
-                  onValueChange={v => updateTimerSettings({ longBreakInterval: v })}
+                  onValueChange={(v) =>
+                    updateTimerSettings({ longBreakInterval: v })
+                  }
                   min={2}
                   max={10}
                 >
                   <NumberField.Group className="flex items-center gap-0">
-                    <NumberField.Decrement className="w-7 h-7 flex items-center justify-center rounded-l-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>−</NumberField.Decrement>
-                    <NumberField.Input className="w-[44px] h-7 text-center text-xs outline-none" style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', color: 'var(--fg)', background: 'var(--bg)' }} />
-                    <NumberField.Increment className="w-7 h-7 flex items-center justify-center rounded-r-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>+</NumberField.Increment>
+                    <NumberField.Decrement
+                      className="flex h-7 w-7 items-center justify-center rounded-l-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      −
+                    </NumberField.Decrement>
+                    <NumberField.Input
+                      className="h-7 w-[44px] text-center text-xs outline-none"
+                      style={{
+                        borderTop: '1px solid var(--border)',
+                        borderBottom: '1px solid var(--border)',
+                        color: 'var(--fg)',
+                        background: 'var(--bg)',
+                      }}
+                    />
+                    <NumberField.Increment
+                      className="flex h-7 w-7 items-center justify-center rounded-r-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      +
+                    </NumberField.Increment>
                   </NumberField.Group>
                 </NumberField.Root>
               </SettingRow>
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="section text-[10.5px] font-semibold uppercase tracking-[0.9px]" style={{ color: 'var(--fg-3)' }}>
+              <div
+                className="section text-[10.5px] font-semibold tracking-[0.9px] uppercase"
+                style={{ color: 'var(--fg-3)' }}
+              >
                 Auto-start
               </div>
               <SettingRow label="Auto-start breaks">
                 <Switch.Root
                   checked={settings.timer.autoStartBreaks}
-                  onCheckedChange={v => updateTimerSettings({ autoStartBreaks: v })}
-                  className="w-[38px] h-[21px] rounded-full relative cursor-pointer shrink-0 transition-background duration-200"
-                  style={{ background: settings.timer.autoStartBreaks ? 'var(--accent)' : 'var(--border-strong)' }}
+                  onCheckedChange={(v) =>
+                    updateTimerSettings({ autoStartBreaks: v })
+                  }
+                  className="transition-background relative h-[21px] w-[38px] shrink-0 cursor-pointer rounded-full duration-200"
+                  style={{
+                    background: settings.timer.autoStartBreaks
+                      ? 'var(--accent)'
+                      : 'var(--border-strong)',
+                  }}
                 >
-                  <Switch.Thumb className="block w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-transform duration-200 absolute top-[2.5px] left-[2.5px]" style={{ transform: settings.timer.autoStartBreaks ? 'translateX(17px)' : 'translateX(0)' }} />
+                  <Switch.Thumb
+                    className="absolute top-[2.5px] left-[2.5px] block h-[16px] w-[16px] rounded-full bg-white shadow-sm transition-transform duration-200"
+                    style={{
+                      transform: settings.timer.autoStartBreaks
+                        ? 'translateX(17px)'
+                        : 'translateX(0)',
+                    }}
+                  />
                 </Switch.Root>
               </SettingRow>
               <SettingRow label="Auto-start pomodoros">
                 <Switch.Root
                   checked={settings.timer.autoStartPomodoros}
-                  onCheckedChange={v => updateTimerSettings({ autoStartPomodoros: v })}
-                  className="w-[38px] h-[21px] rounded-full relative cursor-pointer shrink-0 transition-background duration-200"
-                  style={{ background: settings.timer.autoStartPomodoros ? 'var(--accent)' : 'var(--border-strong)' }}
+                  onCheckedChange={(v) =>
+                    updateTimerSettings({ autoStartPomodoros: v })
+                  }
+                  className="transition-background relative h-[21px] w-[38px] shrink-0 cursor-pointer rounded-full duration-200"
+                  style={{
+                    background: settings.timer.autoStartPomodoros
+                      ? 'var(--accent)'
+                      : 'var(--border-strong)',
+                  }}
                 >
-                  <Switch.Thumb className="block w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-transform duration-200 absolute top-[2.5px] left-[2.5px]" style={{ transform: settings.timer.autoStartPomodoros ? 'translateX(17px)' : 'translateX(0)' }} />
+                  <Switch.Thumb
+                    className="absolute top-[2.5px] left-[2.5px] block h-[16px] w-[16px] rounded-full bg-white shadow-sm transition-transform duration-200"
+                    style={{
+                      transform: settings.timer.autoStartPomodoros
+                        ? 'translateX(17px)'
+                        : 'translateX(0)',
+                    }}
+                  />
                 </Switch.Root>
               </SettingRow>
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="section text-[10.5px] font-semibold uppercase tracking-[0.9px]" style={{ color: 'var(--fg-3)' }}>
+              <div
+                className="section text-[10.5px] font-semibold tracking-[0.9px] uppercase"
+                style={{ color: 'var(--fg-3)' }}
+              >
                 Alarm
               </div>
               <SettingRow label="Sound">
                 <Select.Root
                   value={settings.timer.alarmSound}
-                  onValueChange={v => updateTimerSettings({ alarmSound: v as 'bell' | 'digital' | 'gentle' | 'ping' })}
+                  onValueChange={(v) =>
+                    updateTimerSettings({
+                      alarmSound: v as 'bell' | 'digital' | 'gentle' | 'ping',
+                    })
+                  }
                 >
-                  <Select.Trigger className="flex items-center gap-1 px-2 py-1 text-xs rounded-[4px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)', background: 'var(--bg)' }}>
+                  <Select.Trigger
+                    className="flex items-center gap-1 rounded-[4px] px-2 py-1 text-xs"
+                    style={{
+                      border: '1px solid var(--border)',
+                      color: 'var(--fg-2)',
+                      background: 'var(--bg)',
+                    }}
+                  >
                     <Select.Value />
                     <Select.Icon>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
                     </Select.Icon>
                   </Select.Trigger>
                   <Select.Portal>
                     <Select.Positioner className="z-50">
-                      <Select.Popup className="rounded-[6px] py-1 shadow-lg min-w-[100px]" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
-                        {['bell', 'digital', 'gentle', 'ping'].map(sound => (
-                          <Select.Item key={sound} value={sound} className="flex items-center gap-2 px-3 py-1.5 text-xs cursor-pointer" style={{ color: 'var(--fg-2)' }}>
+                      <Select.Popup
+                        className="min-w-[100px] rounded-[6px] py-1 shadow-lg"
+                        style={{
+                          background: 'var(--bg-card)',
+                          border: '1px solid var(--border)',
+                        }}
+                      >
+                        {['bell', 'digital', 'gentle', 'ping'].map((sound) => (
+                          <Select.Item
+                            key={sound}
+                            value={sound}
+                            className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-xs"
+                            style={{ color: 'var(--fg-2)' }}
+                          >
                             <Select.ItemText>{sound}</Select.ItemText>
                           </Select.Item>
                         ))}
@@ -195,15 +403,29 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
               <SettingRow label="Volume">
                 <Slider.Root
                   value={[settings.timer.alarmVolume]}
-                  onValueChange={([v]) => updateTimerSettings({ alarmVolume: v })}
+                  onValueChange={([v]) =>
+                    updateTimerSettings({ alarmVolume: v })
+                  }
                   min={0}
                   max={1}
                   step={0.1}
-                  className="w-[80px] h-5 flex items-center"
+                  className="flex h-5 w-[80px] items-center"
                 >
-                  <Slider.Track className="h-[4px] rounded-full relative w-full" style={{ background: 'var(--border)' }}>
-                    <Slider.Indicator className="h-full rounded-full" style={{ background: 'var(--accent)' }} />
-                    <Slider.Thumb className="block w-[14px] h-[14px] rounded-full shadow-sm absolute top-1/2 -translate-y-1/2" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-strong)' }} />
+                  <Slider.Track
+                    className="relative h-[4px] w-full rounded-full"
+                    style={{ background: 'var(--border)' }}
+                  >
+                    <Slider.Indicator
+                      className="h-full rounded-full"
+                      style={{ background: 'var(--accent)' }}
+                    />
+                    <Slider.Thumb
+                      className="absolute top-1/2 block h-[14px] w-[14px] -translate-y-1/2 rounded-full shadow-sm"
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-strong)',
+                      }}
+                    />
                   </Slider.Track>
                 </Slider.Root>
               </SettingRow>
@@ -211,102 +433,208 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
               <SettingRow label="Repeat count">
                 <NumberField.Root
                   value={settings.timer.alarmRepeat}
-                  onValueChange={v => updateTimerSettings({ alarmRepeat: v })}
+                  onValueChange={(v) => updateTimerSettings({ alarmRepeat: v })}
                   min={1}
                   max={5}
                 >
                   <NumberField.Group className="flex items-center gap-0">
-                    <NumberField.Decrement className="w-7 h-7 flex items-center justify-center rounded-l-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>−</NumberField.Decrement>
-                    <NumberField.Input className="w-[44px] h-7 text-center text-xs outline-none" style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', color: 'var(--fg)', background: 'var(--bg)' }} />
-                    <NumberField.Increment className="w-7 h-7 flex items-center justify-center rounded-r-[4px] text-[14px]" style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}>+</NumberField.Increment>
+                    <NumberField.Decrement
+                      className="flex h-7 w-7 items-center justify-center rounded-l-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      −
+                    </NumberField.Decrement>
+                    <NumberField.Input
+                      className="h-7 w-[44px] text-center text-xs outline-none"
+                      style={{
+                        borderTop: '1px solid var(--border)',
+                        borderBottom: '1px solid var(--border)',
+                        color: 'var(--fg)',
+                        background: 'var(--bg)',
+                      }}
+                    />
+                    <NumberField.Increment
+                      className="flex h-7 w-7 items-center justify-center rounded-r-[4px] text-[14px]"
+                      style={{
+                        border: '1px solid var(--border)',
+                        color: 'var(--fg-2)',
+                      }}
+                    >
+                      +
+                    </NumberField.Increment>
                   </NumberField.Group>
                 </NumberField.Root>
               </SettingRow>
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="section text-[10.5px] font-semibold uppercase tracking-[0.9px]" style={{ color: 'var(--fg-3)' }}>
+              <div
+                className="section text-[10.5px] font-semibold tracking-[0.9px] uppercase"
+                style={{ color: 'var(--fg-3)' }}
+              >
                 Display
               </div>
               <SettingRow label="First day of week">
                 <select
-                  className="text-xs px-2 py-1 rounded-[4px] outline-none"
-                  style={{ border: '1px solid var(--border)', color: 'var(--fg)', background: 'var(--bg)' }}
+                  className="rounded-[4px] px-2 py-1 text-xs outline-none"
+                  style={{
+                    border: '1px solid var(--border)',
+                    color: 'var(--fg)',
+                    background: 'var(--bg)',
+                  }}
                   value={settings.weekStartDay}
-                  onChange={e => updateSettings({ weekStartDay: Number(e.target.value) as 0 | 1 | 2 | 3 | 4 | 5 | 6 })}
+                  onChange={(e) =>
+                    updateSettings({
+                      weekStartDay: Number(e.target.value) as
+                        | 0
+                        | 1
+                        | 2
+                        | 3
+                        | 4
+                        | 5
+                        | 6,
+                    })
+                  }
                 >
-                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
-                    <option key={i} value={i}>{d}</option>
-                  ))}
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+                    (d, i) => (
+                      <option key={i} value={i}>
+                        {d}
+                      </option>
+                    ),
+                  )}
                 </select>
               </SettingRow>
               <SettingRow label="Dark theme">
                 <Switch.Root
                   checked={settings.theme === 'dark'}
-                  onCheckedChange={v => {
+                  onCheckedChange={(v) => {
                     updateSettings({ theme: v ? 'dark' : 'light' })
                     document.documentElement.classList.toggle('dark', v)
                   }}
-                  className="w-[38px] h-[21px] rounded-full relative cursor-pointer shrink-0 transition-background duration-200"
-                  style={{ background: settings.theme === 'dark' ? 'var(--accent)' : 'var(--border-strong)' }}
+                  className="transition-background relative h-[21px] w-[38px] shrink-0 cursor-pointer rounded-full duration-200"
+                  style={{
+                    background:
+                      settings.theme === 'dark'
+                        ? 'var(--accent)'
+                        : 'var(--border-strong)',
+                  }}
                 >
-                  <Switch.Thumb className="block w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-transform duration-200 absolute top-[2.5px] left-[2.5px]" style={{ transform: settings.theme === 'dark' ? 'translateX(17px)' : 'translateX(0)' }} />
+                  <Switch.Thumb
+                    className="absolute top-[2.5px] left-[2.5px] block h-[16px] w-[16px] rounded-full bg-white shadow-sm transition-transform duration-200"
+                    style={{
+                      transform:
+                        settings.theme === 'dark'
+                          ? 'translateX(17px)'
+                          : 'translateX(0)',
+                    }}
+                  />
                 </Switch.Root>
               </SettingRow>
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="section text-[10.5px] font-semibold uppercase tracking-[0.9px]" style={{ color: 'var(--fg-3)' }}>
+              <div
+                className="section text-[10.5px] font-semibold tracking-[0.9px] uppercase"
+                style={{ color: 'var(--fg-3)' }}
+              >
                 Groups
               </div>
               <GroupSettings />
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="section text-[10.5px] font-semibold uppercase tracking-[0.9px]" style={{ color: 'var(--fg-3)' }}>
+              <div
+                className="section text-[10.5px] font-semibold tracking-[0.9px] uppercase"
+                style={{ color: 'var(--fg-3)' }}
+              >
                 Data
               </div>
               <button
-                className="w-full py-2 text-[13.5px] rounded-[6px] transition-all duration-140"
-                style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}
+                className="w-full rounded-[6px] py-2 text-[13.5px] transition-all duration-140"
+                style={{
+                  border: '1px solid var(--border)',
+                  color: 'var(--fg-2)',
+                }}
                 onClick={handleExport}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.background = 'var(--accent-bg)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--fg-2)'; e.currentTarget.style.background = 'transparent' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--accent)'
+                  e.currentTarget.style.color = 'var(--accent)'
+                  e.currentTarget.style.background = 'var(--accent-bg)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border)'
+                  e.currentTarget.style.color = 'var(--fg-2)'
+                  e.currentTarget.style.background = 'transparent'
+                }}
               >
                 Export
               </button>
-              <AlertDialog.Root open={importConfirmOpen} onOpenChange={o => setImportConfirmOpen(o)}>
+              <AlertDialog.Root
+                open={importConfirmOpen}
+                onOpenChange={(o) => setImportConfirmOpen(o)}
+              >
                 <AlertDialog.Trigger
-                  className="w-full py-2 text-[13.5px] rounded-[6px] transition-all duration-140"
-                  style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.background = 'var(--accent-bg)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--fg-2)'; e.currentTarget.style.background = 'transparent' }}
+                  className="w-full rounded-[6px] py-2 text-[13.5px] transition-all duration-140"
+                  style={{
+                    border: '1px solid var(--border)',
+                    color: 'var(--fg-2)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--accent)'
+                    e.currentTarget.style.color = 'var(--accent)'
+                    e.currentTarget.style.background = 'var(--accent-bg)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border)'
+                    e.currentTarget.style.color = 'var(--fg-2)'
+                    e.currentTarget.style.background = 'transparent'
+                  }}
                 >
                   Import
                 </AlertDialog.Trigger>
                 <AlertDialog.Portal>
-                  <AlertDialog.Backdrop className="fixed inset-0 z-50" style={{ background: 'oklch(0 0 0 / 0.25)' }} />
+                  <AlertDialog.Backdrop
+                    className="fixed inset-0 z-50"
+                    style={{ background: 'oklch(0 0 0 / 0.25)' }}
+                  />
                   <AlertDialog.Popup
-                    className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[10px] p-5 shadow-lg max-w-[85vw]"
-                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                    className="fixed top-1/2 left-1/2 z-50 max-w-[85vw] -translate-x-1/2 -translate-y-1/2 rounded-[10px] p-5 shadow-lg"
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                    }}
                   >
-                    <AlertDialog.Title className="text-sm font-semibold mb-2" style={{ color: 'var(--fg)' }}>
+                    <AlertDialog.Title
+                      className="mb-2 text-sm font-semibold"
+                      style={{ color: 'var(--fg)' }}
+                    >
                       Import data
                     </AlertDialog.Title>
-                    <AlertDialog.Description className="text-xs mb-4" style={{ color: 'var(--fg-2)' }}>
-                      This will replace all current data (tasks, groups, settings). This cannot be undone.
+                    <AlertDialog.Description
+                      className="mb-4 text-xs"
+                      style={{ color: 'var(--fg-2)' }}
+                    >
+                      This will replace all current data (tasks, groups,
+                      settings). This cannot be undone.
                     </AlertDialog.Description>
                     <div className="flex flex-col gap-2">
                       <AlertDialog.Close
-                        className="w-full text-xs py-2 rounded-[6px] font-medium transition-all duration-120"
+                        className="w-full rounded-[6px] py-2 text-xs font-medium transition-all duration-120"
                         style={{ background: 'var(--accent)', color: 'white' }}
                         onClick={doImport}
                       >
                         Continue
                       </AlertDialog.Close>
                       <AlertDialog.Close
-                        className="w-full text-xs py-2 rounded-[6px] transition-all duration-120"
-                        style={{ border: '1px solid var(--border)', color: 'var(--fg-3)' }}
+                        className="w-full rounded-[6px] py-2 text-xs transition-all duration-120"
+                        style={{
+                          border: '1px solid var(--border)',
+                          color: 'var(--fg-3)',
+                        }}
                       >
                         Cancel
                       </AlertDialog.Close>
@@ -315,7 +643,12 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
                 </AlertDialog.Portal>
               </AlertDialog.Root>
               {importError && (
-                <div className="text-xs mt-1" style={{ color: 'var(--overdue)' }}>{importError}</div>
+                <div
+                  className="mt-1 text-xs"
+                  style={{ color: 'var(--overdue)' }}
+                >
+                  {importError}
+                </div>
               )}
             </div>
           </div>
@@ -325,10 +658,18 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
   )
 }
 
-function SettingRow({ label, children }: { label: string; children: React.ReactNode }) {
+function SettingRow({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-[13.5px]" style={{ color: 'var(--fg)' }}>{label}</span>
+      <span className="text-[13.5px]" style={{ color: 'var(--fg)' }}>
+        {label}
+      </span>
       {children}
     </div>
   )

@@ -1,30 +1,30 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --font-sans: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Mono', monospace;
 
-  --color-bg: oklch(0.970 0.008 72);
+  --color-bg: oklch(0.97 0.008 72);
   --color-bg-card: oklch(0.996 0.003 72);
   --color-bg-hover: oklch(0.956 0.011 72);
   --color-bg-active: oklch(0.946 0.013 72);
-  --color-fg: oklch(0.180 0.015 65);
-  --color-fg-2: oklch(0.440 0.015 65);
-  --color-fg-3: oklch(0.630 0.010 70);
+  --color-fg: oklch(0.18 0.015 65);
+  --color-fg-2: oklch(0.44 0.015 65);
+  --color-fg-3: oklch(0.63 0.01 70);
   --color-border: oklch(0.905 0.012 72);
-  --color-border-strong: oklch(0.840 0.016 70);
+  --color-border-strong: oklch(0.84 0.016 70);
   --color-accent: oklch(0.545 0.185 28);
-  --color-accent-dim: oklch(0.620 0.160 28);
+  --color-accent-dim: oklch(0.62 0.16 28);
   --color-accent-bg: oklch(0.975 0.026 28);
   --color-accent-border: oklch(0.875 0.062 28);
-  --color-break: oklch(0.500 0.130 155);
+  --color-break: oklch(0.5 0.13 155);
   --color-break-bg: oklch(0.975 0.022 155);
-  --color-lbreak: oklch(0.500 0.130 255);
+  --color-lbreak: oklch(0.5 0.13 255);
   --color-lbreak-bg: oklch(0.975 0.022 255);
-  --color-overdue: oklch(0.520 0.155 28);
-  --color-overdue-bg: oklch(0.975 0.030 28);
-  --color-overdue-border: oklch(0.880 0.065 28);
-  --color-success: oklch(0.500 0.130 145);
+  --color-overdue: oklch(0.52 0.155 28);
+  --color-overdue-bg: oklch(0.975 0.03 28);
+  --color-overdue-border: oklch(0.88 0.065 28);
+  --color-success: oklch(0.5 0.13 145);
 
   --radius-box: 10px;
   --radius-sm: 6px;
@@ -67,32 +67,46 @@
 .dark {
   --bg: oklch(0.147 0.012 286);
   --bg-card: oklch(0.185 0.014 286);
-  --bg-hover: oklch(0.220 0.016 286);
-  --bg-active: oklch(0.250 0.018 286);
-  --fg: oklch(0.920 0.008 286);
-  --fg-2: oklch(0.720 0.010 286);
-  --fg-3: oklch(0.530 0.012 286);
-  --border: oklch(0.260 0.016 286);
-  --border-strong: oklch(0.330 0.018 286);
-  --accent: oklch(0.620 0.160 28);
-  --accent-dim: oklch(0.550 0.140 28);
-  --accent-bg: oklch(0.200 0.030 28);
-  --accent-border: oklch(0.300 0.050 28);
-  --break-color: oklch(0.500 0.130 155);
-  --break-bg: oklch(0.200 0.025 155);
-  --lbreak-color: oklch(0.500 0.130 255);
-  --lbreak-bg: oklch(0.200 0.025 255);
-  --overdue: oklch(0.650 0.140 28);
-  --overdue-bg: oklch(0.210 0.030 28);
-  --overdue-border: oklch(0.310 0.050 28);
-  --success: oklch(0.550 0.130 145);
-  --shadow: 0 2px 16px oklch(0 0 0 / 0.30);
+  --bg-hover: oklch(0.22 0.016 286);
+  --bg-active: oklch(0.25 0.018 286);
+  --fg: oklch(0.92 0.008 286);
+  --fg-2: oklch(0.72 0.01 286);
+  --fg-3: oklch(0.53 0.012 286);
+  --border: oklch(0.26 0.016 286);
+  --border-strong: oklch(0.33 0.018 286);
+  --accent: oklch(0.62 0.16 28);
+  --accent-dim: oklch(0.55 0.14 28);
+  --accent-bg: oklch(0.2 0.03 28);
+  --accent-border: oklch(0.3 0.05 28);
+  --break-color: oklch(0.5 0.13 155);
+  --break-bg: oklch(0.2 0.025 155);
+  --lbreak-color: oklch(0.5 0.13 255);
+  --lbreak-bg: oklch(0.2 0.025 255);
+  --overdue: oklch(0.65 0.14 28);
+  --overdue-bg: oklch(0.21 0.03 28);
+  --overdue-border: oklch(0.31 0.05 28);
+  --success: oklch(0.55 0.13 145);
+  --shadow: 0 2px 16px oklch(0 0 0 / 0.3);
   --shadow-sm: 0 1px 4px oklch(0 0 0 / 0.25);
 }
 
-*, *::before, *::after { box-sizing: border-box; }
-button { cursor: pointer; border: none; background: none; color: inherit; font-family: inherit; }
-input, select, textarea { font-family: inherit; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+}
+input,
+select,
+textarea {
+  font-family: inherit;
+}
 
 body {
   margin: 0;
@@ -105,4 +119,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-#root { isolation: isolate; }
+#root {
+  isolation: isolate;
+}

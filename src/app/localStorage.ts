@@ -1,5 +1,5 @@
-import type { AppState } from './store'
 import { DEFAULT_APP_SETTINGS } from '../shared/types'
+import type { AppState } from './store'
 
 const CURRENT_VERSION = 1
 
@@ -51,7 +51,10 @@ export function parseImport(jsonString: string): ImportResult {
       return { success: false, error: 'Invalid file format.' }
     }
 
-    const { version, appStore } = parsed as { version?: number; appStore?: Partial<AppState> }
+    const { version, appStore } = parsed as {
+      version?: number
+      appStore?: Partial<AppState>
+    }
 
     if (!appStore) {
       return { success: false, error: 'Invalid export: missing appStore.' }
@@ -59,28 +62,42 @@ export function parseImport(jsonString: string): ImportResult {
 
     const warnings: string[] = []
 
-    const validKeys = ['tasks', 'groups', 'settings', 'view', 'browseDate', 'focusedTaskId', 'stickyGroupId']
+    const validKeys = [
+      'tasks',
+      'groups',
+      'settings',
+      'view',
+      'browseDate',
+      'focusedTaskId',
+      'stickyGroupId',
+    ]
     const importData: Partial<AppState> = {}
 
     for (const key of validKeys) {
       if (key in appStore) {
-        ;(importData as Record<string, unknown>)[key] = (appStore as Record<string, unknown>)[key]
+        ;(importData as Record<string, unknown>)[key] = (
+          appStore as Record<string, unknown>
+        )[key]
       }
     }
 
-    const taskGroupIds = new Set((importData.tasks ?? []).map(t => t.groupId))
+    const taskGroupIds = new Set((importData.tasks ?? []).map((t) => t.groupId))
 
     if (importData.groups) {
-      const existingGroupIds = new Set(importData.groups.map(g => g.id))
+      const existingGroupIds = new Set(importData.groups.map((g) => g.id))
       for (const gid of taskGroupIds) {
         if (!existingGroupIds.has(gid)) {
-          warnings.push(`Task group "${gid}" not found. Tasks reassigned to default group.`)
+          warnings.push(
+            `Task group "${gid}" not found. Tasks reassigned to default group.`,
+          )
         }
       }
     }
 
     if (version !== undefined && version > CURRENT_VERSION) {
-      warnings.push('Imported data is from a newer version. Known fields imported, extras may be ignored.')
+      warnings.push(
+        'Imported data is from a newer version. Known fields imported, extras may be ignored.',
+      )
     }
 
     return {
@@ -93,7 +110,11 @@ export function parseImport(jsonString: string): ImportResult {
   }
 }
 
-export function migrateState(data: Partial<AppState>, fromVersion: number, toVersion: number): Partial<AppState> {
+export function migrateState(
+  data: Partial<AppState>,
+  fromVersion: number,
+  toVersion: number,
+): Partial<AppState> {
   let migrated = { ...data }
 
   for (let v = fromVersion; v < toVersion; v++) {
@@ -106,10 +127,15 @@ export function migrateState(data: Partial<AppState>, fromVersion: number, toVer
   return migrated
 }
 
-const migrations: Record<number, (state: Partial<AppState>) => Partial<AppState>> = {
+const migrations: Record<
+  number,
+  (state: Partial<AppState>) => Partial<AppState>
+> = {
   1: (state) => ({
     ...state,
     settings: state.settings ?? DEFAULT_APP_SETTINGS,
-    stickyGroupId: (state as Record<string, unknown>).stickyGroupId as string | null ?? null,
+    stickyGroupId:
+      ((state as Record<string, unknown>).stickyGroupId as string | null) ??
+      null,
   }),
 }

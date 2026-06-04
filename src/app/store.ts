@@ -1,9 +1,16 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Task, Group, AppSettings, View, TimerSettings } from '../shared/types'
-import { DEFAULT_APP_SETTINGS, GROUP_COLORS } from '../shared/types'
-import { generateId } from '../shared/id'
+
 import { formatDate } from '../shared/dates'
+import { generateId } from '../shared/id'
+import type {
+  Task,
+  Group,
+  AppSettings,
+  View,
+  TimerSettings,
+} from '../shared/types'
+import { DEFAULT_APP_SETTINGS, GROUP_COLORS } from '../shared/types'
 
 export interface AppState {
   version: number
@@ -40,7 +47,12 @@ const CURRENT_VERSION = 1
 const DEFAULT_GROUP_ID = 'default'
 
 const initialGroups: Group[] = [
-  { id: DEFAULT_GROUP_ID, name: 'General', color: GROUP_COLORS[0], createdAt: new Date().toISOString() },
+  {
+    id: DEFAULT_GROUP_ID,
+    name: 'General',
+    color: GROUP_COLORS[0],
+    createdAt: new Date().toISOString(),
+  },
 ]
 
 export type AppStore = AppState & AppActions
@@ -65,35 +77,43 @@ export const useAppStore = create<AppStore>()(
           date: date !== undefined ? date : null,
           pomoEstimate: 0,
           pomoCompleted: 0,
-          sortOrder: get().tasks.filter(t => t.date === (date !== undefined ? date : null)).length,
+          sortOrder: get().tasks.filter(
+            (t) => t.date === (date !== undefined ? date : null),
+          ).length,
           completed: false,
           completedAt: null,
           createdAt: new Date().toISOString(),
         }
-        set(state => ({ tasks: [...state.tasks, task] }))
+        set((state) => ({ tasks: [...state.tasks, task] }))
         return task
       },
 
       updateTask: (id, updates) =>
-        set(state => ({
-          tasks: state.tasks.map(t => (t.id === id ? { ...t, ...updates } : t)),
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
+            t.id === id ? { ...t, ...updates } : t,
+          ),
         })),
 
-      deleteTask: id =>
-        set(state => ({
-          tasks: state.tasks.filter(t => t.id !== id),
+      deleteTask: (id) =>
+        set((state) => ({
+          tasks: state.tasks.filter((t) => t.id !== id),
         })),
 
-      toggleTask: id =>
-        set(state => ({
-          tasks: state.tasks.map(t =>
+      toggleTask: (id) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) =>
             t.id === id
-              ? { ...t, completed: !t.completed, completedAt: !t.completed ? new Date().toISOString() : null }
+              ? {
+                  ...t,
+                  completed: !t.completed,
+                  completedAt: !t.completed ? new Date().toISOString() : null,
+                }
               : t,
           ),
         })),
 
-      reorderTasks: tasks =>
+      reorderTasks: (tasks) =>
         set({
           tasks: tasks.map((t, i) => ({ ...t, sortOrder: i })),
         }),
@@ -106,46 +126,49 @@ export const useAppStore = create<AppStore>()(
           color: GROUP_COLORS[colorIndex % GROUP_COLORS.length],
           createdAt: new Date().toISOString(),
         }
-        set(state => ({ groups: [...state.groups, group] }))
+        set((state) => ({ groups: [...state.groups, group] }))
         return group
       },
 
       renameGroup: (id, name) =>
-        set(state => ({
-          groups: state.groups.map(g => (g.id === id ? { ...g, name } : g)),
+        set((state) => ({
+          groups: state.groups.map((g) => (g.id === id ? { ...g, name } : g)),
         })),
 
       deleteGroup: (id, reassignToDefault = false) => {
         const state = get()
         if (state.groups.length <= 1) return
 
-        set(s => ({
-          groups: s.groups.filter(g => g.id !== id),
+        set((s) => ({
+          groups: s.groups.filter((g) => g.id !== id),
           tasks: reassignToDefault
-            ? s.tasks.map(t => (t.groupId === id ? { ...t, groupId: DEFAULT_GROUP_ID } : t))
-            : s.tasks.filter(t => t.groupId !== id),
+            ? s.tasks.map((t) =>
+                t.groupId === id ? { ...t, groupId: DEFAULT_GROUP_ID } : t,
+              )
+            : s.tasks.filter((t) => t.groupId !== id),
         }))
       },
 
-      updateSettings: updates =>
-        set(state => ({
+      updateSettings: (updates) =>
+        set((state) => ({
           settings: { ...state.settings, ...updates },
         })),
 
-      updateTimerSettings: updates =>
-        set(state => ({
+      updateTimerSettings: (updates) =>
+        set((state) => ({
           settings: {
             ...state.settings,
             timer: { ...state.settings.timer, ...updates },
           },
         })),
 
-      setView: view => set({ view }),
-      setBrowseDate: date => set({ browseDate: date }),
-      setFocusedTaskId: id => set({ focusedTaskId: id }),
-      setStickyGroupId: id => set({ stickyGroupId: id }),
+      setView: (view) => set({ view }),
+      setBrowseDate: (date) => set({ browseDate: date }),
+      setFocusedTaskId: (id) => set({ focusedTaskId: id }),
+      setStickyGroupId: (id) => set({ stickyGroupId: id }),
 
-      getDefaultGroup: () => get().groups.find(g => g.id === DEFAULT_GROUP_ID),
+      getDefaultGroup: () =>
+        get().groups.find((g) => g.id === DEFAULT_GROUP_ID),
 
       getGroupColorIndex: () => {
         const state = get()

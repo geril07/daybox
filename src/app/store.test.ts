@@ -1,14 +1,36 @@
 import { describe, it, expect, beforeEach } from 'vitest'
+
+import type { Task, Group } from '../shared/types'
+import { exportData, parseImport } from './localStorage.ts'
 import { useAppStore } from './store.ts'
 import { useTimerStore, getNextPhase } from './timerStore.ts'
-import { exportData, parseImport } from './localStorage.ts'
-import type { Task, Group } from '../shared/types'
 
 beforeEach(() => {
   useAppStore.setState({
     tasks: [],
-    groups: [{ id: 'default', name: 'General', color: 'oklch(0.545 0.185 28)', createdAt: new Date().toISOString() }],
-    settings: { timer: { focusDuration: 25, shortBreakDuration: 5, longBreakDuration: 15, longBreakInterval: 4, autoStartBreaks: false, autoStartPomodoros: false, alarmSound: 'bell', alarmVolume: 0.5, alarmRepeat: 3 }, theme: 'light', weekStartDay: 1 },
+    groups: [
+      {
+        id: 'default',
+        name: 'General',
+        color: 'oklch(0.545 0.185 28)',
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    settings: {
+      timer: {
+        focusDuration: 25,
+        shortBreakDuration: 5,
+        longBreakDuration: 15,
+        longBreakInterval: 4,
+        autoStartBreaks: false,
+        autoStartPomodoros: false,
+        alarmSound: 'bell',
+        alarmVolume: 0.5,
+        alarmRepeat: 3,
+      },
+      theme: 'light',
+      weekStartDay: 1,
+    },
     view: 'today',
     browseDate: null,
     focusedTaskId: null,
@@ -50,7 +72,7 @@ describe('App Store - Group CRUD', () => {
     useAppStore.getState().addGroup('Work')
     const groups = useAppStore.getState().groups
     expect(groups).toHaveLength(2)
-    expect(groups.some(g => g.name === 'Work')).toBe(true)
+    expect(groups.some((g) => g.name === 'Work')).toBe(true)
   })
 
   it('renames a group', () => {
@@ -63,7 +85,9 @@ describe('App Store - Group CRUD', () => {
     const group = useAppStore.getState().addGroup('Work')
     const task = useAppStore.getState().addTask('Test', group.id)
     useAppStore.getState().deleteGroup(group.id, true)
-    const storedTask = useAppStore.getState().tasks.find(t => t.id === task.id)
+    const storedTask = useAppStore
+      .getState()
+      .tasks.find((t) => t.id === task.id)
     expect(storedTask?.groupId).toBe('default')
   })
 })
@@ -131,8 +155,28 @@ describe('Export/Import', () => {
       version: 1,
       exportedAt: new Date().toISOString(),
       appStore: {
-        tasks: [{ id: '1', title: 'Imported', groupId: 'default', date: null, pomoEstimate: 0, pomoCompleted: 0, sortOrder: 0, completed: false, completedAt: null, createdAt: new Date().toISOString() }],
-        groups: [{ id: 'default', name: 'General', color: 'oklch(0.545 0.185 28)', createdAt: new Date().toISOString() }],
+        tasks: [
+          {
+            id: '1',
+            title: 'Imported',
+            groupId: 'default',
+            date: null,
+            pomoEstimate: 0,
+            pomoCompleted: 0,
+            sortOrder: 0,
+            completed: false,
+            completedAt: null,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+        groups: [
+          {
+            id: 'default',
+            name: 'General',
+            color: 'oklch(0.545 0.185 28)',
+            createdAt: new Date().toISOString(),
+          },
+        ],
       },
     })
     const result = parseImport(data)

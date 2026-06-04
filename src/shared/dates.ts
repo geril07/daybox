@@ -33,7 +33,10 @@ export function getWeekDays(weekStartDay: 0 | 1 | 2 | 3 | 4 | 5 | 6): Date[] {
   return days
 }
 
-export function getWeekRange(weekStartDay: 0 | 1 | 2 | 3 | 4 | 5 | 6): { start: string; end: string } {
+export function getWeekRange(weekStartDay: 0 | 1 | 2 | 3 | 4 | 5 | 6): {
+  start: string
+  end: string
+} {
   const days = getWeekDays(weekStartDay)
   return {
     start: formatDate(days[0]),
@@ -53,5 +56,9 @@ export function getFormattedDate(date: Date): string {
   if (formatDate(date) === formatDate(today)) return 'Today'
   if (formatDate(date) === formatDate(tomorrow)) return 'Tomorrow'
 
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' })
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    weekday: 'short',
+  })
 }
