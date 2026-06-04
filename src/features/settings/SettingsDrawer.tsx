@@ -43,6 +43,7 @@ export default function SettingsDrawer({
   onClose: () => void
 }) {
   const settings = useAppStore((s) => s.settings)
+  console.log('settings :', settings)
   const updateTimerSettings = useAppStore((s) => s.updateTimerSettings)
   const updateSettings = useAppStore((s) => s.updateSettings)
 
@@ -193,14 +194,16 @@ export default function SettingsDrawer({
             <SettingRow label="Volume">
               <Slider
                 value={[settings.timer.alarmVolume]}
-                onValueChange={(v) =>
+                onValueChange={(value) => {
+                  const next = Array.isArray(value) ? value[0] : value
+
                   updateTimerSettings({
-                    alarmVolume: (v as readonly number[])[0],
+                    alarmVolume: next,
                   })
-                }
+                }}
                 min={0}
                 max={1}
-                step={0.1}
+                step={0.05}
                 className="w-[80px]"
               />
             </SettingRow>
