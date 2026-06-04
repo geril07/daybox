@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 import type { TimerPhase } from '@/shared/types'
 
@@ -33,96 +34,111 @@ interface TimerActions {
 
 export type TimerStore = TimerState & TimerActions
 
-export const useTimerStore = create<TimerStore>()((set, get) => ({
-  phase: 'focus',
-  startedAt: null,
-  elapsed: 0,
-  sessionPomoCount: 0,
-  isRunning: false,
-  focusedTaskId: null,
-
-  start: () =>
-    set({
-      isRunning: true,
-      startedAt: Date.now(),
-    }),
-
-  pause: () =>
-    set((state) => ({
-      isRunning: false,
-      elapsed: state.elapsed + (Date.now() - (state.startedAt ?? Date.now())),
-      startedAt: null,
-    })),
-
-  reset: () =>
-    set({
-      isRunning: false,
+export const useTimerStore = create<TimerStore>()(
+  persist(
+    (set, get) => ({
+      phase: 'focus',
       startedAt: null,
       elapsed: 0,
-    }),
-
-  skip: () => {
-    const state = get()
-    const nextPhase = getNextPhase(state.phase, state.sessionPomoCount, 4)
-    set({
-      phase: nextPhase,
-      startedAt: null,
-      elapsed: 0,
+      sessionPomoCount: 0,
       isRunning: false,
-      sessionPomoCount:
-        nextPhase === 'longBreak' || nextPhase === 'shortBreak'
-          ? state.sessionPomoCount + (state.phase === 'focus' ? 1 : 0)
-          : state.sessionPomoCount,
-    })
-  },
+      focusedTaskId: null,
 
-  setPhase: (phase) =>
-    set({
-      phase,
-      startedAt: null,
-      elapsed: 0,
-      isRunning: false,
-    }),
+      start: () =>
+        set({
+          isRunning: true,
+          startedAt: Date.now(),
+        }),
 
-  tick: () => {
-    const state = get()
-    if (!state.isRunning || !state.startedAt) return
-    const now = Date.now()
-    set({
-      elapsed: state.elapsed + (now - state.startedAt),
-      startedAt: now,
-    })
-  },
+      pause: () =>
+        set((state) => ({
+          isRunning: false,
+          elapsed:
+            state.elapsed + (Date.now() - (state.startedAt ?? Date.now())),
+          startedAt: null,
+        })),
 
-  setFocusedTaskId: (id) => set({ focusedTaskId: id }),
+      reset: () =>
+        set({
+          isRunning: false,
+          startedAt: null,
+          elapsed: 0,
+        }),
 
-  getRemainingSeconds: (
-    focusDuration,
-    shortBreakDuration,
-    longBreakDuration,
-  ) => {
-    const state = get()
-    const duration = getPhaseDuration(
-      state.phase,
-      focusDuration,
-      shortBreakDuration,
-      longBreakDuration,
-    )
-    const elapsedSeconds = state.elapsed / 1000
-    return Math.max(0, duration * 60 - elapsedSeconds)
-  },
+      skip: () => {
+        const state = get()
+        const nextPhase = getNextPhase(state.phase, state.sessionPomoCount, 4)
+        set({
+          phase: nextPhase,
+          startedAt: null,
+          elapsed: 0,
+          isRunning: false,
+          sessionPomoCount:
+            nextPhase === 'longBreak' || nextPhase === 'shortBreak'
+              ? state.sessionPomoCount + (state.phase === 'focus' ? 1 : 0)
+              : state.sessionPomoCount,
+        })
+      },
 
-  getDuration: (focusDuration, shortBreakDuration, longBreakDuration) => {
-    return (
-      getPhaseDuration(
-        get().phase,
+      setPhase: (phase) =>
+        set({
+          phase,
+          startedAt: null,
+          elapsed: 0,
+          isRunning: false,
+        }),
+
+      tick: () => {
+        const state = get()
+        if (!state.isRunning || !state.startedAt) return
+        const now = Date.now()
+        set({
+          elapsed: state.elapsed + (now - state.startedAt),
+          startedAt: now,
+        })
+      },
+
+      setFocusedTaskId: (id) => set({ focusedTaskId: id }),
+
+      getRemainingSeconds: (
         focusDuration,
         shortBreakDuration,
         longBreakDuration,
-      ) * 60
-    )
-  },
-}))
+      ) => {
+        const state = get()
+        const duration = getPhaseDuration(
+          state.phase,
+          focusDuration,
+          shortBreakDuration,
+          longBreakDuration,
+        )
+        const elapsedSeconds = state.elapsed / 1000
+        return Math.max(0, duration * 60 - elapsedSeconds)
+      },
+
+      getDuration: (focusDuration, shortBreakDuration, longBreakDuration) => {
+        return (
+          getPhaseDuration(
+            get().phase,
+            focusDuration,
+            shortBreakDuration,
+            longBreakDuration,
+          ) * 60
+        )
+      },
+    }),
+    {
+      name: 'daybox-timer',
+      onRehydrateStorage: () => (state) => {
+        if (state?.isRunning && state.startedAt) {
+          const now = Date.now()
+          state.elapsed += now - state.startedAt
+          state.startedAt = now
+        }
+      },
+    },
+  ),
+)
 
 function getPhaseDuration(
   phase: TimerPhase,

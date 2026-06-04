@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useTimerStore, getNextPhase } from '@/features/timer/store'
 
 beforeEach(() => {
+  localStorage.clear()
   useTimerStore.setState({
     phase: 'focus',
     startedAt: null,
