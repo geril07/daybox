@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { formatDate } from '../shared/dates'
 import { generateId } from '../shared/id'
 import type {
   Task,

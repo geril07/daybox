@@ -15,11 +15,10 @@ import { useAppStore } from './store'
 export default function App() {
   const view = useAppStore((s) => s.view)
   const setView = useAppStore((s) => s.setView)
-  const focusedTaskId = useAppStore((s) => s.focusedTaskId)
   const theme = useAppStore((s) => s.settings.theme)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [addRowFocused, setAddRowFocused] = useState(false)
+  const [, setAddRowFocused] = useState(false)
 
   useEffect(() => {
     const cleanup = registerShortcuts({

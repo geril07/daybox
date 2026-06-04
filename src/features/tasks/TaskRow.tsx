@@ -351,6 +351,8 @@ function PomoArea({ task }: { task: Task }) {
   )
 }
 
+const tomorrowDate = Date.now() + 86400000
+
 function DatePickerButton({ task }: { task: Task }) {
   const updateTask = useAppStore((s) => s.updateTask)
 
@@ -391,7 +393,7 @@ function DatePickerButton({ task }: { task: Task }) {
                 { label: 'Today', value: formatDate(new Date()) },
                 {
                   label: 'Tomorrow',
-                  value: formatDate(new Date(Date.now() + 86400000)),
+                  value: formatDate(new Date(tomorrowDate)),
                 },
                 { label: 'Unsched.', value: null },
               ].map((preset) => (

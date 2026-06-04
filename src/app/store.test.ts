@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import type { Task, Group } from '../shared/types'
 import { exportData, parseImport } from './localStorage.ts'
 import { useAppStore } from './store.ts'
 import { useTimerStore, getNextPhase } from './timerStore.ts'

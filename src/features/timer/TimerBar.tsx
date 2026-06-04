@@ -20,7 +20,6 @@ export default function TimerBar() {
   const start = useTimerStore((s) => s.start)
   const pause = useTimerStore((s) => s.pause)
   const reset = useTimerStore((s) => s.reset)
-  const setPhase = useTimerStore((s) => s.setPhase)
   const tick = useTimerStore((s) => s.tick)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)

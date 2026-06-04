@@ -3,9 +3,11 @@ import EmptyState from '../../shared/EmptyState'
 import { formatDate } from '../../shared/dates'
 import TaskList from '../tasks/TaskList'
 
+const tomorrowTimestamp = Date.now() + 86400000
+
 export default function TomorrowView() {
   const tasks = useAppStore((s) => s.tasks)
-  const tomorrow = formatDate(new Date(Date.now() + 86400000))
+  const tomorrow = formatDate(new Date(tomorrowTimestamp))
   const tomorrowTasks = tasks
     .filter((t) => t.date === tomorrow)
     .sort((a, b) => a.sortOrder - b.sortOrder)

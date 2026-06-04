@@ -121,7 +121,7 @@ export default function SettingsDrawer({
                 <NumberField.Root
                   value={settings.timer.focusDuration}
                   onValueChange={(v) =>
-                    updateTimerSettings({ focusDuration: v })
+                    updateTimerSettings({ focusDuration: v ?? undefined })
                   }
                   min={1}
                   max={120}
@@ -162,7 +162,7 @@ export default function SettingsDrawer({
                 <NumberField.Root
                   value={settings.timer.shortBreakDuration}
                   onValueChange={(v) =>
-                    updateTimerSettings({ shortBreakDuration: v })
+                    updateTimerSettings({ shortBreakDuration: v ?? undefined })
                   }
                   min={1}
                   max={30}
@@ -203,7 +203,7 @@ export default function SettingsDrawer({
                 <NumberField.Root
                   value={settings.timer.longBreakDuration}
                   onValueChange={(v) =>
-                    updateTimerSettings({ longBreakDuration: v })
+                    updateTimerSettings({ longBreakDuration: v ?? undefined })
                   }
                   min={1}
                   max={60}
@@ -244,7 +244,7 @@ export default function SettingsDrawer({
                 <NumberField.Root
                   value={settings.timer.longBreakInterval}
                   onValueChange={(v) =>
-                    updateTimerSettings({ longBreakInterval: v })
+                    updateTimerSettings({ longBreakInterval: v ?? undefined })
                   }
                   min={2}
                   max={10}
@@ -433,7 +433,9 @@ export default function SettingsDrawer({
               <SettingRow label="Repeat count">
                 <NumberField.Root
                   value={settings.timer.alarmRepeat}
-                  onValueChange={(v) => updateTimerSettings({ alarmRepeat: v })}
+                  onValueChange={(v) =>
+                    updateTimerSettings({ alarmRepeat: v ?? undefined })
+                  }
                   min={1}
                   max={5}
                 >

@@ -1,5 +1,5 @@
 import { Popover } from '@base-ui/react'
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 import { useAppStore } from '../../app/store'
 import type { Group } from '../../shared/types'

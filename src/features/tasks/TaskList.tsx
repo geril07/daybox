@@ -1,5 +1,6 @@
 import { arrayMove } from '@dnd-kit/helpers'
 import { DragDropProvider, useDraggable, useDroppable } from '@dnd-kit/react'
+import type { DragEndEvent } from '@dnd-kit/react'
 import { useRef } from 'react'
 
 import { useAppStore } from '../../app/store'
@@ -22,9 +23,7 @@ export default function TaskList({
 }: TaskListProps) {
   const reorderTasks = useAppStore((s) => s.reorderTasks)
 
-  const handleDragEnd = (event: {
-    operation: { source?: { id?: string }; target?: { id?: string } }
-  }) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const sourceId = event.operation.source?.id
     const targetId = event.operation.target?.id
     if (!sourceId || !targetId || sourceId === targetId) return
