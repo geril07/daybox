@@ -1,12 +1,10 @@
-import TaskList from '@/features/tasks/components/TaskList'
-import { selectForDate } from '@/features/tasks/queries'
-import { useTaskStore } from '@/features/tasks/store'
+import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
 import EmptyState from '@/shared/EmptyState'
 import { formatDate } from '@/shared/dates'
 
 const tomorrowTimestamp = Date.now() + 86400000
 
-export default function TomorrowView() {
+export function TomorrowView() {
   const tasks = useTaskStore((s) => s.tasks)
   const tomorrow = formatDate(new Date(tomorrowTimestamp))
   const tomorrowTasks = selectForDate(tasks, tomorrow)

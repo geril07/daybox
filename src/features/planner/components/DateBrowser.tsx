@@ -1,13 +1,11 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { useUIStore } from '@/app/uiStore'
-import TaskList from '@/features/tasks/components/TaskList'
-import { selectForDate } from '@/features/tasks/queries'
-import { useTaskStore } from '@/features/tasks/store'
+import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
 import EmptyState from '@/shared/EmptyState'
 import { formatDate } from '@/shared/dates'
 
-export default function DateBrowser() {
+export function DateBrowser() {
   const browseDate = useUIStore((s) => s.browseDate)
   const setBrowseDate = useUIStore((s) => s.setBrowseDate)
   const tasks = useTaskStore((s) => s.tasks)
@@ -44,9 +42,7 @@ export default function DateBrowser() {
         >
           <ChevronLeft size={12} />
         </button>
-        <span
-          className="text-fg-2 min-w-[120px] text-center text-xs font-medium"
-        >
+        <span className="text-fg-2 min-w-[120px] text-center text-xs font-medium">
           {browseDate}
         </span>
         <button

@@ -2,10 +2,9 @@ import { useState } from 'react'
 
 import { exportData, downloadExport, parseImport } from '@/app/localStorage'
 import { useSettingsStore } from '@/app/settingsStore'
-import GroupSettingsPanel from '@/features/groups/components/GroupSettingsPanel'
-import { useGroupStore } from '@/features/groups/store'
-import { useTaskStore } from '@/features/tasks/store'
-import TimerSettingsPanel from '@/features/timer/components/TimerSettingsPanel'
+import { GroupSettingsPanel, useGroupStore } from '@/features/groups'
+import { useTaskStore } from '@/features/tasks'
+import { TimerSettingsPanel } from '@/features/timer'
 import {
   Sheet,
   SheetContent,

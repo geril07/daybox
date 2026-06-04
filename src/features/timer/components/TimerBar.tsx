@@ -2,13 +2,12 @@ import { RotateCcw, Pause, Play, SkipForward } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
 import { useSettingsStore } from '@/app/settingsStore'
-import { useTaskStore } from '@/features/tasks/store'
-import { playAlarm } from '@/features/timer/alarm'
-import { useTimerStore, getNextPhase } from '@/features/timer/store'
+import { useTaskStore } from '@/features/tasks'
+import { playAlarm, useTimerStore, getNextPhase } from '@/features/timer'
 import { cn } from '@/shared/lib/utils'
 import { sendNotification } from '@/shared/notifications'
 
-export default function TimerBar() {
+export function TimerBar() {
   const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
   const tasks = useTaskStore((s) => s.tasks)
   const settings = useSettingsStore((s) => s.settings.timer)

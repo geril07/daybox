@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-import { useGroupStore } from '@/features/groups/store'
-import { useTaskStore } from '@/features/tasks/store'
+import { useGroupStore } from '@/features/groups'
+import { useTaskStore } from '@/features/tasks'
 import type { Group } from '@/shared/types'
 import {
   AlertDialog,
@@ -13,7 +13,7 @@ import {
   Button,
 } from '@/shared/ui'
 
-export default function GroupSettings() {
+export function GroupSettingsPanel() {
   const groups = useGroupStore((s) => s.groups)
   const addGroup = useGroupStore((s) => s.addGroup)
   const renameGroup = useGroupStore((s) => s.renameGroup)

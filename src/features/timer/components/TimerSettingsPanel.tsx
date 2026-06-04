@@ -10,7 +10,7 @@ import {
   Slider,
 } from '@/shared/ui'
 
-export default function TimerSettingsPanel() {
+export function TimerSettingsPanel() {
   const settings = useSettingsStore((s) => s.settings)
   const updateTimerSettings = useSettingsStore((s) => s.updateTimerSettings)
 

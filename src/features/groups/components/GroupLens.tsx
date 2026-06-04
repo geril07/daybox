@@ -1,4 +1,4 @@
-import { useGroupStore } from '@/features/groups/store'
+import { useGroupStore } from '@/features/groups'
 import {
   Select,
   SelectTrigger,
@@ -12,10 +12,7 @@ interface GroupLensProps {
   onSelect: (id: string | null) => void
 }
 
-export default function GroupLens({
-  selectedGroupId,
-  onSelect,
-}: GroupLensProps) {
+export function GroupLens({ selectedGroupId, onSelect }: GroupLensProps) {
   const groups = useGroupStore((s) => s.groups)
 
   if (groups.length <= 1) return null

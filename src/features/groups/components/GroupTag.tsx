@@ -1,10 +1,10 @@
-import { useGroupStore } from '@/features/groups/store'
+import { useGroupStore } from '@/features/groups'
 
 interface GroupTagProps {
   groupId: string
 }
 
-export default function GroupTag({ groupId }: GroupTagProps) {
+export function GroupTag({ groupId }: GroupTagProps) {
   const groups = useGroupStore((s) => s.groups)
   const group = groups.find((g) => g.id === groupId)
 

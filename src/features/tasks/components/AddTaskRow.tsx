@@ -1,8 +1,8 @@
 import { Plus, ChevronDown } from 'lucide-react'
 import { useState, useRef, useCallback } from 'react'
 
-import { useGroupStore } from '@/features/groups/store'
-import { useTaskStore } from '@/features/tasks/store'
+import { useGroupStore } from '@/features/groups'
+import { useTaskStore } from '@/features/tasks'
 import { cn } from '@/shared/lib/utils'
 import type { Group } from '@/shared/types'
 import { Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
@@ -11,7 +11,7 @@ interface AddTaskRowProps {
   defaultDate?: string | null
 }
 
-export default function AddTaskRow({ defaultDate }: AddTaskRowProps) {
+export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
   const [title, setTitle] = useState('')
   const [showTypeahead, setShowTypeahead] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -67,9 +67,7 @@ export default function AddTaskRow({ defaultDate }: AddTaskRowProps) {
   return (
     <div className="add-task-wrap border-border border-b pt-3.5 pb-1.5">
       <div className="flex items-center gap-2.5">
-        <div
-          className="text-muted-foreground border-border-strong flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed transition-[border-color,color] duration-140"
-        >
+        <div className="text-muted-foreground border-border-strong flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed transition-[border-color,color] duration-140">
           <Plus size={10} strokeWidth={3} />
         </div>
         <input

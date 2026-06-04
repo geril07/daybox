@@ -4,16 +4,16 @@ import { useState, useEffect, useRef } from 'react'
 import { useSettingsStore } from '@/app/settingsStore'
 import SettingsDrawer from '@/app/shell/SettingsDrawer'
 import { useUIStore } from '@/app/uiStore'
-import GroupLens from '@/features/groups/components/GroupLens'
-import { useGroupStore } from '@/features/groups/store'
-import BacklogView from '@/features/planner/components/BacklogView'
-import DateBrowser from '@/features/planner/components/DateBrowser'
-import TodayView from '@/features/planner/components/TodayView'
-import TomorrowView from '@/features/planner/components/TomorrowView'
-import WeekView from '@/features/planner/components/WeekView'
-import AddTaskRow from '@/features/tasks/components/AddTaskRow'
-import { useTaskStore } from '@/features/tasks/store'
-import TimerBar from '@/features/timer/components/TimerBar'
+import { GroupLens, useGroupStore } from '@/features/groups'
+import {
+  BacklogView,
+  DateBrowser,
+  TodayView,
+  TomorrowView,
+  WeekView,
+} from '@/features/planner'
+import { AddTaskRow, useTaskStore } from '@/features/tasks'
+import { TimerBar } from '@/features/timer'
 import { formatDate } from '@/shared/dates'
 import { registerShortcuts } from '@/shared/keyboard'
 import type { View } from '@/shared/types'

@@ -12,6 +12,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   test: {
     environment: 'jsdom',
-    setupFiles: [],
+    setupFiles: ['src/shared/test-setup.ts'],
   },
 })

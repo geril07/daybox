@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { useTimerStore, getNextPhase } from '@/features/timer/store'
+import { useTimerStore, getNextPhase } from '@/features/timer'
 
 beforeEach(() => {
   localStorage.clear()

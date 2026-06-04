@@ -1,9 +1,9 @@
 import { Check, Target, Trash2, Calendar, GripVertical } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
-import { useGroupStore } from '@/features/groups/store'
-import { useTaskStore } from '@/features/tasks/store'
-import { useTimerStore } from '@/features/timer/store'
+import { useGroupStore } from '@/features/groups'
+import { useTaskStore } from '@/features/tasks'
+import { useTimerStore } from '@/features/timer'
 import { isOverdue, formatDate } from '@/shared/dates'
 import { cn } from '@/shared/lib/utils'
 import type { Task } from '@/shared/types'
@@ -14,7 +14,7 @@ interface TaskRowProps {
   dragHandleRef?: React.RefObject<HTMLDivElement | null>
 }
 
-export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
+export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [hovering, setHovering] = useState(false)
@@ -140,9 +140,7 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       )}
 
       {overdue && (
-        <span
-          className="text-destructive bg-overdue-bg border-overdue-border shrink-0 rounded-full border px-[7px] py-[2px] text-xs font-medium"
-        >
+        <span className="text-destructive bg-overdue-bg border-overdue-border shrink-0 rounded-full border px-[7px] py-[2px] text-xs font-medium">
           OVERDUE
         </span>
       )}
@@ -150,9 +148,7 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       <PomoArea task={task} />
       <DatePickerButton task={task} />
 
-      <div
-        className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 hover:opacity-100"
-      >
+      <div className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 hover:opacity-100">
         <button
           className="text-muted-foreground hover:text-accent flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
           onClick={() => {
@@ -197,7 +193,7 @@ function PomoArea({ task }: { task: Task }) {
                     'h-[7px] w-[7px] rounded-full',
                     i < task.pomoCompleted
                       ? 'bg-accent border-none'
-                      : 'bg-transparent border border-border-strong',
+                      : 'border-border-strong border bg-transparent',
                   )}
                 />
               ))}
@@ -218,7 +214,7 @@ function PomoArea({ task }: { task: Task }) {
             <button
               key={i}
               className={cn(
-                'flex h-[26px] w-[26px] items-center justify-center rounded-[4px] text-[12.5px] transition-all duration-120 border',
+                'flex h-[26px] w-[26px] items-center justify-center rounded-[4px] border text-[12.5px] transition-all duration-120',
                 task.pomoEstimate === i
                   ? 'bg-accent border-accent text-white'
                   : 'border-border text-fg-2 bg-transparent',

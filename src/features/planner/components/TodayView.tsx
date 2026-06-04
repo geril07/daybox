@@ -1,9 +1,12 @@
-import TaskList from '@/features/tasks/components/TaskList'
-import { selectOverdue, selectTodayTasks } from '@/features/tasks/queries'
-import { useTaskStore } from '@/features/tasks/store'
+import {
+  TaskList,
+  selectOverdue,
+  selectTodayTasks,
+  useTaskStore,
+} from '@/features/tasks'
 import EmptyState from '@/shared/EmptyState'
 
-export default function TodayView() {
+export function TodayView() {
   const tasks = useTaskStore((s) => s.tasks)
 
   const overdueTasks = selectOverdue(tasks)

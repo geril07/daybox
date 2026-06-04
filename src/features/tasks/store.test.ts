@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { useTaskStore } from '@/features/tasks/store'
+import { useTaskStore } from '@/features/tasks'
 
 beforeEach(() => {
   useTaskStore.setState({ tasks: [] })

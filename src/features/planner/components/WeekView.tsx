@@ -1,11 +1,9 @@
 import { useSettingsStore } from '@/app/settingsStore'
-import TaskList from '@/features/tasks/components/TaskList'
-import { selectForDate } from '@/features/tasks/queries'
-import { useTaskStore } from '@/features/tasks/store'
+import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
 import EmptyState from '@/shared/EmptyState'
 import { getWeekDays, getFormattedDate, formatDate } from '@/shared/dates'
 
-export default function WeekView() {
+export function WeekView() {
   const weekStartDay = useSettingsStore((s) => s.settings.weekStartDay)
   const tasks = useTaskStore((s) => s.tasks)
 
@@ -38,14 +36,10 @@ export default function WeekView() {
 
         return (
           <div key={dateStr} className="mb-2">
-            <div
-              className="text-fg-2 flex items-center gap-2 px-1.5 py-2 text-xs font-semibold"
-            >
+            <div className="text-fg-2 flex items-center gap-2 px-1.5 py-2 text-xs font-semibold">
               {getFormattedDate(day)}
               {isToday && (
-                <span
-                  className="text-accent bg-accent-bg border-accent-border rounded-full border px-[7px] py-[1px] text-xs font-medium"
-                >
+                <span className="text-accent bg-accent-bg border-accent-border rounded-full border px-[7px] py-[1px] text-xs font-medium">
                   TODAY
                 </span>
               )}

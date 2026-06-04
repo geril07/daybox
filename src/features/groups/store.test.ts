@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { useGroupStore } from '@/features/groups/store'
-import { useTaskStore } from '@/features/tasks/store'
+import { useGroupStore } from '@/features/groups'
+import { useTaskStore } from '@/features/tasks'
 
 beforeEach(() => {
   useTaskStore.setState({ tasks: [] })

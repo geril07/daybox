@@ -5,7 +5,7 @@ import {
   selectForDate,
   selectTodayTasks,
   selectBacklog,
-} from '@/features/tasks/queries'
+} from '@/features/tasks'
 import type { Task } from '@/shared/types'
 
 function createTask(overrides: Partial<Task> & { id: string }): Task {
