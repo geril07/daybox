@@ -1,6 +1,6 @@
-import { useAppStore } from '../../app/store'
-import EmptyState from '../../shared/EmptyState'
-import TaskList from '../tasks/TaskList'
+import { useAppStore } from '@/app/store'
+import TaskList from '@/features/tasks/TaskList'
+import EmptyState from '@/shared/EmptyState'
 
 export default function BacklogView() {
   const tasks = useAppStore((s) => s.tasks)

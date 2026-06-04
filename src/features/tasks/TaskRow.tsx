@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 
-import { useAppStore } from '../../app/store'
-import { useTimerStore } from '../../app/timerStore'
-import { isOverdue, formatDate } from '../../shared/dates'
-import type { Task } from '../../shared/types'
-import { Popover, PopoverTrigger, PopoverContent } from '../../shared/ui'
+import { useAppStore } from '@/app/store'
+import { useTimerStore } from '@/app/timerStore'
+import { isOverdue, formatDate } from '@/shared/dates'
+import type { Task } from '@/shared/types'
+import { Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
 interface TaskRowProps {
   task: Task

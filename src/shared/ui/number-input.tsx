@@ -1,7 +1,7 @@
 import { NumberField } from '@base-ui/react'
 import { forwardRef } from 'react'
 
-import { cn } from '../lib/utils'
+import { cn } from '@/shared/lib/utils'
 
 interface NumberInputProps {
   value: number

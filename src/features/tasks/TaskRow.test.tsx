@@ -1,8 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { useAppStore } from '../../app/store'
-import TaskRow from './TaskRow.tsx'
+import { useAppStore } from '@/app/store'
+import TaskRow from '@/features/tasks/TaskRow'
 
 beforeEach(() => {
   useAppStore.setState({

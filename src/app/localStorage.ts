@@ -1,5 +1,5 @@
-import { DEFAULT_APP_SETTINGS } from '../shared/types'
-import type { AppState } from './store'
+import type { AppState } from '@/app/store'
+import { DEFAULT_APP_SETTINGS } from '@/shared/types'
 
 const CURRENT_VERSION = 1
 

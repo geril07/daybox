@@ -1,15 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { generateId } from '../shared/id'
+import { generateId } from '@/shared/id'
 import type {
   Task,
   Group,
   AppSettings,
   View,
   TimerSettings,
-} from '../shared/types'
-import { DEFAULT_APP_SETTINGS, GROUP_COLORS } from '../shared/types'
+} from '@/shared/types'
+import { DEFAULT_APP_SETTINGS, GROUP_COLORS } from '@/shared/types'
 
 export interface AppState {
   version: number

@@ -1,7 +1,7 @@
-import { useAppStore } from '../../app/store'
-import EmptyState from '../../shared/EmptyState'
-import { getWeekDays, getFormattedDate, formatDate } from '../../shared/dates'
-import TaskList from '../tasks/TaskList'
+import { useAppStore } from '@/app/store'
+import TaskList from '@/features/tasks/TaskList'
+import EmptyState from '@/shared/EmptyState'
+import { getWeekDays, getFormattedDate, formatDate } from '@/shared/dates'
 
 export default function WeekView() {
   const weekStartDay = useAppStore((s) => s.settings.weekStartDay)

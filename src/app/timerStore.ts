@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { TimerPhase } from '../shared/types'
+import type { TimerPhase } from '@/shared/types'
 
 interface TimerState {
   phase: TimerPhase

@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback } from 'react'
 
-import { useAppStore } from '../../app/store'
-import type { Group } from '../../shared/types'
-import { Popover, PopoverTrigger, PopoverContent } from '../../shared/ui'
+import { useAppStore } from '@/app/store'
+import type { Group } from '@/shared/types'
+import { Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
 interface AddTaskRowProps {
   defaultDate?: string | null

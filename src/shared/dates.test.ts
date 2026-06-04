@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 
-import { isToday, isOverdue, getWeekRange } from './dates.ts'
+import { isToday, isOverdue, getWeekRange } from '@/shared/dates'
 
 describe('isToday', () => {
   it('returns true for today', () => {

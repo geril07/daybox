@@ -1,7 +1,8 @@
 import { useState } from 'react'
 
-import { exportData, downloadExport, parseImport } from '../../app/localStorage'
-import { useAppStore } from '../../app/store'
+import { exportData, downloadExport, parseImport } from '@/app/localStorage'
+import { useAppStore } from '@/app/store'
+import GroupSettings from '@/features/groups/GroupSettings'
 import {
   Sheet,
   SheetContent,
@@ -22,8 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogCancel,
-} from '../../shared/ui'
-import GroupSettings from '../groups/GroupSettings'
+} from '@/shared/ui'
 
 const weekDays = [
   { value: 0, label: 'Sun' },

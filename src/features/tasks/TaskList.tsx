@@ -3,9 +3,9 @@ import { DragDropProvider, useDraggable, useDroppable } from '@dnd-kit/react'
 import type { DragEndEvent } from '@dnd-kit/react'
 import { useRef } from 'react'
 
-import { useAppStore } from '../../app/store'
-import type { Task } from '../../shared/types'
-import TaskRow from './TaskRow'
+import { useAppStore } from '@/app/store'
+import TaskRow from '@/features/tasks/TaskRow'
+import type { Task } from '@/shared/types'
 
 interface TaskListProps {
   tasks: Task[]

@@ -1,11 +1,11 @@
-import { useAppStore } from '../../app/store'
+import { useAppStore } from '@/app/store'
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '../../shared/ui'
+} from '@/shared/ui'
 
 interface GroupLensProps {
   selectedGroupId: string | null

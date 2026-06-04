@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { exportData, parseImport } from './localStorage.ts'
-import { useAppStore } from './store.ts'
-import { useTimerStore, getNextPhase } from './timerStore.ts'
+import { exportData, parseImport } from '@/app/localStorage'
+import { useAppStore } from '@/app/store'
+import { useTimerStore, getNextPhase } from '@/app/timerStore'
 
 beforeEach(() => {
   useAppStore.setState({

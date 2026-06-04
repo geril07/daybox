@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-import { useAppStore } from '../../app/store'
-import type { Group } from '../../shared/types'
+import { useAppStore } from '@/app/store'
+import type { Group } from '@/shared/types'
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -10,7 +10,7 @@ import {
   AlertDialogDescription,
   AlertDialogCancel,
   Button,
-} from '../../shared/ui'
+} from '@/shared/ui'
 
 export default function GroupSettings() {
   const groups = useAppStore((s) => s.groups)

@@ -1,7 +1,7 @@
-import { useAppStore } from '../../app/store'
-import EmptyState from '../../shared/EmptyState'
-import { formatDate } from '../../shared/dates'
-import TaskList from '../tasks/TaskList'
+import { useAppStore } from '@/app/store'
+import TaskList from '@/features/tasks/TaskList'
+import EmptyState from '@/shared/EmptyState'
+import { formatDate } from '@/shared/dates'
 
 export default function DateBrowser() {
   const browseDate = useAppStore((s) => s.browseDate)

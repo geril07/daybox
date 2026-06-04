@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
 
-import { useAppStore } from '../../app/store'
-import { useTimerStore, getNextPhase } from '../../app/timerStore'
-import { sendNotification } from '../../shared/notifications'
-import { playAlarm } from './alarm'
+import { useAppStore } from '@/app/store'
+import { useTimerStore, getNextPhase } from '@/app/timerStore'
+import { playAlarm } from '@/features/timer/alarm'
+import { sendNotification } from '@/shared/notifications'
 
 export default function TimerBar() {
   const focusedTaskId = useAppStore((s) => s.focusedTaskId)
