@@ -5,7 +5,7 @@ import { useGroupStore } from '@/features/groups'
 import { useTaskStore } from '@/features/tasks'
 import { cn } from '@/shared/lib/utils'
 import type { Group } from '@/shared/types'
-import { Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
+import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
 interface AddTaskRowProps {
   defaultDate?: string | null
@@ -125,10 +125,12 @@ function GroupChip({
       </PopoverTrigger>
       <PopoverContent className="z-50 min-w-[140px] p-2">
         {groups.map((g) => (
-          <button
+          <Button
             key={g.id}
+            variant="ghost"
+            size="none"
             className={cn(
-              'hover:bg-muted flex w-full items-center gap-2 rounded-[4px] px-3 py-2 text-left text-sm transition-colors duration-100',
+              'w-full justify-start gap-2 rounded-[4px] px-3 py-2 text-left text-sm duration-100',
               g.id === group.id ? 'text-accent' : 'text-fg-2',
             )}
             onClick={() => onSelect(g.id)}
@@ -138,7 +140,7 @@ function GroupChip({
               style={{ background: g.color }}
             />
             {g.name}
-          </button>
+          </Button>
         ))}
       </PopoverContent>
     </Popover>
@@ -171,9 +173,11 @@ function GroupTypeahead({
   return (
     <div className="bg-card border-border mt-1 ml-7 overflow-hidden rounded-[6px] border shadow-sm">
       {matched.map((g) => (
-        <button
+        <Button
           key={g.id}
-          className="text-fg-2 hover:bg-bg-hover flex w-full items-center gap-2 px-3 py-2 text-left text-sm duration-100"
+          variant="ghost"
+          size="none"
+          className="text-fg-2 w-full justify-start gap-2 px-3 py-2 text-left text-sm duration-100"
           onClick={() => onSelect(g)}
         >
           <span
@@ -181,7 +185,7 @@ function GroupTypeahead({
             style={{ background: g.color }}
           />
           {g.name}
-        </button>
+        </Button>
       ))}
     </div>
   )

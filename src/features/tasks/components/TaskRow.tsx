@@ -7,7 +7,7 @@ import { useTimerStore } from '@/features/timer'
 import { isOverdue, formatDate } from '@/shared/dates'
 import { cn } from '@/shared/lib/utils'
 import type { Task } from '@/shared/types'
-import { Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
+import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
 interface TaskRowProps {
   task: Task
@@ -90,9 +90,11 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
         <GripVertical size={12} />
       </div>
 
-      <button
+      <Button
+        variant="ghost"
+        size="none"
         className={cn(
-          'flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full border transition-all duration-140',
+          'h-[19px] w-[19px] shrink-0 rounded-full border p-0 duration-140',
           task.completed
             ? 'border-success bg-success text-white'
             : 'border-border-strong bg-transparent text-transparent',
@@ -100,7 +102,7 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
         onClick={() => toggleTask(task.id)}
       >
         {task.completed && <Check size={10} strokeWidth={3} />}
-      </button>
+      </Button>
 
       <div className="min-w-0 flex-1">
         {editing ? (
@@ -149,8 +151,9 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       <DatePickerButton task={task} />
 
       <div className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 hover:opacity-100">
-        <button
-          className="text-muted-foreground hover:text-accent flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={() => {
             if (isFocused) {
               setFocusedTaskId(null)
@@ -163,15 +166,16 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
           }}
           title="Focus"
         >
-          <Target size={14} />
-        </button>
-        <button
-          className="text-muted-foreground hover:text-overdue hover:bg-overdue-bg flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
+          <Target />
+        </Button>
+        <Button
+          variant="ghostDestructive"
+          size="icon-sm"
           onClick={() => deleteTask(task.id)}
           title="Delete"
         >
-          <Trash2 size={14} />
-        </button>
+          <Trash2 />
+        </Button>
       </div>
     </div>
   )
@@ -211,10 +215,12 @@ function PomoArea({ task }: { task: Task }) {
         </div>
         <div className="flex flex-wrap gap-1">
           {Array.from({ length: 9 }, (_, i) => (
-            <button
+            <Button
               key={i}
+              variant="ghost"
+              size="none"
               className={cn(
-                'flex h-[26px] w-[26px] items-center justify-center rounded-[4px] border text-[12.5px] transition-all duration-120',
+                'h-[26px] w-[26px] rounded-[4px] border text-[12.5px] duration-120',
                 task.pomoEstimate === i
                   ? 'bg-accent border-accent text-white'
                   : 'border-border text-fg-2 bg-transparent',
@@ -234,7 +240,7 @@ function PomoArea({ task }: { task: Task }) {
               }}
             >
               {i}
-            </button>
+            </Button>
           ))}
         </div>
       </PopoverContent>
@@ -267,13 +273,15 @@ function DatePickerButton({ task }: { task: Task }) {
             },
             { label: 'Unsched.', value: null },
           ].map((preset) => (
-            <button
+            <Button
               key={preset.label}
-              className="border-border text-muted-foreground hover:border-accent hover:text-accent hover:bg-accent-bg flex-1 rounded-[4px] border px-1 py-1.5 text-center text-xs transition-all duration-120"
+              variant="ghost"
+              size="none"
+              className="border-border hover:border-accent hover:text-accent hover:bg-accent-bg flex-1 shrink rounded-[4px] px-1 py-1.5 text-center text-xs duration-120"
               onClick={() => updateTask(task.id, { date: preset.value })}
             >
               {preset.label}
-            </button>
+            </Button>
           ))}
         </div>
         <input

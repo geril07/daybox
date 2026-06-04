@@ -6,6 +6,7 @@ import { useTaskStore } from '@/features/tasks'
 import { playAlarm, useTimerStore, getNextPhase } from '@/features/timer'
 import { cn } from '@/shared/lib/utils'
 import { sendNotification } from '@/shared/notifications'
+import { Button } from '@/shared/ui'
 
 export function TimerBar() {
   const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
@@ -208,18 +209,20 @@ export function TimerBar() {
               {String(seconds).padStart(2, '0')}
             </span>
             <div className="flex items-center gap-1">
-              <button
-                className="text-muted-foreground hover:bg-bg-hover hover:text-fg flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
+              <Button
+                variant="ghost"
+                size="none"
+                className="text-muted-foreground hover:bg-bg-hover hover:text-fg h-[34px] w-[34px] rounded-full border-0 duration-140"
                 onClick={handleReset}
                 title="Reset"
               >
                 <RotateCcw size={14} />
-              </button>
-              <button
-                className="flex h-[40px] w-[40px] items-center justify-center rounded-full text-white shadow-sm transition-all duration-140 hover:scale-105 hover:opacity-90"
-                style={{
-                  background: phaseColor,
-                }}
+              </Button>
+              <Button
+                variant="ghost"
+                size="none"
+                className="h-[40px] w-[40px] rounded-full border-0 text-white shadow-sm duration-140 hover:scale-105 hover:opacity-90"
+                style={{ background: phaseColor }}
                 onClick={handlePlayPause}
                 title={isRunning ? 'Pause' : 'Start'}
               >
@@ -228,14 +231,16 @@ export function TimerBar() {
                 ) : (
                   <Play size={16} fill="currentColor" />
                 )}
-              </button>
-              <button
-                className="text-muted-foreground hover:bg-bg-hover hover:text-fg flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
+              </Button>
+              <Button
+                variant="ghost"
+                size="none"
+                className="text-muted-foreground hover:bg-bg-hover hover:text-fg h-[34px] w-[34px] rounded-full border-0 duration-140"
                 onClick={handleSkip}
                 title="Skip"
               >
                 <SkipForward size={14} />
-              </button>
+              </Button>
               <div className="flex min-w-[40px] shrink-0 items-center gap-[3px]">
                 {sessionDots.map((i) => (
                   <span
