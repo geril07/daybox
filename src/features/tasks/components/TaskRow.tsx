@@ -152,7 +152,7 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
 
       <div className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 hover:opacity-100">
         <Button
-          variant="ghost"
+          variant="ghostDestructive"
           size="icon-sm"
           onClick={() => {
             if (isFocused) {
