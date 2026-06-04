@@ -4,7 +4,7 @@ import {
   selectTodayTasks,
   useTaskStore,
 } from '@/features/tasks'
-import EmptyState from '@/shared/EmptyState'
+import { EmptyState } from '@/shared/EmptyState'
 
 export function TodayView() {
   const tasks = useTaskStore((s) => s.tasks)

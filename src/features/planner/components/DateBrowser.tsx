@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { useUIStore } from '@/app/uiStore'
 import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
-import EmptyState from '@/shared/EmptyState'
+import { EmptyState } from '@/shared/EmptyState'
 import { formatDate } from '@/shared/dates'
 
 export function DateBrowser() {

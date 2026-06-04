@@ -1,6 +1,6 @@
 import { useSettingsStore } from '@/app/settingsStore'
 import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
-import EmptyState from '@/shared/EmptyState'
+import { EmptyState } from '@/shared/EmptyState'
 import { getWeekDays, getFormattedDate, formatDate } from '@/shared/dates'
 
 export function WeekView() {

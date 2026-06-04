@@ -1,6 +1,6 @@
 import { FilePlus } from 'lucide-react'
 
-export default function EmptyState({
+export function EmptyState({
   title,
   description,
 }: {

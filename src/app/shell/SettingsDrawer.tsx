@@ -35,7 +35,7 @@ const weekDays = [
   { value: 6, label: 'Sat' },
 ] as const
 
-export default function SettingsDrawer({
+export function SettingsDrawer({
   open,
   onClose,
 }: {

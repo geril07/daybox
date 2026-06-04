@@ -1,5 +1,5 @@
 import { TaskList, selectBacklog, useTaskStore } from '@/features/tasks'
-import EmptyState from '@/shared/EmptyState'
+import { EmptyState } from '@/shared/EmptyState'
 
 export function BacklogView() {
   const tasks = useTaskStore((s) => s.tasks)

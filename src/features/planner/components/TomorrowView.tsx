@@ -1,5 +1,5 @@
 import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
-import EmptyState from '@/shared/EmptyState'
+import { EmptyState } from '@/shared/EmptyState'
 import { formatDate } from '@/shared/dates'
 
 const tomorrowTimestamp = Date.now() + 86400000

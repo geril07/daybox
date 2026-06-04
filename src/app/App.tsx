@@ -2,7 +2,7 @@ import { Settings } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
 import { useSettingsStore } from '@/app/settingsStore'
-import SettingsDrawer from '@/app/shell/SettingsDrawer'
+import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
 import { useUIStore } from '@/app/uiStore'
 import { GroupLens, useGroupStore } from '@/features/groups'
 import {
@@ -19,7 +19,7 @@ import { registerShortcuts } from '@/shared/keyboard'
 import type { View } from '@/shared/types'
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui'
 
-export default function App() {
+export function App() {
   const view = useUIStore((s) => s.view)
   const setView = useUIStore((s) => s.setView)
   const theme = useSettingsStore((s) => s.settings.theme)
