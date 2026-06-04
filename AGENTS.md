@@ -26,6 +26,13 @@ Testing: `vitest` config in `vite.config.ts`, environment `jsdom`. Test files si
 
 ## Workflow
 
+After touching codebase make sure to run:
+
+- npm run format
+- npm run typecheck
+- npm run lint
+- npm run test
+
 Project uses OpenSpec with `spec-driven` schema. Changes live in `openspec/changes/<name>/`:
 
 - `/opsx-apply <change>` — implement tasks
