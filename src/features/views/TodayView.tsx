@@ -1,0 +1,47 @@
+import { useAppStore } from '../../app/store'
+import { isOverdue, formatDate } from '../../shared/dates'
+import TaskList from '../tasks/TaskList'
+import EmptyState from '../../shared/EmptyState'
+
+export default function TodayView() {
+  const tasks = useAppStore(s => s.tasks)
+  const today = formatDate(new Date())
+
+  const overdueTasks = tasks
+    .filter(t => !t.completed && t.date !== null && isOverdue(t.date))
+    .sort((a, b) => {
+      if (a.date! < b.date!) return -1
+      if (a.date! > b.date!) return 1
+      return a.sortOrder - b.sortOrder
+    })
+
+  const todayTasks = tasks
+    .filter(t => t.date === today)
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+
+  if (overdueTasks.length === 0 && todayTasks.length === 0) {
+    return (
+      <EmptyState
+        title="Nothing scheduled for today"
+        description="Pull tasks from Backlog or add a new one."
+      />
+    )
+  }
+
+  return (
+    <div>
+      {overdueTasks.length > 0 && (
+        <div>
+          <div className="section-label uppercase font-semibold tracking-[0.9px] text-[10.5px] pb-2 pt-5" style={{ color: 'var(--overdue)' }}>
+            Overdue
+          </div>
+          <TaskList tasks={overdueTasks} showAddRow={false} />
+        </div>
+      )}
+      <div className="section-label uppercase font-semibold tracking-[0.9px] text-[10.5px] pb-2 pt-5" style={{ color: 'var(--fg-3)' }}>
+        Today
+      </div>
+      <TaskList tasks={todayTasks} defaultDate={today} />
+    </div>
+  )
+}
