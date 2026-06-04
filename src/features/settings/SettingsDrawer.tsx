@@ -25,6 +25,16 @@ import {
 } from '../../shared/ui'
 import GroupSettings from '../groups/GroupSettings'
 
+const weekDays = [
+  { value: 0, label: 'Sun' },
+  { value: 1, label: 'Mon' },
+  { value: 2, label: 'Tue' },
+  { value: 3, label: 'Wed' },
+  { value: 4, label: 'Thu' },
+  { value: 5, label: 'Fri' },
+  { value: 6, label: 'Sat' },
+] as const
+
 export default function SettingsDrawer({
   open,
   onClose,
@@ -212,30 +222,26 @@ export default function SettingsDrawer({
               Display
             </div>
             <SettingRow label="First day of week">
-              <select
-                className="border-border bg-background text-foreground rounded-[4px] border px-2 py-1 text-xs outline-none"
+              <Select
+                items={weekDays}
                 value={settings.weekStartDay}
-                onChange={(e) =>
+                onValueChange={(v) =>
                   updateSettings({
-                    weekStartDay: Number(e.target.value) as
-                      | 0
-                      | 1
-                      | 2
-                      | 3
-                      | 4
-                      | 5
-                      | 6,
+                    weekStartDay: (v ?? 1) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
                   })
                 }
               >
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-                  (d, i) => (
-                    <option key={i} value={i}>
-                      {d}
-                    </option>
-                  ),
-                )}
-              </select>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {weekDays.map((day) => (
+                    <SelectItem key={day.value} value={day.value}>
+                      {day.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </SettingRow>
             <SettingRow label="Dark theme">
               <Switch

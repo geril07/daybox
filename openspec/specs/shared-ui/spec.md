@@ -60,21 +60,21 @@ Consumer code SHALL NOT use raw `<button>`, inline `style={{}}`, or imperative h
 
 The following shadcn components SHALL be available after migration:
 
-| Component | Status | Replaces |
-|---|---|---|
-| Button | replace | existing button.tsx |
-| Select | replace | existing select-menu.tsx |
-| Sheet | replace | existing side-panel.tsx |
-| Switch | replace | existing toggle.tsx |
-| Slider | replace | existing range-slider.tsx |
+| Component   | Status  | Replaces                  |
+| ----------- | ------- | ------------------------- |
+| Button      | replace | existing button.tsx       |
+| Select      | replace | existing select-menu.tsx  |
+| Sheet       | replace | existing side-panel.tsx   |
+| Switch      | replace | existing toggle.tsx       |
+| Slider      | replace | existing range-slider.tsx |
 | AlertDialog | replace | existing alert-dialog.tsx |
-| Popover | replace | existing popover-card.tsx |
-| Input | add | none |
-| Label | add | none |
-| Separator | add | none |
-| Badge | add | none |
-| Card | add | none |
-| Tabs | add | none |
+| Popover     | replace | existing popover-card.tsx |
+| Input       | add     | none                      |
+| Label       | add     | none                      |
+| Separator   | add     | none                      |
+| Badge       | add     | none                      |
+| Card        | add     | none                      |
+| Tabs        | add     | none                      |
 
 #### Scenario: Component inventory
 
