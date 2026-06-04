@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 
 import { useAppStore } from '../../app/store'
 import type { Group } from '../../shared/types'
-import { PopoverCard } from '../../shared/ui'
+import { Popover } from '../../shared/ui'
 
 interface AddTaskRowProps {
   defaultDate?: string | null
@@ -127,8 +127,8 @@ function GroupChip({
   onSelect: (id: string) => void
 }) {
   return (
-    <PopoverCard
-      trigger={
+    <Popover>
+      <Popover.Trigger>
         <span
           className="transition-border flex shrink-0 items-center gap-1.5 rounded-[4px] px-2 py-1 text-xs duration-140"
           style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}
@@ -149,32 +149,36 @@ function GroupChip({
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </span>
-      }
-      className="p-2"
-    >
-      {groups.map((g) => (
-        <button
-          key={g.id}
-          className="transition-background flex w-full items-center gap-2 rounded-[4px] px-3 py-2 text-left text-sm duration-100"
-          style={{
-            color: g.id === group.id ? 'var(--accent)' : 'var(--fg-2)',
-          }}
-          onClick={() => onSelect(g.id)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--bg-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent'
-          }}
-        >
-          <span
-            className="h-[8px] w-[8px] shrink-0 rounded-full"
-            style={{ background: g.color }}
-          />
-          {g.name}
-        </button>
-      ))}
-    </PopoverCard>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner className="z-50" style={{ top: 4 }}>
+          <Popover.Content className="min-w-[140px] p-2">
+            {groups.map((g) => (
+              <button
+                key={g.id}
+                className="transition-background flex w-full items-center gap-2 rounded-[4px] px-3 py-2 text-left text-sm duration-100"
+                style={{
+                  color: g.id === group.id ? 'var(--accent)' : 'var(--fg-2)',
+                }}
+                onClick={() => onSelect(g.id)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--bg-hover)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <span
+                  className="h-[8px] w-[8px] shrink-0 rounded-full"
+                  style={{ background: g.color }}
+                />
+                {g.name}
+              </button>
+            ))}
+          </Popover.Content>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover>
   )
 }
 

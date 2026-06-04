@@ -116,10 +116,8 @@ function GroupItem({
           {group.name}
         </span>
       )}
-      <AlertDialog
-        title={`Delete "${group.name}"`}
-        description="What should happen to tasks in this group?"
-        trigger={
+      <AlertDialog>
+        <AlertDialog.Trigger>
           <button
             disabled={isLast}
             className="rounded-[4px] px-[7px] py-[3px] text-xs transition-all duration-120 disabled:cursor-not-allowed disabled:opacity-30"
@@ -127,21 +125,47 @@ function GroupItem({
           >
             Delete
           </button>
-        }
-        actions={[
-          {
-            label: 'Move tasks to General',
-            onClick: () => onDelete(group.id, true),
-            variant: 'primary',
-          },
-          {
-            label: 'Delete all tasks',
-            onClick: () => onDelete(group.id, false),
-            variant: 'danger',
-          },
-          { label: 'Cancel', variant: 'secondary' },
-        ]}
-      />
+        </AlertDialog.Trigger>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay />
+          <AlertDialog.Content>
+            <AlertDialog.Title>
+              Delete &quot;{group.name}&quot;
+            </AlertDialog.Title>
+            <AlertDialog.Description>
+              What should happen to tasks in this group?
+            </AlertDialog.Description>
+            <div className="flex flex-col gap-2">
+              <AlertDialog.Close
+                className="w-full rounded-[6px] py-2 text-xs font-medium text-white transition-all duration-120"
+                style={{ background: 'var(--accent)' }}
+                onClick={() => onDelete(group.id, true)}
+              >
+                Move tasks to General
+              </AlertDialog.Close>
+              <AlertDialog.Close
+                className="w-full rounded-[6px] py-2 text-xs transition-all duration-120"
+                style={{
+                  border: '1px solid var(--overdue-border)',
+                  color: 'var(--overdue)',
+                }}
+                onClick={() => onDelete(group.id, false)}
+              >
+                Delete all tasks
+              </AlertDialog.Close>
+              <AlertDialog.Close
+                className="w-full rounded-[6px] py-2 text-xs transition-all duration-120"
+                style={{
+                  border: '1px solid var(--border)',
+                  color: 'var(--fg-3)',
+                }}
+              >
+                Cancel
+              </AlertDialog.Close>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog>
     </div>
   )
 }
