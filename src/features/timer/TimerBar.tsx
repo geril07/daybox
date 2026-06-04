@@ -202,137 +202,142 @@ export default function TimerBar() {
         />
       </div>
       <div className="mx-auto flex max-w-[680px] items-center gap-3.5 px-7 py-2.5">
-        <div className="flex min-w-0 flex-1 flex-col gap-[1px]">
-          <span
-            className="text-[10.5px] font-semibold tracking-[0.8px] uppercase"
-            style={{ color: phaseColor }}
-          >
-            {phaseLabel}
-          </span>
-          <span
-            className="truncate text-[12.5px]"
-            style={{ color: focusedTask ? 'var(--fg-2)' : 'var(--fg-3)' }}
-          >
-            {focusedTask ? focusedTask.title : 'No task focused'}
-          </span>
-        </div>
-        <span
-          className="min-w-[80px] shrink-0 text-center text-[30px] font-medium tracking-[1px] transition-colors duration-300"
-          style={{
-            color: isIdle ? 'var(--fg-3)' : 'var(--fg)',
-            fontFamily: 'var(--font-mono)',
-          }}
-        >
-          {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-        </span>
-        <div className="flex shrink-0 items-center gap-1">
-          <button
-            className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
-            style={{ color: 'var(--fg-3)' }}
-            onClick={handleReset}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--bg-hover)'
-              e.currentTarget.style.color = 'var(--fg)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = 'var(--fg-3)'
-            }}
-            title="Reset"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="23 4 23 10 17 10" />
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-            </svg>
-          </button>
-          <button
-            className="flex h-[40px] w-[40px] items-center justify-center rounded-full transition-all duration-140"
-            style={{
-              background: phaseColor,
-              color: 'white',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-            onClick={handlePlayPause}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.88'
-              e.currentTarget.style.transform = 'scale(1.04)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1'
-              e.currentTarget.style.transform = 'scale(1)'
-            }}
-            title={isRunning ? 'Pause' : 'Start'}
-          >
-            {isRunning ? (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <rect x="6" y="4" width="4" height="16" />
-                <rect x="14" y="4" width="4" height="16" />
-              </svg>
-            ) : (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-            )}
-          </button>
-          <button
-            className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
-            style={{ color: 'var(--fg-3)' }}
-            onClick={handleSkip}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--bg-hover)'
-              e.currentTarget.style.color = 'var(--fg)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = 'var(--fg-3)'
-            }}
-            title="Skip"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polygon points="5 4 15 12 5 20 5 4" />
-              <line x1="19" y1="5" x2="19" y2="19" />
-            </svg>
-          </button>
-        </div>
-        <div className="flex min-w-[40px] shrink-0 items-center gap-[3px]">
-          {sessionDots.map((i) => (
+        <div className="flex w-full shrink-0 items-center justify-between gap-2.5">
+          <div className="flex items-center">
             <span
-              key={i}
-              className="h-[6px] w-[6px] rounded-full"
+              className="min-w-[80px] shrink-0 text-center text-[30px] font-medium tracking-[1px] transition-colors duration-300"
               style={{
-                background: phaseColor,
-                opacity: i < sessionPomoCount ? 1 : 0.5,
+                color: isIdle ? 'var(--fg-3)' : 'var(--fg)',
+                fontFamily: 'var(--font-mono)',
               }}
-            />
-          ))}
+            >
+              {String(minutes).padStart(2, '0')}:
+              {String(seconds).padStart(2, '0')}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
+                style={{ color: 'var(--fg-3)' }}
+                onClick={handleReset}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--bg-hover)'
+                  e.currentTarget.style.color = 'var(--fg)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--fg-3)'
+                }}
+                title="Reset"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
+              </button>
+              <button
+                className="flex h-[40px] w-[40px] items-center justify-center rounded-full transition-all duration-140"
+                style={{
+                  background: phaseColor,
+                  color: 'white',
+                  boxShadow: 'var(--shadow-sm)',
+                }}
+                onClick={handlePlayPause}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = '0.88'
+                  e.currentTarget.style.transform = 'scale(1.04)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = '1'
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
+                title={isRunning ? 'Pause' : 'Start'}
+              >
+                {isRunning ? (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <rect x="6" y="4" width="4" height="16" />
+                    <rect x="14" y="4" width="4" height="16" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                )}
+              </button>
+              <button
+                className="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-140"
+                style={{ color: 'var(--fg-3)' }}
+                onClick={handleSkip}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--bg-hover)'
+                  e.currentTarget.style.color = 'var(--fg)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = 'var(--fg-3)'
+                }}
+                title="Skip"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polygon points="5 4 15 12 5 20 5 4" />
+                  <line x1="19" y1="5" x2="19" y2="19" />
+                </svg>
+              </button>
+              <div className="flex min-w-[40px] shrink-0 items-center gap-[3px]">
+                {sessionDots.map((i) => (
+                  <span
+                    key={i}
+                    className="h-[6px] w-[6px] rounded-full"
+                    style={{
+                      background: phaseColor,
+                      opacity: i < sessionPomoCount ? 1 : 0.5,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex min-w-0 flex-col gap-[1px]">
+            <span
+              className="text-[10.5px] font-semibold tracking-[0.8px] uppercase"
+              style={{ color: phaseColor }}
+            >
+              {phaseLabel}
+            </span>
+            <span
+              className="truncate text-[12.5px]"
+              style={{ color: focusedTask ? 'var(--fg-2)' : 'var(--fg-3)' }}
+            >
+              {focusedTask ? focusedTask.title : 'No task focused'}
+            </span>
+          </div>
         </div>
       </div>
     </div>
