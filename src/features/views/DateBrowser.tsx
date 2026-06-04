@@ -1,7 +1,6 @@
 import { useAppStore } from '../../app/store'
 import EmptyState from '../../shared/EmptyState'
 import { formatDate } from '../../shared/dates'
-import AddTaskRow from '../tasks/AddTaskRow'
 import TaskList from '../tasks/TaskList'
 
 export default function DateBrowser() {
@@ -94,17 +93,7 @@ export default function DateBrowser() {
           </svg>
         </button>
       </div>
-      {dateTasks.length === 0 ? (
-        <>
-          <AddTaskRow defaultDate={browseDate} />
-          <EmptyState
-            title="Nothing on this day."
-            description="Reschedule a task or add a new one."
-          />
-        </>
-      ) : (
-        <TaskList tasks={dateTasks} defaultDate={browseDate} />
-      )}
+      <TaskList tasks={dateTasks} />
     </div>
   )
 }

@@ -5,22 +5,14 @@ import { useRef } from 'react'
 
 import { useAppStore } from '../../app/store'
 import type { Task } from '../../shared/types'
-import AddTaskRow from './AddTaskRow'
 import TaskRow from './TaskRow'
 
 interface TaskListProps {
   tasks: Task[]
-  showAddRow?: boolean
-  defaultDate?: string | null
   emptyMessage?: string
 }
 
-export default function TaskList({
-  tasks,
-  showAddRow = true,
-  defaultDate,
-  emptyMessage,
-}: TaskListProps) {
+export default function TaskList({ tasks, emptyMessage }: TaskListProps) {
   const reorderTasks = useAppStore((s) => s.reorderTasks)
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -38,7 +30,6 @@ export default function TaskList({
 
   return (
     <div>
-      {showAddRow && <AddTaskRow defaultDate={defaultDate} />}
       {tasks.length === 0 ? (
         <div className="py-14 text-center" style={{ color: 'var(--fg-3)' }}>
           {emptyMessage || 'No tasks yet.'}

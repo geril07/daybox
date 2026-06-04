@@ -162,8 +162,8 @@ src/
     <GroupLens />                       — features/groups/GroupLens.tsx
     <GearIcon />
   </Header>
+  <AddTaskRow />                      — features/tasks/AddTaskRow.tsx
   <TaskList>                           — features/tasks/TaskList.tsx
-    <AddTaskRow />                      — features/tasks/AddTaskRow.tsx
     <OverdueSection />                  — features/views/TodayView.tsx
     <TaskRow />*                        — features/tasks/TaskRow.tsx
     <PomoPopup />                       — features/tasks/PomoPopup.tsx

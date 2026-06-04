@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 
 import GroupLens from '../features/groups/GroupLens'
 import SettingsDrawer from '../features/settings/SettingsDrawer'
+import AddTaskRow from '../features/tasks/AddTaskRow'
 import TimerBar from '../features/timer/TimerBar'
 import BacklogView from '../features/views/BacklogView'
 import DateBrowser from '../features/views/DateBrowser'
 import TodayView from '../features/views/TodayView'
 import TomorrowView from '../features/views/TomorrowView'
 import WeekView from '../features/views/WeekView'
+import { formatDate } from '../shared/dates'
 import { registerShortcuts } from '../shared/keyboard'
 import type { View } from '../shared/types'
 import { useAppStore } from './store'
@@ -16,13 +18,32 @@ export default function App() {
   const view = useAppStore((s) => s.view)
   const setView = useAppStore((s) => s.setView)
   const theme = useAppStore((s) => s.settings.theme)
+  const browseDate = useAppStore((s) => s.browseDate)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [, setAddRowFocused] = useState(false)
+
+  const defaultDate: string | undefined = (() => {
+    switch (view) {
+      case 'today':
+        return formatDate(new Date())
+      case 'tomorrow': {
+        const d = new Date()
+        d.setDate(d.getDate() + 1)
+        return formatDate(d)
+      }
+      case 'week':
+        return formatDate(new Date())
+      case 'backlog':
+        return undefined
+      case 'date':
+        return browseDate ?? undefined
+      default:
+        return formatDate(new Date())
+    }
+  })()
 
   useEffect(() => {
     const cleanup = registerShortcuts({
-      n: () => setAddRowFocused(true),
       ' ': () => {
         document
           .querySelector('[title="Start"], [title="Pause"]')
@@ -167,7 +188,10 @@ export default function App() {
 
       <main className="app-content flex-1" style={{ paddingBottom: '72px' }}>
         <div className="container mx-auto w-full max-w-[680px] px-7">
-          <div className="task-list-area py-1 pb-10">{renderView()}</div>
+          <div className="task-list-area py-1 pb-10">
+            <AddTaskRow defaultDate={defaultDate} />
+            {renderView()}
+          </div>
         </div>
       </main>
 

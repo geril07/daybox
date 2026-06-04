@@ -1,7 +1,6 @@
 import { useAppStore } from '../../app/store'
 import EmptyState from '../../shared/EmptyState'
 import { formatDate } from '../../shared/dates'
-import AddTaskRow from '../tasks/AddTaskRow'
 import TaskList from '../tasks/TaskList'
 
 const tomorrowTimestamp = Date.now() + 86400000
@@ -15,19 +14,16 @@ export default function TomorrowView() {
 
   if (tomorrowTasks.length === 0) {
     return (
-      <>
-        <AddTaskRow defaultDate={tomorrow} />
-        <EmptyState
-          title="Nothing planned for tomorrow yet."
-          description="Add a task or reschedule one from today."
-        />
-      </>
+      <EmptyState
+        title="Nothing planned for tomorrow yet."
+        description="Add a task or reschedule one from today."
+      />
     )
   }
 
   return (
     <div>
-      <TaskList tasks={tomorrowTasks} defaultDate={tomorrow} />
+      <TaskList tasks={tomorrowTasks} />
     </div>
   )
 }

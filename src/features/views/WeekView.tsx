@@ -1,7 +1,6 @@
 import { useAppStore } from '../../app/store'
 import EmptyState from '../../shared/EmptyState'
 import { getWeekDays, getFormattedDate, formatDate } from '../../shared/dates'
-import AddTaskRow from '../tasks/AddTaskRow'
 import TaskList from '../tasks/TaskList'
 
 export default function WeekView() {
@@ -18,13 +17,10 @@ export default function WeekView() {
 
   if (!hasAnyTasks) {
     return (
-      <>
-        <AddTaskRow defaultDate={today} />
-        <EmptyState
-          title="No tasks this week."
-          description="Add or reschedule something."
-        />
-      </>
+      <EmptyState
+        title="No tasks this week."
+        description="Add or reschedule something."
+      />
     )
   }
 
@@ -60,11 +56,7 @@ export default function WeekView() {
                 </span>
               )}
             </div>
-            <TaskList
-              tasks={dayTasks}
-              showAddRow={isToday}
-              defaultDate={isToday ? dateStr : null}
-            />
+            <TaskList tasks={dayTasks} />
           </div>
         )
       })}

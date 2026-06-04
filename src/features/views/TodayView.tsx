@@ -1,7 +1,6 @@
 import { useAppStore } from '../../app/store'
 import EmptyState from '../../shared/EmptyState'
 import { isOverdue, formatDate } from '../../shared/dates'
-import AddTaskRow from '../tasks/AddTaskRow'
 import TaskList from '../tasks/TaskList'
 
 export default function TodayView() {
@@ -22,13 +21,10 @@ export default function TodayView() {
 
   if (overdueTasks.length === 0 && todayTasks.length === 0) {
     return (
-      <>
-        <AddTaskRow defaultDate={today} />
-        <EmptyState
-          title="Nothing scheduled for today"
-          description="Pull tasks from Backlog or add a new one."
-        />
-      </>
+      <EmptyState
+        title="Nothing scheduled for today"
+        description="Pull tasks from Backlog or add a new one."
+      />
     )
   }
 
@@ -42,7 +38,7 @@ export default function TodayView() {
           >
             Overdue
           </div>
-          <TaskList tasks={overdueTasks} showAddRow={false} />
+          <TaskList tasks={overdueTasks} />
         </div>
       )}
       <div
@@ -51,7 +47,7 @@ export default function TodayView() {
       >
         Today
       </div>
-      <TaskList tasks={todayTasks} defaultDate={today} />
+      <TaskList tasks={todayTasks} />
     </div>
   )
 }
