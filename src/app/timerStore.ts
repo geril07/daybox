@@ -75,7 +75,11 @@ export const useTimerStore = create<TimerStore>()((set, get) => ({
   tick: () => {
     const state = get()
     if (!state.isRunning || !state.startedAt) return
-    set({ elapsed: Date.now() - state.startedAt })
+    const now = Date.now()
+    set({
+      elapsed: state.elapsed + (now - state.startedAt),
+      startedAt: now,
+    })
   },
 
   getRemainingSeconds: (focusDuration, shortBreakDuration, longBreakDuration) => {

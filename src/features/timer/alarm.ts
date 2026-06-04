@@ -1,6 +1,16 @@
 type SoundName = 'bell' | 'digital' | 'gentle' | 'ping'
 
-const audioContext = new AudioContext()
+let audioContext: AudioContext | null = null
+
+function getAudioContext(): AudioContext {
+  if (!audioContext) {
+    audioContext = new AudioContext()
+  }
+  if (audioContext.state === 'suspended') {
+    audioContext.resume()
+  }
+  return audioContext
+}
 
 function playTone(
   frequency: number,
@@ -9,16 +19,17 @@ function playTone(
   volume: number,
   delay: number,
 ): void {
-  const osc = audioContext.createOscillator()
-  const gain = audioContext.createGain()
+  const ctx = getAudioContext()
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
   osc.type = type
-  osc.frequency.setValueAtTime(frequency, audioContext.currentTime + delay)
-  gain.gain.setValueAtTime(volume, audioContext.currentTime + delay)
-  gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + delay + duration)
+  osc.frequency.setValueAtTime(frequency, ctx.currentTime + delay)
+  gain.gain.setValueAtTime(volume, ctx.currentTime + delay)
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration)
   osc.connect(gain)
-  gain.connect(audioContext.destination)
-  osc.start(audioContext.currentTime + delay)
-  osc.stop(audioContext.currentTime + delay + duration)
+  gain.connect(ctx.destination)
+  osc.start(ctx.currentTime + delay)
+  osc.stop(ctx.currentTime + delay + duration)
 }
 
 const soundDefinitions: Record<SoundName, { freqs: number[]; duration: number; type: OscillatorType }> = {

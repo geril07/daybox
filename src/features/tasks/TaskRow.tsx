@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Popover } from '@base-ui/react'
 import { useAppStore } from '../../app/store'
+import { useTimerStore } from '../../app/timerStore'
 import type { Task } from '../../shared/types'
 import { isOverdue, formatDate } from '../../shared/dates'
 
@@ -12,6 +13,7 @@ interface TaskRowProps {
 export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
+  const [hovering, setHovering] = useState(false)
   const editRef = useRef<HTMLInputElement>(null)
   const toggleTask = useAppStore(s => s.toggleTask)
   const updateTask = useAppStore(s => s.updateTask)
@@ -19,6 +21,10 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   const setFocusedTaskId = useAppStore(s => s.setFocusedTaskId)
   const groups = useAppStore(s => s.groups)
   const focusedTaskId = useAppStore(s => s.focusedTaskId)
+  const timerSetPhase = useTimerStore(s => s.setPhase)
+  const timerReset = useTimerStore(s => s.reset)
+  const timerStart = useTimerStore(s => s.start)
+  const timerIsRunning = useTimerStore(s => s.isRunning)
 
   const group = groups.find(g => g.id === task.groupId)
   const showGroupUi = groups.length > 1
@@ -66,13 +72,13 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
         background: isFocused ? 'var(--accent-bg)' : overdue ? 'var(--overdue-bg)' : 'transparent',
         opacity: task.completed ? 0.52 : 1,
       }}
-      onMouseEnter={e => { if (!isFocused) e.currentTarget.style.background = 'var(--bg-hover)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = isFocused ? 'var(--accent-bg)' : overdue ? 'var(--overdue-bg)' : 'transparent' }}
+      onMouseEnter={e => { setHovering(true); if (!isFocused) e.currentTarget.style.background = 'var(--bg-hover)' }}
+      onMouseLeave={e => { setHovering(false); e.currentTarget.style.background = isFocused ? 'var(--accent-bg)' : overdue ? 'var(--overdue-bg)' : 'transparent' }}
     >
       <div
         ref={dragHandleRef}
-        className="shrink-0 cursor-grab active:cursor-grabbing opacity-0 transition-opacity duration-120 p-0.5"
-        style={{ color: 'var(--fg-3)' }}
+        className="shrink-0 cursor-grab active:cursor-grabbing p-0.5 transition-opacity duration-120"
+        style={{ color: 'var(--fg-3)', opacity: hovering ? 1 : 0 }}
         onClick={e => e.stopPropagation()}
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -149,7 +155,16 @@ export default function TaskRow({ task, dragHandleRef }: TaskRowProps) {
         <button
           className="w-7 h-7 rounded-[4px] flex items-center justify-center transition-all duration-120"
           style={{ color: 'var(--fg-3)' }}
-          onClick={() => setFocusedTaskId(isFocused ? null : task.id)}
+          onClick={() => {
+            if (isFocused) {
+              setFocusedTaskId(null)
+            } else {
+              setFocusedTaskId(task.id)
+              timerSetPhase('focus')
+              timerReset()
+              if (timerIsRunning) timerStart()
+            }
+          }}
           onMouseEnter={e => { e.currentTarget.style.color = 'var(--accent)' }}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--fg-3)' }}
           title="Focus"

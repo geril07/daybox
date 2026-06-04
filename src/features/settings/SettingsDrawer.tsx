@@ -1,4 +1,5 @@
-import { Drawer, NumberField, Switch, Select, Slider } from '@base-ui/react'
+import { useState } from 'react'
+import { Drawer, NumberField, Switch, Select, Slider, AlertDialog } from '@base-ui/react'
 import { useAppStore } from '../../app/store'
 import { exportData, downloadExport, parseImport } from '../../app/localStorage'
 import GroupSettings from '../groups/GroupSettings'
@@ -8,33 +9,40 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
   const updateTimerSettings = useAppStore(s => s.updateTimerSettings)
   const updateSettings = useAppStore(s => s.updateSettings)
 
+  const [importConfirmOpen, setImportConfirmOpen] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+
   const handleExport = () => {
     const state = useAppStore.getState()
     const json = exportData(state)
     downloadExport(json)
   }
 
-  const handleImport = () => {
+  const doImport = () => {
+    setImportConfirmOpen(false)
+    setImportError(null)
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.json'
     input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      const text = await file.text()
-      const result = parseImport(text)
-      if (result.success && result.data) {
-        const store = useAppStore.getState()
-        if (result.data.tasks) store.tasks = result.data.tasks
-        if (result.data.groups) store.groups = result.data.groups
-        if (result.data.settings) {
-          store.settings = { ...store.settings, ...result.data.settings }
+      try {
+        const file = (e.target as HTMLInputElement).files?.[0]
+        if (!file) return
+        const text = await file.text()
+        const result = parseImport(text)
+        if (!result.success) {
+          setImportError(result.error ?? 'Unknown error')
+          return
         }
-        useAppStore.setState({
-          tasks: result.data.tasks ?? store.tasks,
-          groups: result.data.groups ?? store.groups,
-          settings: result.data.settings ?? store.settings,
-        })
+        if (result.data) {
+          useAppStore.setState({
+            tasks: result.data.tasks ?? [],
+            groups: result.data.groups ?? [],
+            settings: result.data.settings ?? useAppStore.getState().settings,
+          })
+        }
+      } catch {
+        setImportError('Failed to read file.')
       }
     }
     input.click()
@@ -267,15 +275,48 @@ export default function SettingsDrawer({ open, onClose }: { open: boolean; onClo
               >
                 Export
               </button>
-              <button
-                className="w-full py-2 text-[13.5px] rounded-[6px] transition-all duration-140"
-                style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}
-                onClick={handleImport}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.background = 'var(--accent-bg)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--fg-2)'; e.currentTarget.style.background = 'transparent' }}
-              >
-                Import
-              </button>
+              <AlertDialog.Root open={importConfirmOpen} onOpenChange={o => setImportConfirmOpen(o)}>
+                <AlertDialog.Trigger
+                  className="w-full py-2 text-[13.5px] rounded-[6px] transition-all duration-140"
+                  style={{ border: '1px solid var(--border)', color: 'var(--fg-2)' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.background = 'var(--accent-bg)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--fg-2)'; e.currentTarget.style.background = 'transparent' }}
+                >
+                  Import
+                </AlertDialog.Trigger>
+                <AlertDialog.Portal>
+                  <AlertDialog.Backdrop className="fixed inset-0 z-50" style={{ background: 'oklch(0 0 0 / 0.25)' }} />
+                  <AlertDialog.Popup
+                    className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[10px] p-5 shadow-lg max-w-[85vw]"
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                  >
+                    <AlertDialog.Title className="text-sm font-semibold mb-2" style={{ color: 'var(--fg)' }}>
+                      Import data
+                    </AlertDialog.Title>
+                    <AlertDialog.Description className="text-xs mb-4" style={{ color: 'var(--fg-2)' }}>
+                      This will replace all current data (tasks, groups, settings). This cannot be undone.
+                    </AlertDialog.Description>
+                    <div className="flex flex-col gap-2">
+                      <AlertDialog.Close
+                        className="w-full text-xs py-2 rounded-[6px] font-medium transition-all duration-120"
+                        style={{ background: 'var(--accent)', color: 'white' }}
+                        onClick={doImport}
+                      >
+                        Continue
+                      </AlertDialog.Close>
+                      <AlertDialog.Close
+                        className="w-full text-xs py-2 rounded-[6px] transition-all duration-120"
+                        style={{ border: '1px solid var(--border)', color: 'var(--fg-3)' }}
+                      >
+                        Cancel
+                      </AlertDialog.Close>
+                    </div>
+                  </AlertDialog.Popup>
+                </AlertDialog.Portal>
+              </AlertDialog.Root>
+              {importError && (
+                <div className="text-xs mt-1" style={{ color: 'var(--overdue)' }}>{importError}</div>
+              )}
             </div>
           </div>
         </Drawer.Popup>

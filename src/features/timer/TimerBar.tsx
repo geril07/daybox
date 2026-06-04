@@ -45,7 +45,7 @@ export default function TimerBar() {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
         tick()
-      }, 200)
+      }, 1000)
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
