@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import { PlannerStateSchema } from '@/features/planner/schema'
 import { formatDate } from '@/shared/dates'
+import { createValidatedPersist } from '@/shared/lib/persistence'
 
 export type WeekStartDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 
@@ -17,6 +19,8 @@ interface PlannerActions {
 }
 
 export type PlannerStore = PlannerState & PlannerActions
+
+const plannerInit: PlannerState = { weekStartDay: 1, browseDate: null }
 
 export const usePlannerStore = create<PlannerStore>()(
   persist(
@@ -35,8 +39,11 @@ export const usePlannerStore = create<PlannerStore>()(
         set({ browseDate: formatDate(base) })
       },
     }),
-    {
-      name: 'daybox-planner',
-    },
+    createValidatedPersist(
+      'daybox-planner',
+      PlannerStateSchema,
+      plannerInit,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ) as any,
   ),
 )

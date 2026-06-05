@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { exportData, parseImport } from '@/app/localStorage'
 import { setTheme } from '@/app/theme'
@@ -181,5 +181,131 @@ describe('Import errors', () => {
       JSON.stringify({ version: 3, tasks: [], groups: [] }),
     )
     expect(result.success).toBe(false)
+  })
+})
+
+describe('Import validation pipeline', () => {
+  it('drops malformed task and names it in warnings', () => {
+    const valid = createTask({ id: 'good', title: 'Good' })
+    const malformed = { title: 'No id' }
+    const data = JSON.stringify({
+      version: 3,
+      exportedAt: new Date().toISOString(),
+      tasks: [valid, malformed],
+      groups: [createGroup({ id: 'default' })],
+    })
+    const result = parseImport(data)
+    expect(result.success).toBe(true)
+    expect(result.data?.tasks).toHaveLength(1)
+    expect(result.data?.tasks[0].id).toBe('good')
+    expect(result.warnings).toBeDefined()
+    expect(result.warnings?.some((w) => w.toLowerCase().includes('task'))).toBe(
+      true,
+    )
+  })
+
+  it('reassigns dangling groupId to default and warns', () => {
+    const data = JSON.stringify({
+      version: 3,
+      exportedAt: new Date().toISOString(),
+      tasks: [createTask({ id: '1', groupId: 'missing' })],
+      groups: [createGroup({ id: 'default' })],
+    })
+    const result = parseImport(data)
+    expect(result.success).toBe(true)
+    expect(result.data?.tasks[0].groupId).toBe('default')
+    expect(result.warnings).toBeDefined()
+    expect(
+      result.warnings?.some((w) => w.toLowerCase().includes('not found')),
+    ).toBe(true)
+  })
+
+  it('coerces theme "sepia" to "light" silently', () => {
+    const data = JSON.stringify({
+      version: 3,
+      exportedAt: new Date().toISOString(),
+      tasks: [createTask({ id: '1' })],
+      groups: [createGroup({ id: 'default' })],
+      theme: 'sepia',
+    })
+    const result = parseImport(data)
+    expect(result.success).toBe(true)
+    expect(result.data?.theme).toBe('light')
+    const hasThemeWarning =
+      result.warnings?.some((w) => w.toLowerCase().includes('theme')) ?? false
+    expect(hasThemeWarning).toBe(false)
+  })
+
+  it('returns envelope failure with the new wording when version is missing', () => {
+    const data = JSON.stringify({
+      tasks: [createTask({ id: '1' })],
+      groups: [createGroup({ id: 'default' })],
+    })
+    const result = parseImport(data)
+    expect(result.success).toBe(false)
+    expect(result.error).toBe('Not a DayBox export file.')
+  })
+})
+
+describe('Legacy migrations', () => {
+  it('migrates a valid daybox-app-store to the new feature stores', async () => {
+    const { migrateLegacyAppStore } = await import('@/app/localStorage')
+    localStorage.setItem(
+      'daybox-app-store',
+      JSON.stringify({
+        state: {
+          tasks: [createTask({ id: 'legacy-1', title: 'Legacy' })],
+          groups: [createGroup({ id: 'legacy-g' })],
+        },
+      }),
+    )
+    migrateLegacyAppStore()
+    expect(localStorage.getItem('daybox-app-store')).toBeNull()
+    expect(useTaskStore.getState().tasks.some((t) => t.id === 'legacy-1')).toBe(
+      true,
+    )
+    expect(
+      useGroupStore.getState().groups.some((g) => g.id === 'legacy-g'),
+    ).toBe(true)
+  })
+
+  it('removes the daybox-app-store key and warns on invalid shape', async () => {
+    const { migrateLegacyAppStore } = await import('@/app/localStorage')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    localStorage.setItem('daybox-app-store', 'not-valid-json-shape')
+    migrateLegacyAppStore()
+    expect(localStorage.getItem('daybox-app-store')).toBeNull()
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('migrates a valid daybox-settings to the new feature stores', async () => {
+    const { migrateLegacySettings } = await import('@/app/localStorage')
+    localStorage.setItem(
+      'daybox-settings',
+      JSON.stringify({
+        state: {
+          settings: {
+            timer: { ...DEFAULT_TIMER_SETTINGS, focusDuration: 42 },
+            weekStartDay: 0,
+            theme: 'dark',
+          },
+        },
+      }),
+    )
+    migrateLegacySettings()
+    expect(localStorage.getItem('daybox-settings')).toBeNull()
+    expect(useTimerStore.getState().settings.focusDuration).toBe(42)
+    expect(usePlannerStore.getState().weekStartDay).toBe(0)
+  })
+
+  it('removes the daybox-settings key and warns on invalid shape', async () => {
+    const { migrateLegacySettings } = await import('@/app/localStorage')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    localStorage.setItem('daybox-settings', 'not-valid-json-shape')
+    migrateLegacySettings()
+    expect(localStorage.getItem('daybox-settings')).toBeNull()
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
   })
 })

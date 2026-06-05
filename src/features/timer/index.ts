@@ -1,4 +1,6 @@
 export * from './store'
+export * from './types'
+export * from './schema'
 export * from './alarm'
 export * from './components/TimerBar'
 export * from './components/TimerSettingsPanel'

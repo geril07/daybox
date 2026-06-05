@@ -1,10 +1,17 @@
+import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import { TaskSchema } from '@/features/tasks/schema'
 import type { Task } from '@/features/tasks/types'
 import { generateId } from '@/shared/id'
+import { createValidatedPersist } from '@/shared/lib/persistence'
 
 const DEFAULT_GROUP_ID = 'default'
+
+const TaskStateSchema = z.object({
+  tasks: z.array(TaskSchema),
+})
 
 interface TaskState {
   tasks: Task[]
@@ -22,15 +29,39 @@ interface TaskActions {
 
 export type TaskStore = TaskState & TaskActions
 
+const taskInit: TaskState = { tasks: [] }
+
+function createPlaceholderTask(): Task {
+  return {
+    id: '',
+    title: '',
+    groupId: '',
+    date: null,
+    pomoEstimate: 0,
+    pomoCompleted: 0,
+    sortOrder: 0,
+    completed: false,
+    completedAt: null,
+    createdAt: '',
+  }
+}
+
 export const useTaskStore = create<TaskStore>()(
   persist(
     (set) => ({
       tasks: [],
 
       addTask: (title: string, groupId?: string, date?: string | null) => {
+        const trimmed = title.trim()
+        if (trimmed.length === 0 || trimmed.length > 280) {
+          console.warn(
+            `[daybox] Task title ${trimmed.length > 280 ? `exceeds 280 character limit (${trimmed.length})` : 'is empty'}`,
+          )
+          return createPlaceholderTask()
+        }
         const task: Task = {
           id: generateId(),
-          title,
+          title: trimmed,
           groupId: groupId || DEFAULT_GROUP_ID,
           date: date !== undefined ? date : null,
           pomoEstimate: 0,
@@ -91,8 +122,7 @@ export const useTaskStore = create<TaskStore>()(
           tasks: state.tasks.filter((t) => t.groupId !== groupId),
         })),
     }),
-    {
-      name: 'daybox-tasks',
-    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    createValidatedPersist('daybox-tasks', TaskStateSchema, taskInit) as any,
   ),
 )

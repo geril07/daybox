@@ -1,9 +1,12 @@
 import { Settings } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
+import {
+  migrateLegacyAppStore,
+  migrateLegacySettings,
+} from '@/app/localStorage'
 import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
-import { setTheme } from '@/app/theme'
-import { GroupLens, useGroupStore } from '@/features/groups'
+import { GroupLens } from '@/features/groups'
 import {
   BacklogView,
   DateBrowser,
@@ -12,7 +15,7 @@ import {
   WeekView,
   usePlannerStore,
 } from '@/features/planner'
-import { AddTaskRow, useTaskStore } from '@/features/tasks'
+import { AddTaskRow } from '@/features/tasks'
 import { TimerBar, useTimerStore } from '@/features/timer'
 import { formatDate, getTomorrow } from '@/shared/dates'
 import { registerShortcuts } from '@/shared/keyboard'
@@ -60,50 +63,13 @@ export function App() {
 
   useEffect(() => {
     if (migrationDone.current) return
-    const oldData = localStorage.getItem('daybox-app-store')
-    if (oldData) {
-      try {
-        const parsed = JSON.parse(oldData)
-        const state = parsed.state || parsed
-        const tasks = state.tasks ?? []
-        const groups = state.groups ?? []
-        if (tasks.length > 0) useTaskStore.setState({ tasks })
-        if (groups.length > 0) useGroupStore.setState({ groups })
-        if (state.settings) {
-          localStorage.setItem(
-            'daybox-settings',
-            JSON.stringify({ state: { settings: state.settings }, version: 0 }),
-          )
-        }
-        localStorage.removeItem('daybox-app-store')
-      } catch {
-        // ignore corrupted old store
-      }
-    }
+    migrateLegacyAppStore()
     migrationDone.current = true
   }, [])
 
   useEffect(() => {
     if (settingsMigrationDone.current) return
-    const oldSettings = localStorage.getItem('daybox-settings')
-    if (oldSettings) {
-      try {
-        const parsed = JSON.parse(oldSettings)
-        const settings = parsed.state?.settings ?? parsed.settings ?? parsed
-        if (settings?.timer) {
-          useTimerStore.getState().setTimerSettings(settings.timer)
-        }
-        if (typeof settings?.weekStartDay === 'number') {
-          usePlannerStore.getState().setWeekStartDay(settings.weekStartDay)
-        }
-        if (settings?.theme === 'light' || settings?.theme === 'dark') {
-          setTheme(settings.theme)
-        }
-        localStorage.removeItem('daybox-settings')
-      } catch {
-        // ignore corrupted old settings
-      }
-    }
+    migrateLegacySettings()
     settingsMigrationDone.current = true
   }, [])
 

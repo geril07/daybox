@@ -1,11 +1,19 @@
+import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import { GROUP_COLORS } from '@/features/groups/constants'
+import { GroupSchema } from '@/features/groups/schema'
 import type { Group } from '@/features/groups/types'
 import { generateId } from '@/shared/id'
+import { createValidatedPersist } from '@/shared/lib/persistence'
 
 const DEFAULT_GROUP_ID = 'default'
+
+const GroupStateSchema = z.object({
+  groups: z.array(GroupSchema),
+  stickyGroupId: z.string().nullable(),
+})
 
 interface GroupState {
   groups: Group[]
@@ -23,6 +31,18 @@ interface GroupActions {
 
 export type GroupStore = GroupState & GroupActions
 
+const groupInit: GroupState = {
+  groups: [
+    {
+      id: DEFAULT_GROUP_ID,
+      name: 'General',
+      color: GROUP_COLORS[0],
+      createdAt: new Date().toISOString(),
+    },
+  ],
+  stickyGroupId: null,
+}
+
 export const useGroupStore = create<GroupStore>()(
   persist(
     (set, get) => ({
@@ -37,10 +57,17 @@ export const useGroupStore = create<GroupStore>()(
       stickyGroupId: null,
 
       addGroup: (name: string) => {
+        const trimmed = name.trim()
+        if (trimmed.length === 0 || trimmed.length > 40) {
+          console.warn(
+            `[daybox] Group name ${trimmed.length > 40 ? `exceeds 40 character limit (${trimmed.length})` : 'is empty'}`,
+          )
+          return createPlaceholderGroup()
+        }
         const colorIndex = get().getGroupColorIndex()
         const group: Group = {
           id: generateId(),
-          name,
+          name: trimmed,
           color: GROUP_COLORS[colorIndex % GROUP_COLORS.length],
           createdAt: new Date().toISOString(),
         }
@@ -48,10 +75,20 @@ export const useGroupStore = create<GroupStore>()(
         return group
       },
 
-      renameGroup: (id, name) =>
+      renameGroup: (id, name) => {
+        const trimmed = name.trim()
+        if (trimmed.length === 0 || trimmed.length > 40) {
+          console.warn(
+            `[daybox] Group name ${trimmed.length > 40 ? `exceeds 40 character limit (${trimmed.length})` : 'is empty'}`,
+          )
+          return
+        }
         set((state) => ({
-          groups: state.groups.map((g) => (g.id === id ? { ...g, name } : g)),
-        })),
+          groups: state.groups.map((g) =>
+            g.id === id ? { ...g, name: trimmed } : g,
+          ),
+        }))
+      },
 
       deleteGroup: (id) => {
         const state = get()
@@ -71,8 +108,16 @@ export const useGroupStore = create<GroupStore>()(
 
       setStickyGroupId: (id) => set({ stickyGroupId: id }),
     }),
-    {
-      name: 'daybox-groups',
-    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    createValidatedPersist('daybox-groups', GroupStateSchema, groupInit) as any,
   ),
 )
+
+function createPlaceholderGroup(): Group {
+  return {
+    id: '',
+    name: '',
+    color: '',
+    createdAt: '',
+  }
+}

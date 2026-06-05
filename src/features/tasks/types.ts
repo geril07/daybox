@@ -1,12 +1,5 @@
-export interface Task {
-  id: string
-  title: string
-  groupId: string
-  date: string | null
-  pomoEstimate: number
-  pomoCompleted: number
-  sortOrder: number
-  completed: boolean
-  completedAt: string | null
-  createdAt: string
-}
+import type { z } from 'zod'
+
+import type { TaskSchema } from '@/features/tasks/schema'
+
+export type Task = z.infer<typeof TaskSchema>

@@ -1,6 +1,9 @@
 import { useSyncExternalStore } from 'react'
+import { z } from 'zod'
 
-export type Theme = 'light' | 'dark'
+export const ThemeSchema = z.enum(['light', 'dark'])
+
+export type Theme = z.infer<typeof ThemeSchema>
 
 const STORAGE_KEY = 'daybox-theme'
 

@@ -1,19 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { TimerPhase } from '@/features/timer/types'
-
-export interface TimerSettings {
-  focusDuration: number
-  shortBreakDuration: number
-  longBreakDuration: number
-  longBreakInterval: number
-  autoStartBreaks: boolean
-  autoStartPomodoros: boolean
-  alarmSound: 'bell' | 'digital' | 'gentle' | 'ping'
-  alarmVolume: number
-  alarmRepeat: number
-}
+import { TimerStateSchema, TimerSettingsSchema } from '@/features/timer/schema'
+import type { TimerPhase, TimerSettings } from '@/features/timer/types'
+import { createValidatedPersist } from '@/shared/lib/persistence'
 
 export const DEFAULT_TIMER_SETTINGS: TimerSettings = {
   focusDuration: 25,
@@ -61,7 +51,7 @@ export type TimerStore = TimerState & TimerActions
 export const useTimerStore = create<TimerStore>()(
   persist(
     (set, get) => ({
-      phase: 'focus',
+      phase: 'focus' as TimerPhase,
       startedAt: null,
       elapsed: 0,
       sessionPomoCount: 0,
@@ -163,21 +153,41 @@ export const useTimerStore = create<TimerStore>()(
         })
       },
 
-      setTimerSettings: (partial) =>
-        set((state) => ({
-          settings: { ...state.settings, ...partial },
-        })),
-    }),
-    {
-      name: 'daybox-timer',
-      onRehydrateStorage: () => (state) => {
-        if (state?.isRunning && state.startedAt) {
-          const now = Date.now()
-          state.elapsed += now - state.startedAt
-          state.startedAt = now
+      setTimerSettings: (partial) => {
+        const state = get()
+        const merged = { ...state.settings, ...partial }
+        const result = TimerSettingsSchema.safeParse(merged)
+        if (!result.success) {
+          console.warn('[daybox] Invalid timer settings rejected', result.error)
+          return
         }
+        set({ settings: merged as TimerSettings })
       },
-    },
+    }),
+    createValidatedPersist(
+      'daybox-timer',
+      TimerStateSchema,
+      {
+        phase: 'focus' as TimerPhase,
+        startedAt: null as number | null,
+        elapsed: 0,
+        sessionPomoCount: 0,
+        isRunning: false,
+        focusedTaskId: null as string | null,
+        settings: DEFAULT_TIMER_SETTINGS,
+      },
+      {
+        onRehydrateStorage: () => (state) => {
+          const timerState = state as TimerState | undefined
+          if (timerState?.isRunning && timerState.startedAt) {
+            const now = Date.now()
+            timerState.elapsed += now - timerState.startedAt
+            timerState.startedAt = now
+          }
+        },
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ) as any,
   ),
 )
 
