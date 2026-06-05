@@ -22,11 +22,11 @@ const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(
         max={max}
       >
         <NumberField.Group className={cn('flex items-center gap-0', className)}>
-          <NumberField.Decrement className="text-fg-2 border-border flex h-7 w-7 items-center justify-center rounded-l-[4px] border text-[14px]">
+          <NumberField.Decrement className="text-fg-2 border-border flex h-7 w-7 items-center justify-center rounded-l-[4px] border text-[14px] data-disabled:opacity-40">
             −
           </NumberField.Decrement>
           <NumberField.Input className="border-border text-foreground bg-background h-7 w-[44px] border-y text-center text-xs outline-none" />
-          <NumberField.Increment className="text-fg-2 border-border flex h-7 w-7 items-center justify-center rounded-r-[4px] border text-[14px]">
+          <NumberField.Increment className="text-fg-2 border-border flex h-7 w-7 items-center justify-center rounded-r-[4px] border text-[14px] data-disabled:opacity-40">
             +
           </NumberField.Increment>
         </NumberField.Group>

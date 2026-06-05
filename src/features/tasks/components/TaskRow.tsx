@@ -6,8 +6,14 @@ import { useTaskStore } from '@/features/tasks'
 import type { Task } from '@/features/tasks/types'
 import { useTimerStore } from '@/features/timer'
 import { isOverdue, formatDate, getTomorrow } from '@/shared/dates'
+import {
+  Button,
+  NumberInput,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
-import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
 interface TaskRowProps {
   task: Task
@@ -170,64 +176,64 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
 function PomoArea({ task }: { task: Task }) {
   const updateTask = useTaskStore((s) => s.updateTask)
 
+  const handleEstimateChange = (n: number | null) => {
+    if (n == null) return
+    const patch: Partial<Task> = { pomoEstimate: n }
+    if (n < task.pomoCompleted) {
+      patch.pomoCompleted = n
+    }
+    updateTask(task.id, patch)
+  }
+
+  const handleCompletedChange = (n: number | null) => {
+    if (n == null) return
+    updateTask(task.id, { pomoCompleted: n })
+  }
+
+  const progressPct =
+    task.pomoEstimate > 0
+      ? Math.min(100, (task.pomoCompleted / task.pomoEstimate) * 100)
+      : 0
+
   return (
     <Popover>
       <PopoverTrigger>
         <span className="relative flex min-w-[32px] shrink-0 cursor-pointer items-center">
-          {task.pomoEstimate > 0 ? (
-            <div className="flex items-center gap-[3px]">
-              {Array.from({ length: task.pomoEstimate }, (_, i) => (
-                <span
-                  key={i}
-                  className={cn(
-                    'h-[7px] w-[7px] rounded-full',
-                    i < task.pomoCompleted
-                      ? 'bg-accent border-none'
-                      : 'border-border-strong border bg-transparent',
-                  )}
-                />
-              ))}
-            </div>
-          ) : (
-            <span className="text-muted-foreground text-[11.5px]">
-              {task.pomoCompleted > 0 ? task.pomoCompleted : '0'}
+          <span className="flex flex-col items-start gap-[1px]">
+            <span className="text-fg-2 text-[11.5px] leading-none tabular-nums">
+              {task.pomoCompleted}/{task.pomoEstimate}
             </span>
-          )}
+            <span className="relative block h-[1.5px] w-full">
+              <span
+                className="bg-accent absolute top-0 left-0 block h-full transition-[width] duration-200 ease-out"
+                style={{ width: `${progressPct}%` }}
+              />
+            </span>
+          </span>
         </span>
       </PopoverTrigger>
-      <PopoverContent className="z-40 p-3">
-        <div className="text-muted-foreground mb-2 text-[11px] font-medium tracking-[0.5px] uppercase">
-          Pomodoros
+      <PopoverContent className="z-40 w-fit flex-row gap-3 p-3">
+        <div className="flex min-w-[100px] flex-col items-center gap-2">
+          <label className="text-muted-foreground text-[11px] font-medium tracking-[0.5px] uppercase">
+            Estimate
+          </label>
+          <NumberInput
+            value={task.pomoEstimate}
+            onValueChange={handleEstimateChange}
+            min={0}
+            max={9}
+          />
         </div>
-        <div className="flex flex-wrap gap-1">
-          {Array.from({ length: 9 }, (_, i) => (
-            <Button
-              key={i}
-              variant="ghost"
-              size="none"
-              className={cn(
-                'h-[26px] w-[26px] rounded-[4px] border text-[12.5px] duration-120',
-                task.pomoEstimate === i
-                  ? 'bg-accent border-accent text-white'
-                  : 'border-border text-fg-2 bg-transparent',
-              )}
-              onClick={() => updateTask(task.id, { pomoEstimate: i })}
-              onMouseEnter={(e) => {
-                if (task.pomoEstimate !== i) {
-                  e.currentTarget.style.borderColor = 'var(--accent)'
-                  e.currentTarget.style.color = 'var(--accent)'
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (task.pomoEstimate !== i) {
-                  e.currentTarget.style.borderColor = 'var(--border)'
-                  e.currentTarget.style.color = 'var(--fg-2)'
-                }
-              }}
-            >
-              {i}
-            </Button>
-          ))}
+        <div className="flex min-w-[100px] flex-col items-center gap-2">
+          <label className="text-muted-foreground text-[11px] font-medium tracking-[0.5px] uppercase">
+            Completed
+          </label>
+          <NumberInput
+            value={task.pomoCompleted}
+            onValueChange={handleCompletedChange}
+            min={0}
+            max={task.pomoEstimate}
+          />
         </div>
       </PopoverContent>
     </Popover>

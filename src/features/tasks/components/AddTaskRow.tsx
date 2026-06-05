@@ -4,8 +4,8 @@ import { useState, useRef, useCallback } from 'react'
 import { useGroupStore } from '@/features/groups'
 import type { Group } from '@/features/groups/types'
 import { useTaskStore } from '@/features/tasks'
-import { cn } from '@/shared/utils/cn'
 import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
+import { cn } from '@/shared/utils/cn'
 
 interface AddTaskRowProps {
   defaultDate?: string | null

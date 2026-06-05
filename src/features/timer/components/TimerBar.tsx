@@ -3,9 +3,9 @@ import { useEffect, useRef } from 'react'
 
 import { useTaskStore } from '@/features/tasks'
 import { playAlarm, useTimerStore } from '@/features/timer'
-import { cn } from '@/shared/utils/cn'
 import { sendNotification } from '@/shared/notifications'
 import { Button } from '@/shared/ui'
+import { cn } from '@/shared/utils/cn'
 
 export function TimerBar() {
   const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
