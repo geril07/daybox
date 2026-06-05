@@ -98,7 +98,7 @@ export function TimerSettingsPanel() {
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent align="end">
               {['bell', 'digital', 'gentle', 'ping'].map((sound) => (
                 <SelectItem key={sound} value={sound}>
                   {sound}

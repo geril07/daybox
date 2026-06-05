@@ -109,7 +109,7 @@ export function SettingsDrawer({
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="end">
                   {weekDays.map((day) => (
                     <SelectItem key={day.value} value={day.value}>
                       {day.label}
