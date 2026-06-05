@@ -6,7 +6,7 @@ import {
   selectTodayTasks,
   selectBacklog,
 } from '@/features/tasks'
-import type { Task } from '@/shared/types'
+import type { Task } from '@/features/tasks/types'
 
 function createTask(overrides: Partial<Task> & { id: string }): Task {
   return {

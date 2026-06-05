@@ -1,6 +1,6 @@
 import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
-import { EmptyState } from '@/shared/EmptyState'
 import { getWeekDays, getFormattedDate, formatDate } from '@/shared/dates'
+import { EmptyState } from '@/shared/ui'
 
 import { usePlannerStore } from '../store'
 

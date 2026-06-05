@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
-import { EmptyState } from '@/shared/EmptyState'
+import { EmptyState } from '@/shared/ui'
 import { Button } from '@/shared/ui'
 
 import { usePlannerStore } from '../store'

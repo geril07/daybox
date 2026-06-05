@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { TimerPhase } from '@/shared/types'
+import type { TimerPhase } from '@/features/timer/types'
 
 export interface TimerSettings {
   focusDuration: number

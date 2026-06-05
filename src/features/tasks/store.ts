@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import type { Task } from '@/features/tasks/types'
 import { generateId } from '@/shared/id'
-import type { Task } from '@/shared/types'
 
 const DEFAULT_GROUP_ID = 'default'
 

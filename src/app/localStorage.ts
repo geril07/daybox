@@ -1,13 +1,14 @@
 import { getTheme, setTheme, type Theme } from '@/app/theme'
 import { useGroupStore } from '@/features/groups'
+import type { Group } from '@/features/groups/types'
 import { usePlannerStore, type WeekStartDay } from '@/features/planner'
 import { useTaskStore } from '@/features/tasks'
+import type { Task } from '@/features/tasks/types'
 import {
   DEFAULT_TIMER_SETTINGS,
   useTimerStore,
   type TimerSettings,
 } from '@/features/timer'
-import type { Group, Task } from '@/shared/types'
 
 const CURRENT_VERSION = 3
 

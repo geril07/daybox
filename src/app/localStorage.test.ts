@@ -3,11 +3,12 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { exportData, parseImport } from '@/app/localStorage'
 import { setTheme } from '@/app/theme'
 import { useGroupStore } from '@/features/groups'
+import { GROUP_COLORS } from '@/features/groups/constants'
+import type { Group } from '@/features/groups/types'
 import { usePlannerStore } from '@/features/planner'
 import { useTaskStore } from '@/features/tasks'
+import type { Task } from '@/features/tasks/types'
 import { DEFAULT_TIMER_SETTINGS, useTimerStore } from '@/features/timer'
-import { GROUP_COLORS } from '@/shared/types'
-import type { Group, Task } from '@/shared/types'
 
 function createTask(overrides: Partial<Task> & { id: string }): Task {
   return {

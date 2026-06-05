@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import { GROUP_COLORS } from '@/features/groups/constants'
+import type { Group } from '@/features/groups/types'
 import { generateId } from '@/shared/id'
-import type { Group } from '@/shared/types'
-import { GROUP_COLORS } from '@/shared/types'
 
 const DEFAULT_GROUP_ID = 'default'
 

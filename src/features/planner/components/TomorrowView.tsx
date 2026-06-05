@@ -1,6 +1,6 @@
 import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
-import { EmptyState } from '@/shared/EmptyState'
 import { formatDate, getTomorrow } from '@/shared/dates'
+import { EmptyState } from '@/shared/ui'
 
 export function TomorrowView() {
   const tasks = useTaskStore((s) => s.tasks)

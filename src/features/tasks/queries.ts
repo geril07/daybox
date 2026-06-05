@@ -1,5 +1,5 @@
+import type { Task } from '@/features/tasks/types'
 import { isOverdue, formatDate } from '@/shared/dates'
-import type { Task } from '@/shared/types'
 
 export function selectOverdue(tasks: Task[]): Task[] {
   return tasks

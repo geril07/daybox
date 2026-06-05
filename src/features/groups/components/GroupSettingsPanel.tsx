@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
 import { useGroupStore } from '@/features/groups'
+import type { Group } from '@/features/groups/types'
 import { useTaskStore } from '@/features/tasks'
-import type { Group } from '@/shared/types'
 import {
   AlertDialog,
   AlertDialogTrigger,

@@ -4,7 +4,7 @@ import type { DragEndEvent } from '@dnd-kit/react'
 import { useRef } from 'react'
 
 import { TaskRow, useTaskStore } from '@/features/tasks'
-import type { Task } from '@/shared/types'
+import type { Task } from '@/features/tasks/types'
 
 interface TaskListProps {
   tasks: Task[]
