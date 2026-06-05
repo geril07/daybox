@@ -1,8 +1,4 @@
-## Purpose
-
-Defines the testing conventions for component tests under `src/`: which Testing Library APIs to use, how to structure async test bodies, and the setup pattern for `userEvent`. Complements `shared-layer` (which governs test-infrastructure file locations) by covering the test-author rules.
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Test interaction via user-event
 

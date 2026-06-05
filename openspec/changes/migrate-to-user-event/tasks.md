@@ -69,7 +69,7 @@
 
 ## 4. Spec delta
 
-- [ ] 4.1 The delta spec is at `openspec/changes/2026-06-05-migrate-to-user-event/specs/shared-layer/spec.md` and adds one `ADDED Requirement: Test interaction via user-event` with two scenarios ("Component tests use userEvent" and "fireEvent is banned from test files"). Already drafted — no additional authoring needed.
+- [ ] 4.1 The delta spec is at `openspec/changes/migrate-to-user-event/specs/testing/spec.md` and adds one `ADDED Requirement: Test interaction via user-event` with three scenarios ("Component tests use userEvent", "fireEvent is banned from test files", "Per-test user instance"). The new `testing` capability is created on archive via the OpenSpec delta-sync. Already drafted — no additional authoring needed.
 
 ## 5. Verification
 
