@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useGroupStore } from '@/features/groups'
 import { useTaskStore } from '@/features/tasks'
 import { useTimerStore } from '@/features/timer'
-import { isOverdue, formatDate } from '@/shared/dates'
+import { isOverdue, formatDate, getTomorrow } from '@/shared/dates'
 import { cn } from '@/shared/lib/utils'
 import type { Task } from '@/shared/types'
 import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
@@ -24,11 +24,7 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   const deleteTask = useTaskStore((s) => s.deleteTask)
   const groups = useGroupStore((s) => s.groups)
   const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
-  const setFocusedTaskId = useTimerStore((s) => s.setFocusedTaskId)
-  const timerSetPhase = useTimerStore((s) => s.setPhase)
-  const timerReset = useTimerStore((s) => s.reset)
-  const timerStart = useTimerStore((s) => s.start)
-  const timerIsRunning = useTimerStore((s) => s.isRunning)
+  const focusTask = useTimerStore((s) => s.focusTask)
 
   const group = groups.find((g) => g.id === task.groupId)
   const showGroupUi = groups.length > 1
@@ -154,16 +150,7 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
         <Button
           variant="ghostDestructive"
           size="icon-sm"
-          onClick={() => {
-            if (isFocused) {
-              setFocusedTaskId(null)
-            } else {
-              setFocusedTaskId(task.id)
-              timerSetPhase('focus')
-              timerReset()
-              if (timerIsRunning) timerStart()
-            }
-          }}
+          onClick={() => focusTask(task.id)}
           title="Focus"
         >
           <Target />
@@ -248,8 +235,6 @@ function PomoArea({ task }: { task: Task }) {
   )
 }
 
-const tomorrowDate = Date.now() + 86400000
-
 function DatePickerButton({ task }: { task: Task }) {
   const updateTask = useTaskStore((s) => s.updateTask)
 
@@ -269,7 +254,7 @@ function DatePickerButton({ task }: { task: Task }) {
             { label: 'Today', value: formatDate(new Date()) },
             {
               label: 'Tomorrow',
-              value: formatDate(new Date(tomorrowDate)),
+              value: formatDate(getTomorrow()),
             },
             { label: 'Unsched.', value: null },
           ].map((preset) => (

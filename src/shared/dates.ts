@@ -2,6 +2,12 @@ export function formatDate(date: Date): string {
   return date.toLocaleDateString('en-CA')
 }
 
+export function getTomorrow(): Date {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return d
+}
+
 export function isToday(dateStr: string): boolean {
   return dateStr === formatDate(new Date())
 }

@@ -3,27 +3,28 @@ import { useEffect, useRef } from 'react'
 
 import { useSettingsStore } from '@/app/settingsStore'
 import { useTaskStore } from '@/features/tasks'
-import { playAlarm, useTimerStore, getNextPhase } from '@/features/timer'
+import { playAlarm, useTimerStore } from '@/features/timer'
 import { cn } from '@/shared/lib/utils'
 import { sendNotification } from '@/shared/notifications'
 import { Button } from '@/shared/ui'
 
 export function TimerBar() {
   const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
-  const tasks = useTaskStore((s) => s.tasks)
+  const focusedTask = useTaskStore((s) =>
+    focusedTaskId ? s.tasks.find((t) => t.id === focusedTaskId) : undefined,
+  )
   const settings = useSettingsStore((s) => s.settings.timer)
   const updateTask = useTaskStore((s) => s.updateTask)
-  const focusedTask = tasks.find((t) => t.id === focusedTaskId)
 
   const phase = useTimerStore((s) => s.phase)
   const isRunning = useTimerStore((s) => s.isRunning)
   const startedAt = useTimerStore((s) => s.startedAt)
   const elapsed = useTimerStore((s) => s.elapsed)
   const sessionPomoCount = useTimerStore((s) => s.sessionPomoCount)
-  const start = useTimerStore((s) => s.start)
-  const pause = useTimerStore((s) => s.pause)
+  const togglePlayPause = useTimerStore((s) => s.togglePlayPause)
   const reset = useTimerStore((s) => s.reset)
   const tick = useTimerStore((s) => s.tick)
+  const advancePhase = useTimerStore((s) => s.advancePhase)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const alarmPlayedRef = useRef(false)
@@ -62,60 +63,39 @@ export function TimerBar() {
   }, [phase, startedAt])
 
   useEffect(() => {
-    if (remainingMs <= 0 && isRunning) {
-      if (!alarmPlayedRef.current) {
-        alarmPlayedRef.current = true
-        playAlarm(
-          settings.alarmSound,
-          settings.alarmVolume,
-          settings.alarmRepeat,
-        )
-        sendNotification(
-          phase === 'focus'
-            ? 'Focus complete!'
-            : `${phase === 'shortBreak' ? 'Short break' : 'Long break'} complete!`,
-          focusedTask ? `Task: ${focusedTask.title}` : undefined,
-        )
+    if (remainingMs > 0 || !isRunning || alarmPlayedRef.current) return
+    alarmPlayedRef.current = true
 
-        if (phase === 'focus' && focusedTask) {
-          updateTask(focusedTask.id, {
-            pomoCompleted: focusedTask.pomoCompleted + 1,
-          })
-        }
+    playAlarm(settings.alarmSound, settings.alarmVolume, settings.alarmRepeat)
+    sendNotification(
+      phase === 'focus'
+        ? 'Focus complete!'
+        : `${phase === 'shortBreak' ? 'Short break' : 'Long break'} complete!`,
+      focusedTask ? `Task: ${focusedTask.title}` : undefined,
+    )
 
-        const nextPhase = getNextPhase(
-          phase,
-          sessionPomoCount,
-          settings.longBreakInterval,
-        )
-
-        const autoStart =
-          (phase === 'focus' && settings.autoStartBreaks) ||
-          (phase !== 'focus' && settings.autoStartPomodoros)
-
-        const newSessionCount =
-          nextPhase === 'longBreak' ||
-          (nextPhase === 'shortBreak' && phase === 'focus')
-            ? sessionPomoCount + 1
-            : sessionPomoCount
-
-        useTimerStore.setState({
-          phase: nextPhase,
-          elapsed: 0,
-          startedAt: autoStart ? Date.now() : null,
-          isRunning: autoStart,
-          sessionPomoCount: nextPhase === 'focus' ? 0 : newSessionCount,
-        })
-      }
+    if (phase === 'focus' && focusedTask) {
+      updateTask(focusedTask.id, {
+        pomoCompleted: focusedTask.pomoCompleted + 1,
+      })
     }
+
+    const autoStart =
+      (phase === 'focus' && settings.autoStartBreaks) ||
+      (phase !== 'focus' && settings.autoStartPomodoros)
+
+    advancePhase({
+      autoStart,
+      longBreakInterval: settings.longBreakInterval,
+    })
   }, [
     remainingMs,
     isRunning,
     phase,
     focusedTask,
-    sessionPomoCount,
     settings,
     updateTask,
+    advancePhase,
   ])
 
   useEffect(() => {
@@ -125,19 +105,6 @@ export function TimerBar() {
       document.title = 'DayBox'
     }
   }, [isRunning, minutes, seconds])
-
-  const handlePlayPause = () => {
-    if (isRunning) {
-      pause()
-    } else {
-      if (elapsed > 0) {
-        start()
-      } else {
-        reset()
-        start()
-      }
-    }
-  }
 
   const handleReset = () => {
     reset()
@@ -150,22 +117,9 @@ export function TimerBar() {
         pomoCompleted: focusedTask.pomoCompleted + 1,
       })
     }
-    const nextPhase = getNextPhase(
-      phase,
-      sessionPomoCount,
-      settings.longBreakInterval,
-    )
-    const newSessionCount =
-      nextPhase === 'longBreak' ||
-      (nextPhase === 'shortBreak' && phase === 'focus')
-        ? sessionPomoCount + 1
-        : sessionPomoCount
-    useTimerStore.setState({
-      phase: nextPhase,
-      elapsed: 0,
-      startedAt: null,
-      isRunning: false,
-      sessionPomoCount: nextPhase === 'focus' ? 0 : newSessionCount,
+    advancePhase({
+      autoStart: false,
+      longBreakInterval: settings.longBreakInterval,
     })
     alarmPlayedRef.current = false
   }
@@ -223,7 +177,7 @@ export function TimerBar() {
                 size="none"
                 className="h-[40px] w-[40px] rounded-full border-0 text-white shadow-sm duration-140 hover:scale-105 hover:opacity-90"
                 style={{ background: phaseColor }}
-                onClick={handlePlayPause}
+                onClick={togglePlayPause}
                 title={isRunning ? 'Pause' : 'Start'}
               >
                 {isRunning ? (

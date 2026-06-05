@@ -18,6 +18,7 @@ import {
   SelectContent,
   SelectItem,
   AlertDialog,
+  AlertDialogAction,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogTitle,
@@ -163,9 +164,9 @@ export function SettingsDrawer({
                   This cannot be undone.
                 </AlertDialogDescription>
                 <div className="flex flex-col gap-2">
-                  <AlertDialogCancel onClick={doImport}>
+                  <AlertDialogAction onClick={doImport}>
                     Continue
-                  </AlertDialogCancel>
+                  </AlertDialogAction>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                 </div>
               </AlertDialogContent>

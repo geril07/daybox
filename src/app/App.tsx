@@ -13,8 +13,8 @@ import {
   WeekView,
 } from '@/features/planner'
 import { AddTaskRow, useTaskStore } from '@/features/tasks'
-import { TimerBar } from '@/features/timer'
-import { formatDate } from '@/shared/dates'
+import { TimerBar, useTimerStore } from '@/features/timer'
+import { formatDate, getTomorrow } from '@/shared/dates'
 import { registerShortcuts } from '@/shared/keyboard'
 import type { View } from '@/shared/types'
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui'
@@ -33,11 +33,8 @@ export function App() {
     switch (view) {
       case 'today':
         return formatDate(new Date())
-      case 'tomorrow': {
-        const d = new Date()
-        d.setDate(d.getDate() + 1)
-        return formatDate(d)
-      }
+      case 'tomorrow':
+        return formatDate(getTomorrow())
       case 'week':
         return formatDate(new Date())
       case 'backlog':
@@ -52,9 +49,7 @@ export function App() {
   useEffect(() => {
     const cleanup = registerShortcuts({
       ' ': () => {
-        document
-          .querySelector('[title="Start"], [title="Pause"]')
-          ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        useTimerStore.getState().togglePlayPause()
       },
       escape: () => {
         setSettingsOpen(false)

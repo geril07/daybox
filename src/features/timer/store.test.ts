@@ -37,6 +37,90 @@ describe('Timer Store', () => {
     useTimerStore.getState().setFocusedTaskId(null)
     expect(useTimerStore.getState().focusedTaskId).toBeNull()
   })
+
+  describe('togglePlayPause', () => {
+    it('starts when idle', () => {
+      useTimerStore.getState().togglePlayPause()
+      expect(useTimerStore.getState().isRunning).toBe(true)
+    })
+
+    it('pauses when running', () => {
+      const store = useTimerStore.getState()
+      store.start()
+      store.togglePlayPause()
+      expect(useTimerStore.getState().isRunning).toBe(false)
+    })
+
+    it('resumes when paused with elapsed', () => {
+      useTimerStore.setState({ elapsed: 1000, isRunning: false })
+      useTimerStore.getState().togglePlayPause()
+      const state = useTimerStore.getState()
+      expect(state.isRunning).toBe(true)
+      expect(state.elapsed).toBe(1000)
+    })
+  })
+
+  describe('advancePhase', () => {
+    it('focus -> shortBreak increments session count', () => {
+      useTimerStore.setState({ phase: 'focus', sessionPomoCount: 0 })
+      useTimerStore.getState().advancePhase({ longBreakInterval: 4 })
+      const state = useTimerStore.getState()
+      expect(state.phase).toBe('shortBreak')
+      expect(state.sessionPomoCount).toBe(1)
+      expect(state.isRunning).toBe(false)
+      expect(state.elapsed).toBe(0)
+    })
+
+    it('focus -> longBreak at interval', () => {
+      useTimerStore.setState({ phase: 'focus', sessionPomoCount: 3 })
+      useTimerStore.getState().advancePhase({ longBreakInterval: 4 })
+      expect(useTimerStore.getState().phase).toBe('longBreak')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(4)
+    })
+
+    it('break -> focus resets session count', () => {
+      useTimerStore.setState({ phase: 'longBreak', sessionPomoCount: 4 })
+      useTimerStore.getState().advancePhase({ longBreakInterval: 4 })
+      const state = useTimerStore.getState()
+      expect(state.phase).toBe('focus')
+      expect(state.sessionPomoCount).toBe(0)
+    })
+
+    it('autoStart begins the next phase running', () => {
+      useTimerStore.setState({ phase: 'focus', sessionPomoCount: 0 })
+      useTimerStore
+        .getState()
+        .advancePhase({ autoStart: true, longBreakInterval: 4 })
+      const state = useTimerStore.getState()
+      expect(state.isRunning).toBe(true)
+      expect(state.startedAt).not.toBeNull()
+    })
+  })
+
+  describe('focusTask', () => {
+    it('sets focused task and resets phase to focus', () => {
+      useTimerStore.setState({ phase: 'shortBreak', elapsed: 5000 })
+      useTimerStore.getState().focusTask('task-1')
+      const state = useTimerStore.getState()
+      expect(state.focusedTaskId).toBe('task-1')
+      expect(state.phase).toBe('focus')
+      expect(state.elapsed).toBe(0)
+    })
+
+    it('preserves running state when refocusing', () => {
+      useTimerStore.setState({ isRunning: true, startedAt: Date.now() })
+      useTimerStore.getState().focusTask('task-1')
+      const state = useTimerStore.getState()
+      expect(state.isRunning).toBe(true)
+      expect(state.startedAt).not.toBeNull()
+    })
+
+    it('clears focus when re-focusing the same task', () => {
+      useTimerStore.setState({ focusedTaskId: 'task-1' })
+      useTimerStore.getState().focusTask('task-1')
+      expect(useTimerStore.getState().focusedTaskId).toBeNull()
+    })
+  })
 })
 
 describe('getNextPhase', () => {

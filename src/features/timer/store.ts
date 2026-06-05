@@ -12,24 +12,22 @@ interface TimerState {
   focusedTaskId: string | null
 }
 
+interface AdvancePhaseOpts {
+  autoStart?: boolean
+  longBreakInterval: number
+}
+
 interface TimerActions {
   start: () => void
   pause: () => void
   reset: () => void
-  skip: () => void
+  togglePlayPause: () => void
+  skip: (longBreakInterval: number) => void
+  advancePhase: (opts: AdvancePhaseOpts) => void
   setPhase: (phase: TimerPhase) => void
   tick: () => void
   setFocusedTaskId: (id: string | null) => void
-  getRemainingSeconds: (
-    focusDuration: number,
-    shortBreakDuration: number,
-    longBreakDuration: number,
-  ) => number
-  getDuration: (
-    focusDuration: number,
-    shortBreakDuration: number,
-    longBreakDuration: number,
-  ) => number
+  focusTask: (id: string) => void
 }
 
 export type TimerStore = TimerState & TimerActions
@@ -65,19 +63,41 @@ export const useTimerStore = create<TimerStore>()(
           elapsed: 0,
         }),
 
-      skip: () => {
+      togglePlayPause: () => {
         const state = get()
-        const nextPhase = getNextPhase(state.phase, state.sessionPomoCount, 4)
+        if (state.isRunning) {
+          state.pause()
+        } else if (state.elapsed > 0) {
+          state.start()
+        } else {
+          state.reset()
+          state.start()
+        }
+      },
+
+      advancePhase: ({ autoStart = false, longBreakInterval }) => {
+        const state = get()
+        const nextPhase = getNextPhase(
+          state.phase,
+          state.sessionPomoCount,
+          longBreakInterval,
+        )
+        const completedFocus = state.phase === 'focus'
+        const nextSessionCount =
+          nextPhase === 'focus'
+            ? 0
+            : state.sessionPomoCount + (completedFocus ? 1 : 0)
         set({
           phase: nextPhase,
-          startedAt: null,
+          startedAt: autoStart ? Date.now() : null,
           elapsed: 0,
-          isRunning: false,
-          sessionPomoCount:
-            nextPhase === 'longBreak' || nextPhase === 'shortBreak'
-              ? state.sessionPomoCount + (state.phase === 'focus' ? 1 : 0)
-              : state.sessionPomoCount,
+          isRunning: autoStart,
+          sessionPomoCount: nextSessionCount,
         })
+      },
+
+      skip: (longBreakInterval) => {
+        get().advancePhase({ autoStart: false, longBreakInterval })
       },
 
       setPhase: (phase) =>
@@ -100,31 +120,20 @@ export const useTimerStore = create<TimerStore>()(
 
       setFocusedTaskId: (id) => set({ focusedTaskId: id }),
 
-      getRemainingSeconds: (
-        focusDuration,
-        shortBreakDuration,
-        longBreakDuration,
-      ) => {
+      focusTask: (id) => {
         const state = get()
-        const duration = getPhaseDuration(
-          state.phase,
-          focusDuration,
-          shortBreakDuration,
-          longBreakDuration,
-        )
-        const elapsedSeconds = state.elapsed / 1000
-        return Math.max(0, duration * 60 - elapsedSeconds)
-      },
-
-      getDuration: (focusDuration, shortBreakDuration, longBreakDuration) => {
-        return (
-          getPhaseDuration(
-            get().phase,
-            focusDuration,
-            shortBreakDuration,
-            longBreakDuration,
-          ) * 60
-        )
+        if (state.focusedTaskId === id) {
+          set({ focusedTaskId: null })
+          return
+        }
+        const wasRunning = state.isRunning
+        set({
+          focusedTaskId: id,
+          phase: 'focus',
+          elapsed: 0,
+          startedAt: wasRunning ? Date.now() : null,
+          isRunning: wasRunning,
+        })
       },
     }),
     {
@@ -139,22 +148,6 @@ export const useTimerStore = create<TimerStore>()(
     },
   ),
 )
-
-function getPhaseDuration(
-  phase: TimerPhase,
-  focusDuration: number,
-  shortBreakDuration: number,
-  longBreakDuration: number,
-): number {
-  switch (phase) {
-    case 'focus':
-      return focusDuration
-    case 'shortBreak':
-      return shortBreakDuration
-    case 'longBreak':
-      return longBreakDuration
-  }
-}
 
 export function getNextPhase(
   current: TimerPhase,
