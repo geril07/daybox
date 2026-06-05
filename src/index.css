@@ -2,33 +2,6 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-@theme {
-  --font-sans: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Mono', monospace;
-
-  --color-bg: oklch(0.97 0.008 72);
-  --color-bg-card: oklch(0.996 0.003 72);
-  --color-bg-hover: oklch(0.956 0.011 72);
-  --color-bg-active: oklch(0.946 0.013 72);
-  --color-fg: oklch(0.18 0.015 65);
-  --color-fg-2: oklch(0.44 0.015 65);
-  --color-fg-3: oklch(0.63 0.01 70);
-  --color-border: oklch(0.905 0.012 72);
-  --color-border-strong: oklch(0.84 0.016 70);
-  --color-accent: oklch(0.545 0.185 28);
-  --color-accent-dim: oklch(0.62 0.16 28);
-  --color-accent-bg: oklch(0.975 0.026 28);
-  --color-accent-border: oklch(0.875 0.062 28);
-  --color-break: oklch(0.5 0.13 155);
-  --color-break-bg: oklch(0.975 0.022 155);
-  --color-lbreak: oklch(0.5 0.13 255);
-  --color-lbreak-bg: oklch(0.975 0.022 255);
-  --color-overdue: oklch(0.52 0.155 28);
-  --color-overdue-bg: oklch(0.975 0.03 28);
-  --color-overdue-border: oklch(0.88 0.065 28);
-  --color-success: oklch(0.5 0.13 145);
-}
-
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -71,6 +44,8 @@
   --destructive-foreground: oklch(1 0 0);
   --input: oklch(0.905 0.012 72);
   --ring: oklch(0.545 0.185 28);
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Mono', monospace;
 }
 
 .dark {
@@ -115,39 +90,6 @@
   --ring: oklch(0.62 0.16 28);
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-button {
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: inherit;
-  font-family: inherit;
-}
-input,
-select,
-textarea {
-  font-family: inherit;
-}
-
-body {
-  margin: 0;
-  font-family: var(--font-sans);
-  background: var(--bg);
-  color: var(--fg);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-#root {
-  isolation: isolate;
-}
-
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
@@ -183,6 +125,26 @@ body {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --font-mono: var(--font-mono);
+  --color-bg: var(--bg);
+  --color-bg-card: var(--bg-card);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-active: var(--bg-active);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-border-strong: var(--border-strong);
+  --color-accent-dim: var(--accent-dim);
+  --color-accent-bg: var(--accent-bg);
+  --color-accent-border: var(--accent-border);
+  --color-break: var(--break-color);
+  --color-break-bg: var(--break-bg);
+  --color-lbreak: var(--lbreak-color);
+  --color-lbreak-bg: var(--lbreak-bg);
+  --color-overdue: var(--overdue);
+  --color-overdue-bg: var(--overdue-bg);
+  --color-overdue-border: var(--overdue-border);
+  --color-success: var(--success);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
