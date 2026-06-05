@@ -58,4 +58,4 @@
 - [x] 9.2 Run `npm run lint`
 - [x] 9.3 Run `npm run test`; confirm all tests pass (existing + new planner store tests + new timer settings tests)
 - [x] 9.4 Run `npm run format`
-- [ ] 9.5 Manually verify in dev: with a fresh localStorage, all settings persist; with a `daybox-settings` blob, the v1-style values migrate to the right new keys on reload; with a v2 export file, import restores everything
+- [x] 9.5 Manually verify in dev: with a fresh localStorage, all settings persist; with a `daybox-settings` blob, the v1-style values migrate to the right new keys on reload; with a v2 export file, import restores everything
