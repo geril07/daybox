@@ -3,6 +3,30 @@ import { persist } from 'zustand/middleware'
 
 import type { TimerPhase } from '@/shared/types'
 
+export interface TimerSettings {
+  focusDuration: number
+  shortBreakDuration: number
+  longBreakDuration: number
+  longBreakInterval: number
+  autoStartBreaks: boolean
+  autoStartPomodoros: boolean
+  alarmSound: 'bell' | 'digital' | 'gentle' | 'ping'
+  alarmVolume: number
+  alarmRepeat: number
+}
+
+export const DEFAULT_TIMER_SETTINGS: TimerSettings = {
+  focusDuration: 25,
+  shortBreakDuration: 5,
+  longBreakDuration: 15,
+  longBreakInterval: 4,
+  autoStartBreaks: false,
+  autoStartPomodoros: false,
+  alarmSound: 'bell',
+  alarmVolume: 0.5,
+  alarmRepeat: 3,
+}
+
 interface TimerState {
   phase: TimerPhase
   startedAt: number | null
@@ -10,6 +34,7 @@ interface TimerState {
   sessionPomoCount: number
   isRunning: boolean
   focusedTaskId: string | null
+  settings: TimerSettings
 }
 
 interface AdvancePhaseOpts {
@@ -28,6 +53,7 @@ interface TimerActions {
   tick: () => void
   setFocusedTaskId: (id: string | null) => void
   focusTask: (id: string) => void
+  setTimerSettings: (partial: Partial<TimerSettings>) => void
 }
 
 export type TimerStore = TimerState & TimerActions
@@ -41,6 +67,7 @@ export const useTimerStore = create<TimerStore>()(
       sessionPomoCount: 0,
       isRunning: false,
       focusedTaskId: null,
+      settings: DEFAULT_TIMER_SETTINGS,
 
       start: () =>
         set({
@@ -135,6 +162,11 @@ export const useTimerStore = create<TimerStore>()(
           isRunning: wasRunning,
         })
       },
+
+      setTimerSettings: (partial) =>
+        set((state) => ({
+          settings: { ...state.settings, ...partial },
+        })),
     }),
     {
       name: 'daybox-timer',

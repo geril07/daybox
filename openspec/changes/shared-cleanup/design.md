@@ -40,8 +40,8 @@ Each feature has a single `types.ts` at the feature root rather than `types/inde
 
 **Alternatives considered:**
 
-- *Per-feature `types/` subfolder* — over-engineered for the current size; adds a directory layer. Rejected.
-- *Co-locate types inside each store* — splits related types across files (`store.ts` and `types.ts`); harder to scan. Rejected.
+- _Per-feature `types/` subfolder_ — over-engineered for the current size; adds a directory layer. Rejected.
+- _Co-locate types inside each store_ — splits related types across files (`store.ts` and `types.ts`); harder to scan. Rejected.
 
 ### 2. `GROUP_COLORS` lives in `src/features/groups/constants.ts`, not `types.ts`
 
@@ -57,8 +57,8 @@ The file is a Vitest setup that stubs `ResizeObserver`. The reference in `vite.c
 
 **Alternatives considered:**
 
-- *Keep it in `shared/`* — it is a global stub, not a "shared primitive", and the rule says `shared/` is for primitives and utilities. Rejected.
-- *Move to a new `src/test/` directory* — adds a new top-level folder for a 10-line file. Rejected.
+- _Keep it in `shared/`_ — it is a global stub, not a "shared primitive", and the rule says `shared/` is for primitives and utilities. Rejected.
+- _Move to a new `src/test/` directory_ — adds a new top-level folder for a 10-line file. Rejected.
 
 ### 5. `cn` (`shared/lib/utils.ts`) is left in place
 

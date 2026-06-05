@@ -41,8 +41,8 @@ The timer feature already has a persisted store under `daybox-timer` that holds 
 
 **Alternatives considered:**
 
-- *New `features/timer/settingsStore.ts` with `daybox-timer-settings` key* — adds a second Zustand store for the same feature, doubles the persist calls, and means the timer feature has two unrelated stores that consumers must remember to read from. Rejected.
-- *New `features/timer/settings.ts` module-level object + hook* — would not get Zustand's reactivity/devtools/persist for free. Rejected.
+- _New `features/timer/settingsStore.ts` with `daybox-timer-settings` key_ — adds a second Zustand store for the same feature, doubles the persist calls, and means the timer feature has two unrelated stores that consumers must remember to read from. Rejected.
+- _New `features/timer/settings.ts` module-level object + hook_ — would not get Zustand's reactivity/devtools/persist for free. Rejected.
 
 The merge keeps the public surface of `useTimerStore` consistent: callers already import it, the settings appear as another slice of state, and the timer UI panel reads/writes via existing selector patterns.
 
@@ -57,8 +57,8 @@ Both persist under `daybox-planner`. This co-locates the two planner-specific pr
 
 **Alternatives considered:**
 
-- *Two separate `useState` hooks in each consuming component* — would lose the persist behavior. Rejected.
-- *One store for the whole app's "preferences"* — would re-introduce the leak we are removing. Rejected.
+- _Two separate `useState` hooks in each consuming component_ — would lose the persist behavior. Rejected.
+- _One store for the whole app's "preferences"_ — would re-introduce the leak we are removing. Rejected.
 
 ### 3. `app/theme.ts` as a tiny hook, not a Zustand store
 
@@ -66,8 +66,8 @@ Theme is a single string read by `App.tsx`. A `useTheme()` hook (15–20 lines) 
 
 **Alternatives considered:**
 
-- *Inline `useState` in `app/App.tsx`* — works, but pushes the persistence concern into the shell component and makes future "set theme from settings panel" code paths read state from a different place than they write. The tiny `app/theme.ts` hook is more discoverable.
-- *Zustand store* — overkill; no shared subscribers; only one reader. Rejected.
+- _Inline `useState` in `app/App.tsx`_ — works, but pushes the persistence concern into the shell component and makes future "set theme from settings panel" code paths read state from a different place than they write. The tiny `app/theme.ts` hook is more discoverable.
+- _Zustand store_ — overkill; no shared subscribers; only one reader. Rejected.
 
 ### 4. `view` inlined as `useState` in `app/App.tsx`, not persisted
 
@@ -75,7 +75,7 @@ The view selector is local navigation state. Reloading the page resets to "Today
 
 **Alternatives considered:**
 
-- *Persist the last view* — would require a new localStorage key just for the active tab, and would couple shell state to disk for no obvious user benefit. Rejected.
+- _Persist the last view_ — would require a new localStorage key just for the active tab, and would couple shell state to disk for no obvious user benefit. Rejected.
 
 ### 5. localStorage migration in `App.tsx`, mirroring the existing `daybox-app-store` pattern
 
@@ -91,7 +91,7 @@ The order of these steps does not matter — they touch different stores. We kee
 
 **Alternatives considered:**
 
-- *One-time migration in a new `app/migrations.ts` module* — would extract the existing migration too, which is out of scope. Add the new step in the same place to keep churn minimal.
+- _One-time migration in a new `app/migrations.ts` module_ — would extract the existing migration too, which is out of scope. Add the new step in the same place to keep churn minimal.
 
 ### 6. Export/import glue stays in `app/localStorage.ts`, updated to round-trip five keys
 
@@ -99,7 +99,7 @@ The order of these steps does not matter — they touch different stores. We kee
 
 **Alternatives considered:**
 
-- *Version the export shape (`v: 3` field) and accept v2 + v3 on import* — preserves backward compatibility for cross-deploy exports. **Chosen.** Add a `version: 3` field; `parseImport` accepts `version: 2` and `version: 3`, with the v2 path reading from `settings` and writing to the per-feature stores. This avoids a hard break.
+- _Version the export shape (`v: 3` field) and accept v2 + v3 on import_ — preserves backward compatibility for cross-deploy exports. **Chosen.** Add a `version: 3` field; `parseImport` accepts `version: 2` and `version: 3`, with the v2 path reading from `settings` and writing to the per-feature stores. This avoids a hard break.
 
 ### 7. Test layout mirrors the production layout
 
@@ -112,7 +112,7 @@ The order of these steps does not matter — they touch different stores. We kee
 ## Risks / Trade-offs
 
 - **[Risk] Missed re-exports** — `app/localStorage.ts` is re-exported by the shell `SettingsDrawer`. After splitting, `exportData` may need to accept the per-store reads as arguments or read from `getState()`. The latter is simpler and matches the current pattern. Mitigation: re-run `tsc -b` after each store split.
-- **[Risk] Migration order race** — if a user has both `daybox-app-store` (v1) and `daybox-settings` (v2), the order of the two migrations in `App.tsx` matters. The current `daybox-app-store` migration writes *into* `daybox-tasks`, `daybox-groups`, and `daybox-settings`. If we run the v1 migration first and the v2 migration second, the v1 migration's write to `daybox-settings.timer/theme/weekStartDay` is immediately consumed by the v2 migration. If we run the v2 migration first, the v1 migration overwrites `daybox-settings` with v1 data (which has no `timer` etc. because v1 was the unified shape). Mitigation: run the v1 migration first, then the v2 migration; v1 has data for tasks/groups and an old `settings` shape that the v2 migration also reads. Document the order in the migration code with a comment.
+- **[Risk] Migration order race** — if a user has both `daybox-app-store` (v1) and `daybox-settings` (v2), the order of the two migrations in `App.tsx` matters. The current `daybox-app-store` migration writes _into_ `daybox-tasks`, `daybox-groups`, and `daybox-settings`. If we run the v1 migration first and the v2 migration second, the v1 migration's write to `daybox-settings.timer/theme/weekStartDay` is immediately consumed by the v2 migration. If we run the v2 migration first, the v1 migration overwrites `daybox-settings` with v1 data (which has no `timer` etc. because v1 was the unified shape). Mitigation: run the v1 migration first, then the v2 migration; v1 has data for tasks/groups and an old `settings` shape that the v2 migration also reads. Document the order in the migration code with a comment.
 - **[Risk] `useTaskStore.setState` in `App.tsx` from the v1 migration** — the existing migration uses `useTaskStore.setState({ tasks })` which bypasses actions. After the change, we use the action-based path for v2 (e.g., `useTimerStore.getState().setTimerSettings(parsed.timer)`). The v1 path is unchanged. Mitigation: keep the v1 path on `setState` (it predates the action API for the legacy data) and use the action API for the v2 path.
 - **[Risk] Theme race on first render** — `app/theme.ts` must apply `.dark` to `<html>` before the first paint, otherwise users see a flash of light theme on reload. Mitigation: the existing `useEffect` in `App.tsx` runs after first paint; we will move the class toggle to a synchronous read in `app/theme.ts` (a module-level side effect at import time) so the class is set before the React tree mounts.
 - **[Trade-off] Five localStorage keys instead of three** — slightly more keys, but each key has a single owner and a single concern. Easier to reason about and migrate.

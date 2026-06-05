@@ -1,7 +1,6 @@
 import { RotateCcw, Pause, Play, SkipForward } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
-import { useSettingsStore } from '@/app/settingsStore'
 import { useTaskStore } from '@/features/tasks'
 import { playAlarm, useTimerStore } from '@/features/timer'
 import { cn } from '@/shared/lib/utils'
@@ -13,7 +12,7 @@ export function TimerBar() {
   const focusedTask = useTaskStore((s) =>
     focusedTaskId ? s.tasks.find((t) => t.id === focusedTaskId) : undefined,
   )
-  const settings = useSettingsStore((s) => s.settings.timer)
+  const settings = useTimerStore((s) => s.settings)
   const updateTask = useTaskStore((s) => s.updateTask)
 
   const phase = useTimerStore((s) => s.phase)

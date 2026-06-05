@@ -1,9 +1,8 @@
 import { Settings } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 
-import { useSettingsStore } from '@/app/settingsStore'
 import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
-import { useUIStore } from '@/app/uiStore'
+import { setTheme } from '@/app/theme'
 import { GroupLens, useGroupStore } from '@/features/groups'
 import {
   BacklogView,
@@ -11,21 +10,22 @@ import {
   TodayView,
   TomorrowView,
   WeekView,
+  usePlannerStore,
 } from '@/features/planner'
 import { AddTaskRow, useTaskStore } from '@/features/tasks'
 import { TimerBar, useTimerStore } from '@/features/timer'
 import { formatDate, getTomorrow } from '@/shared/dates'
 import { registerShortcuts } from '@/shared/keyboard'
-import type { View } from '@/shared/types'
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui'
 
+type View = 'today' | 'tomorrow' | 'week' | 'backlog' | 'date'
+
 export function App() {
-  const view = useUIStore((s) => s.view)
-  const setView = useUIStore((s) => s.setView)
-  const theme = useSettingsStore((s) => s.settings.theme)
-  const browseDate = useUIStore((s) => s.browseDate)
+  const [view, setView] = useState<View>('today')
+  const browseDate = usePlannerStore((s) => s.browseDate)
 
   const migrationDone = useRef(false)
+  const settingsMigrationDone = useRef(false)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -59,10 +59,6 @@ export function App() {
   }, [])
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-  }, [theme])
-
-  useEffect(() => {
     if (migrationDone.current) return
     const oldData = localStorage.getItem('daybox-app-store')
     if (oldData) {
@@ -71,16 +67,44 @@ export function App() {
         const state = parsed.state || parsed
         const tasks = state.tasks ?? []
         const groups = state.groups ?? []
-        const settings = state.settings ?? null
         if (tasks.length > 0) useTaskStore.setState({ tasks })
         if (groups.length > 0) useGroupStore.setState({ groups })
-        if (settings) useSettingsStore.setState({ settings })
+        if (state.settings) {
+          localStorage.setItem(
+            'daybox-settings',
+            JSON.stringify({ state: { settings: state.settings }, version: 0 }),
+          )
+        }
         localStorage.removeItem('daybox-app-store')
       } catch {
         // ignore corrupted old store
       }
     }
     migrationDone.current = true
+  }, [])
+
+  useEffect(() => {
+    if (settingsMigrationDone.current) return
+    const oldSettings = localStorage.getItem('daybox-settings')
+    if (oldSettings) {
+      try {
+        const parsed = JSON.parse(oldSettings)
+        const settings = parsed.state?.settings ?? parsed.settings ?? parsed
+        if (settings?.timer) {
+          useTimerStore.getState().setTimerSettings(settings.timer)
+        }
+        if (typeof settings?.weekStartDay === 'number') {
+          usePlannerStore.getState().setWeekStartDay(settings.weekStartDay)
+        }
+        if (settings?.theme === 'light' || settings?.theme === 'dark') {
+          setTheme(settings.theme)
+        }
+        localStorage.removeItem('daybox-settings')
+      } catch {
+        // ignore corrupted old settings
+      }
+    }
+    settingsMigrationDone.current = true
   }, [])
 
   const tabs: { label: string; value: View }[] = [

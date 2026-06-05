@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { useTimerStore, getNextPhase } from '@/features/timer'
+import {
+  useTimerStore,
+  getNextPhase,
+  DEFAULT_TIMER_SETTINGS,
+} from '@/features/timer'
 
 beforeEach(() => {
   localStorage.clear()
@@ -11,6 +15,7 @@ beforeEach(() => {
     sessionPomoCount: 0,
     isRunning: false,
     focusedTaskId: null,
+    settings: DEFAULT_TIMER_SETTINGS,
   })
 })
 
@@ -138,5 +143,39 @@ describe('getNextPhase', () => {
 
   it('longBreak -> focus', () => {
     expect(getNextPhase('longBreak', 1, 4)).toBe('focus')
+  })
+})
+
+describe('Timer settings slice', () => {
+  it('defaults to DEFAULT_TIMER_SETTINGS', () => {
+    expect(useTimerStore.getState().settings).toEqual(DEFAULT_TIMER_SETTINGS)
+  })
+
+  it('setTimerSettings merges a single field without clobbering others', () => {
+    useTimerStore.getState().setTimerSettings({ focusDuration: 30 })
+    const settings = useTimerStore.getState().settings
+    expect(settings.focusDuration).toBe(30)
+    expect(settings.shortBreakDuration).toBe(
+      DEFAULT_TIMER_SETTINGS.shortBreakDuration,
+    )
+    expect(settings.alarmSound).toBe(DEFAULT_TIMER_SETTINGS.alarmSound)
+  })
+
+  it('setTimerSettings merges multiple fields', () => {
+    useTimerStore.getState().setTimerSettings({
+      longBreakInterval: 6,
+      autoStartBreaks: true,
+      alarmVolume: 0.8,
+    })
+    const settings = useTimerStore.getState().settings
+    expect(settings.longBreakInterval).toBe(6)
+    expect(settings.autoStartBreaks).toBe(true)
+    expect(settings.alarmVolume).toBe(0.8)
+  })
+
+  it('persists settings to the daybox-timer key', () => {
+    useTimerStore.getState().setTimerSettings({ alarmRepeat: 5 })
+    const persisted = JSON.parse(localStorage.getItem('daybox-timer') ?? '{}')
+    expect(persisted.state.settings.alarmRepeat).toBe(5)
   })
 })

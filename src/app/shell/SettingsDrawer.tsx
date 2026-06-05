@@ -1,9 +1,14 @@
 import { useState } from 'react'
 
-import { exportData, downloadExport, parseImport } from '@/app/localStorage'
-import { useSettingsStore } from '@/app/settingsStore'
-import { GroupSettingsPanel, useGroupStore } from '@/features/groups'
-import { useTaskStore } from '@/features/tasks'
+import {
+  applyImport,
+  downloadExport,
+  exportData,
+  parseImport,
+} from '@/app/localStorage'
+import { useTheme } from '@/app/theme'
+import { GroupSettingsPanel } from '@/features/groups'
+import { usePlannerStore } from '@/features/planner'
 import { TimerSettingsPanel } from '@/features/timer'
 import {
   Sheet,
@@ -43,19 +48,15 @@ export function SettingsDrawer({
   open: boolean
   onClose: () => void
 }) {
-  const settings = useSettingsStore((s) => s.settings)
-  const updateSettings = useSettingsStore((s) => s.updateSettings)
+  const weekStartDay = usePlannerStore((s) => s.weekStartDay)
+  const setWeekStartDay = usePlannerStore((s) => s.setWeekStartDay)
+  const [theme, setTheme] = useTheme()
 
   const [importConfirmOpen, setImportConfirmOpen] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
 
   const handleExport = () => {
-    const json = exportData(
-      useTaskStore.getState().tasks,
-      useGroupStore.getState().groups,
-      useSettingsStore.getState().settings,
-    )
-    downloadExport(json)
+    downloadExport(exportData())
   }
 
   const doImport = () => {
@@ -75,12 +76,7 @@ export function SettingsDrawer({
           return
         }
         if (result.data) {
-          useTaskStore.setState({ tasks: result.data.tasks ?? [] })
-          useGroupStore.setState({ groups: result.data.groups ?? [] })
-          useSettingsStore.setState({
-            settings:
-              result.data.settings ?? useSettingsStore.getState().settings,
-          })
+          applyImport(result.data)
         }
       } catch {
         setImportError('Failed to read file.')
@@ -105,11 +101,9 @@ export function SettingsDrawer({
             <SettingRow label="First day of week">
               <Select
                 items={weekDays}
-                value={settings.weekStartDay}
+                value={weekStartDay}
                 onValueChange={(v) =>
-                  updateSettings({
-                    weekStartDay: (v ?? 1) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
-                  })
+                  setWeekStartDay((v ?? 1) as 0 | 1 | 2 | 3 | 4 | 5 | 6)
                 }
               >
                 <SelectTrigger>
@@ -126,11 +120,8 @@ export function SettingsDrawer({
             </SettingRow>
             <SettingRow label="Dark theme">
               <Switch
-                checked={settings.theme === 'dark'}
-                onCheckedChange={(v) => {
-                  updateSettings({ theme: v ? 'dark' : 'light' })
-                  document.documentElement.classList.toggle('dark', v)
-                }}
+                checked={theme === 'dark'}
+                onCheckedChange={(v) => setTheme(v ? 'dark' : 'light')}
               />
             </SettingRow>
           </div>

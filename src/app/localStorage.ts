@@ -1,29 +1,44 @@
-import { DEFAULT_APP_SETTINGS } from '@/shared/types'
-import type { Task } from '@/shared/types'
-import type { Group } from '@/shared/types'
-import type { AppSettings } from '@/shared/types'
+import { getTheme, setTheme, type Theme } from '@/app/theme'
+import { useGroupStore } from '@/features/groups'
+import { usePlannerStore, type WeekStartDay } from '@/features/planner'
+import { useTaskStore } from '@/features/tasks'
+import {
+  DEFAULT_TIMER_SETTINGS,
+  useTimerStore,
+  type TimerSettings,
+} from '@/features/timer'
+import type { Group, Task } from '@/shared/types'
 
-const CURRENT_VERSION = 1
+const CURRENT_VERSION = 3
+
+interface PlannerExport {
+  weekStartDay: WeekStartDay
+  browseDate: string | null
+}
 
 export interface ExportData {
   version: number
   exportedAt: string
   tasks: Task[]
   groups: Group[]
-  settings: AppSettings
+  timer: TimerSettings
+  planner: PlannerExport
+  theme: Theme
 }
 
-export function exportData(
-  tasks: Task[],
-  groups: Group[],
-  settings: AppSettings,
-): string {
+export function exportData(): string {
+  const planner = usePlannerStore.getState()
   const data: ExportData = {
     version: CURRENT_VERSION,
     exportedAt: new Date().toISOString(),
-    tasks,
-    groups,
-    settings,
+    tasks: useTaskStore.getState().tasks,
+    groups: useGroupStore.getState().groups,
+    timer: useTimerStore.getState().settings,
+    planner: {
+      weekStartDay: planner.weekStartDay,
+      browseDate: planner.browseDate,
+    },
+    theme: getTheme(),
   }
   return JSON.stringify(data, null, 2)
 }
@@ -38,15 +53,35 @@ export function downloadExport(data: string): void {
   URL.revokeObjectURL(url)
 }
 
+interface ImportPayload {
+  tasks: Task[]
+  groups: Group[]
+  timer: TimerSettings
+  planner: PlannerExport
+  theme: Theme
+}
+
 export interface ImportResult {
   success: boolean
-  data?: {
-    tasks: Task[]
-    groups: Group[]
-    settings: AppSettings
-  }
+  data?: ImportPayload
   error?: string
   warnings?: string[]
+}
+
+function coerceTheme(value: unknown): Theme {
+  return value === 'dark' ? 'dark' : 'light'
+}
+
+function coerceWeekStartDay(value: unknown): WeekStartDay {
+  if (typeof value === 'number' && value >= 0 && value <= 6) {
+    return value as WeekStartDay
+  }
+  return 1
+}
+
+function coerceTimerSettings(value: unknown): TimerSettings {
+  if (!value || typeof value !== 'object') return DEFAULT_TIMER_SETTINGS
+  return { ...DEFAULT_TIMER_SETTINGS, ...(value as Partial<TimerSettings>) }
 }
 
 export function parseImport(jsonString: string): ImportResult {
@@ -57,12 +92,39 @@ export function parseImport(jsonString: string): ImportResult {
       return { success: false, error: 'Invalid file format.' }
     }
 
-    // Support both new format (flat keys) and old format (appStore wrapper)
+    const version = typeof parsed.version === 'number' ? parsed.version : 3
     const source = parsed.appStore || parsed
 
-    const tasks: Task[] = source.tasks ?? []
-    const groups: Group[] = source.groups ?? []
-    const settings: AppSettings = source.settings ?? DEFAULT_APP_SETTINGS
+    const tasks: Task[] = Array.isArray(source.tasks) ? source.tasks : []
+    const groups: Group[] = Array.isArray(source.groups) ? source.groups : []
+
+    let timer: TimerSettings
+    let planner: PlannerExport
+    let theme: Theme
+
+    if (version === 2) {
+      const settings = source.settings ?? {}
+      timer = coerceTimerSettings(settings.timer)
+      planner = {
+        weekStartDay: coerceWeekStartDay(settings.weekStartDay),
+        browseDate: null,
+      }
+      theme = coerceTheme(settings.theme)
+    } else {
+      timer = coerceTimerSettings(source.timer)
+      const plannerSource =
+        source.planner && typeof source.planner === 'object'
+          ? source.planner
+          : {}
+      planner = {
+        weekStartDay: coerceWeekStartDay(plannerSource.weekStartDay),
+        browseDate:
+          typeof plannerSource.browseDate === 'string'
+            ? plannerSource.browseDate
+            : null,
+      }
+      theme = coerceTheme(source.theme)
+    }
 
     if (tasks.length === 0 && groups.length === 0) {
       return { success: false, error: 'No valid data found in file.' }
@@ -81,10 +143,19 @@ export function parseImport(jsonString: string): ImportResult {
 
     return {
       success: true,
-      data: { tasks, groups, settings },
+      data: { tasks, groups, timer, planner, theme },
       warnings: warnings.length > 0 ? warnings : undefined,
     }
   } catch {
     return { success: false, error: 'Corrupted file. Could not parse JSON.' }
   }
+}
+
+export function applyImport(payload: ImportPayload): void {
+  useTaskStore.setState({ tasks: payload.tasks })
+  useGroupStore.setState({ groups: payload.groups })
+  useTimerStore.getState().setTimerSettings(payload.timer)
+  usePlannerStore.getState().setWeekStartDay(payload.planner.weekStartDay)
+  usePlannerStore.getState().setBrowseDate(payload.planner.browseDate)
+  setTheme(payload.theme)
 }

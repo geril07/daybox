@@ -1,10 +1,11 @@
-import { useSettingsStore } from '@/app/settingsStore'
 import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
 import { EmptyState } from '@/shared/EmptyState'
 import { getWeekDays, getFormattedDate, formatDate } from '@/shared/dates'
 
+import { usePlannerStore } from '../store'
+
 export function WeekView() {
-  const weekStartDay = useSettingsStore((s) => s.settings.weekStartDay)
+  const weekStartDay = usePlannerStore((s) => s.weekStartDay)
   const tasks = useTaskStore((s) => s.tasks)
 
   const days = getWeekDays(weekStartDay)

@@ -1,4 +1,4 @@
-import { useSettingsStore } from '@/app/settingsStore'
+import { useTimerStore } from '@/features/timer'
 import {
   NumberInput,
   Switch,
@@ -11,8 +11,10 @@ import {
 } from '@/shared/ui'
 
 export function TimerSettingsPanel() {
-  const settings = useSettingsStore((s) => s.settings)
-  const updateTimerSettings = useSettingsStore((s) => s.updateTimerSettings)
+  const settings = useTimerStore((s) => s.settings)
+  const updateTimerSettings = (
+    partial: Partial<ReturnType<typeof useTimerStore.getState>['settings']>,
+  ) => useTimerStore.getState().setTimerSettings(partial)
 
   return (
     <>
@@ -22,7 +24,7 @@ export function TimerSettingsPanel() {
         </div>
         <SettingRow label="Focus duration">
           <NumberInput
-            value={settings.timer.focusDuration}
+            value={settings.focusDuration}
             onValueChange={(v) =>
               updateTimerSettings({ focusDuration: v ?? undefined })
             }
@@ -32,7 +34,7 @@ export function TimerSettingsPanel() {
         </SettingRow>
         <SettingRow label="Short break">
           <NumberInput
-            value={settings.timer.shortBreakDuration}
+            value={settings.shortBreakDuration}
             onValueChange={(v) =>
               updateTimerSettings({ shortBreakDuration: v ?? undefined })
             }
@@ -42,7 +44,7 @@ export function TimerSettingsPanel() {
         </SettingRow>
         <SettingRow label="Long break">
           <NumberInput
-            value={settings.timer.longBreakDuration}
+            value={settings.longBreakDuration}
             onValueChange={(v) =>
               updateTimerSettings({ longBreakDuration: v ?? undefined })
             }
@@ -52,7 +54,7 @@ export function TimerSettingsPanel() {
         </SettingRow>
         <SettingRow label="Long break interval">
           <NumberInput
-            value={settings.timer.longBreakInterval}
+            value={settings.longBreakInterval}
             onValueChange={(v) =>
               updateTimerSettings({ longBreakInterval: v ?? undefined })
             }
@@ -67,13 +69,13 @@ export function TimerSettingsPanel() {
         </div>
         <SettingRow label="Auto-start breaks">
           <Switch
-            checked={settings.timer.autoStartBreaks}
+            checked={settings.autoStartBreaks}
             onCheckedChange={(v) => updateTimerSettings({ autoStartBreaks: v })}
           />
         </SettingRow>
         <SettingRow label="Auto-start pomodoros">
           <Switch
-            checked={settings.timer.autoStartPomodoros}
+            checked={settings.autoStartPomodoros}
             onCheckedChange={(v) =>
               updateTimerSettings({ autoStartPomodoros: v })
             }
@@ -86,7 +88,7 @@ export function TimerSettingsPanel() {
         </div>
         <SettingRow label="Sound">
           <Select
-            value={settings.timer.alarmSound}
+            value={settings.alarmSound}
             onValueChange={(v) =>
               updateTimerSettings({
                 alarmSound: v as 'bell' | 'digital' | 'gentle' | 'ping',
@@ -107,7 +109,7 @@ export function TimerSettingsPanel() {
         </SettingRow>
         <SettingRow label="Volume">
           <Slider
-            value={[settings.timer.alarmVolume]}
+            value={[settings.alarmVolume]}
             onValueChange={(value) => {
               const next = Array.isArray(value) ? value[0] : value
               updateTimerSettings({ alarmVolume: next })
@@ -120,7 +122,7 @@ export function TimerSettingsPanel() {
         </SettingRow>
         <SettingRow label="Repeat count">
           <NumberInput
-            value={settings.timer.alarmRepeat}
+            value={settings.alarmRepeat}
             onValueChange={(v) =>
               updateTimerSettings({ alarmRepeat: v ?? undefined })
             }

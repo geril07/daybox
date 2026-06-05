@@ -1,29 +1,20 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-import { useUIStore } from '@/app/uiStore'
 import { TaskList, selectForDate, useTaskStore } from '@/features/tasks'
 import { EmptyState } from '@/shared/EmptyState'
-import { formatDate } from '@/shared/dates'
 import { Button } from '@/shared/ui'
 
+import { usePlannerStore } from '../store'
+
 export function DateBrowser() {
-  const browseDate = useUIStore((s) => s.browseDate)
-  const setBrowseDate = useUIStore((s) => s.setBrowseDate)
+  const browseDate = usePlannerStore((s) => s.browseDate)
+  const stepBrowseDate = usePlannerStore((s) => s.stepBrowseDate)
   const tasks = useTaskStore((s) => s.tasks)
 
   const dateTasks = browseDate ? selectForDate(tasks, browseDate) : []
 
-  const goBack = () => {
-    const current = browseDate ? new Date(browseDate) : new Date()
-    current.setDate(current.getDate() - 1)
-    setBrowseDate(formatDate(current))
-  }
-
-  const goForward = () => {
-    const current = browseDate ? new Date(browseDate) : new Date()
-    current.setDate(current.getDate() + 1)
-    setBrowseDate(formatDate(current))
-  }
+  const goBack = () => stepBrowseDate(-1)
+  const goForward = () => stepBrowseDate(1)
 
   if (!browseDate) {
     return (

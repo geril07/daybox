@@ -19,7 +19,7 @@ Four files in `features/` import from `app/settingsStore` or `app/uiStore`, brea
   - `features/planner/components/DateBrowser.tsx` reads/writes `browseDate` from `features/planner/store.ts`
   - `app/App.tsx` reads `theme` from `app/theme.ts`, uses a local `useState` for `view`, and registers the `daybox-settings` migration
 - **Delete `features/timer/components/TimerSettingsPanel.tsx`'s dependency on `app/settingsStore.ts`** — same source as TimerBar
-- **No behavior changes** — the UI, persisted semantics from the user's perspective, and store APIs observed by consumers remain identical; only the *location* of state and the localStorage key layout change
+- **No behavior changes** — the UI, persisted semantics from the user's perspective, and store APIs observed by consumers remain identical; only the _location_ of state and the localStorage key layout change
 
 ## Capabilities
 
@@ -32,7 +32,7 @@ Four files in `features/` import from `app/settingsStore` or `app/uiStore`, brea
 - `data-persistence`: Add the new localStorage key layout (`daybox-tasks`, `daybox-groups`, `daybox-timer` now also holds timer configuration, `daybox-planner` holds planner preferences, `daybox-theme` holds the theme). Update the export/import requirements to round-trip all five keys. Add a new migration scenario for the `daybox-settings` → split-keys path, alongside the existing `daybox-app-store` migration.
 - `pomodoro-timer`: Add a requirement that timer configuration (durations, auto-start, alarm sound/volume/repeat, long-break interval) is persisted in the timer's own store under `daybox-timer` rather than a separate settings store. The `TimerSettingsPanel` reads and writes the timer's own store.
 - `time-views`: Add a requirement that the first day of the week and the date browser's current date are persisted in the planner feature's own store under `daybox-planner`. The `WeekView` reads the week-start preference from the planner store; the `DateBrowser` reads and writes the browse-date from the same store.
-- `settings`: Reduce the `settings` capability to the app-shell concerns: the settings drawer opens/closes from the header, and the drawer hosts feature-owned panels (Timer, Groups, Theme, First day of week). The actual persisted data for each panel lives in the corresponding feature's own store. Remove the requirements that describe the *storage location* of timer/theme/week-start data — those are now described by the owning capability.
+- `settings`: Reduce the `settings` capability to the app-shell concerns: the settings drawer opens/closes from the header, and the drawer hosts feature-owned panels (Timer, Groups, Theme, First day of week). The actual persisted data for each panel lives in the corresponding feature's own store. Remove the requirements that describe the _storage location_ of timer/theme/week-start data — those are now described by the owning capability.
 
 ## Impact
 
