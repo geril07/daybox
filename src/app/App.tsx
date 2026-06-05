@@ -1,4 +1,5 @@
 import { Settings } from 'lucide-react'
+import { MotionConfig } from 'motion/react'
 import { useState, useEffect, useRef } from 'react'
 
 import {
@@ -151,10 +152,12 @@ export function App() {
 
       <main className="app-content flex-1 pb-[72px]">
         <div className="container mx-auto w-full max-w-[680px] px-7">
-          <div className="task-list-area py-1 pb-10">
-            <AddTaskRow defaultDate={defaultDate} />
-            {renderView()}
-          </div>
+          <MotionConfig reducedMotion="user">
+            <div className="task-list-area py-1 pb-10">
+              <AddTaskRow defaultDate={defaultDate} />
+              {renderView()}
+            </div>
+          </MotionConfig>
         </div>
       </main>
 

@@ -11,7 +11,7 @@ import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
 interface TaskRowProps {
   task: Task
-  dragHandleRef?: React.RefObject<HTMLDivElement | null>
+  dragHandleRef?: (element: Element | null) => void
 }
 
 export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
@@ -70,7 +70,6 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
         'transition-background border-border flex min-h-[46px] items-center gap-2.5 rounded-[4px] border-b px-1.5 py-2 duration-120',
         isFocused && 'bg-accent-bg',
         !isFocused && overdue && 'bg-overdue-bg',
-        task.completed && 'opacity-[0.52]',
       )}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
