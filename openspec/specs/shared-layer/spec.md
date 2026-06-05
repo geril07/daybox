@@ -32,11 +32,17 @@ All shared, layout-neutral UI components SHALL live in `src/shared/ui/` and SHAL
 - **THEN** the component file is placed in `src/shared/ui/<Component>.tsx`
 - **AND** it is re-exported from `src/shared/ui/index.ts`
 
-#### Scenario: No top-level UI files in shared/
+### Requirement: Shared module folders are folder-per-module
 
-- **WHEN** listing files directly under `src/shared/`
-- **THEN** only utilities (`cn`, `dates`, `id`, `keyboard`, `notifications`, `test-setup` if present) and folders (`ui/`, `lib/`, `assets/` if present) are present
-- **AND** no `.tsx` UI components sit directly in `src/shared/`
+Every shared utility SHALL live in its own folder under `src/shared/` with a barrel `index.ts` that re-exports the module's public API. No standalone source files sit directly in `src/shared/`.
+
+#### Scenario: No top-level files in shared/
+
+- **WHEN** listing entries directly under `src/shared/`
+- **THEN** only folders are present — one folder per utility module (`dates/`, `id/`, `keyboard/`, `notifications/`, plus `lib/` and `ui/`)
+- **AND** each module folder contains the implementation file (e.g., `dates/dates.ts`) plus a barrel `index.ts` that re-exports its public API
+- **AND** the test file sits next to its source inside the same module folder (e.g., `dates/dates.test.ts`)
+- **AND** consumers import via the module folder path: `@/shared/dates`, `@/shared/id`, etc.
 
 ### Requirement: Test infrastructure lives in app/ or a dedicated test folder
 
