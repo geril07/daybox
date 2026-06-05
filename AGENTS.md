@@ -4,13 +4,18 @@
 
 ## Stack
 
-- **Vite + React 19 + TypeScript 6** — entry: `src/main.tsx` → `src/app/App.tsx` (note: `src/App.tsx` is a stale Vite scaffold, not used)
+- **Vite + React 19 + TypeScript 6** — entry: `src/main.tsx` → `src/app/App.tsx`. (`src/App.tsx` does not exist; ignore the Vite scaffold reference.)
 - **Tailwind CSS v4** — `@tailwindcss/vite` plugin; tokens in `src/index.css` `@theme`; dark mode via `.dark` class on `<html>`
-- **Zustand** — two stores: `src/app/store.ts` (persisted, app state) and `src/app/timerStore.ts` (non-persisted, 1Hz tick kept separate to avoid task list re-renders)
+- **Zustand v5** — five stores, all co-located with the feature that owns them:
+  - `src/app/uiStore.ts` — non-persisted; current view (`today`/`tomorrow`/`week`/`backlog`/`date`) and `browseDate`
+  - `src/app/settingsStore.ts` — persisted (`daybox-settings`); `AppSettings` (theme, weekStartDay, `TimerSettings`)
+  - `src/features/tasks/store.ts` — persisted (`daybox-tasks`); `Task[]` + CRUD actions
+  - `src/features/groups/store.ts` — persisted (`daybox-groups`); `Group[]` + `stickyGroupId`
+  - `src/features/timer/store.ts` — persisted (`daybox-timer`); `phase`, `startedAt`, `elapsed`, `sessionPomoCount`, `isRunning`, `focusedTaskId`, plus `start`/`pause`/`reset`/`togglePlayPause`/`advancePhase`/`skip`/`focusTask`. Timer `tick` is fired by a `setInterval` in `TimerBar` so the 1Hz update doesn't re-render the task list.
 - **@base-ui/react v1.5** — headless UI primitives used via `src/shared/ui/` wrappers only
-- **Shared UI (`src/shared/ui/`)** — shadcn/ui-style wrappers isolating base-ui: `Button` (cva variants), `NumberInput`, `Toggle`, `RangeSlider`, `SelectMenu` (compound: `.Trigger`, `.Content`, `.Item`), `AlertDialog` (compound: `.Overlay`, `.Content`, `.Title`, `.Description`), `SidePanel` (compound: `.Overlay`, `.Content`, `.Header`), `Popover` (compound: `.Trigger`, `.Positioner`, `.Content`). Consumer code never imports base-ui directly.
+- **Shared UI (`src/shared/ui/`)** — shadcn-style wrappers isolating base-ui. Current primitives: `Button` (cva variants), `Input`, `Label`, `Separator`, `Badge`, `Card` (compound: `.Header`/`.Title`/`.Description`/`.Content`/`.Footer`), `Select` (compound: `.Trigger`/`.Content`/`.Item`/`.Value`/`.Group`/`.Label`/`.Separator`), `Sheet` (compound: `.Trigger`/`.Close`/`.Content`/`.Header`/`.Footer`/`.Title`/`.Description`), `Switch`, `Slider`, `AlertDialog` (compound: `.Trigger`/`.Portal`/`.Overlay`/`.Content`/`.Header`/`.Footer`/`.Title`/`.Description`/`.Action`/`.Cancel`/`.Media`), `Popover` (compound: `.Trigger`/`.Content`/`.Header`/`.Title`/`.Description`), `Tabs` (compound: `.List`/`.Trigger`/`.Content`), `NumberInput`. Consumer code never imports base-ui directly.
 - **Shadcn utilities** — `cn()` in `src/shared/lib/utils.ts` (clsx + tailwind-merge); `cva` via `class-variance-authority` for variant components.
-- **@dnd-kit/react** — drag-to-reorder in `src/features/tasks/TaskList.tsx`
+- **@dnd-kit/react** — drag-to-reorder in `src/features/tasks/components/TaskList.tsx`
 
 ## Commands
 
@@ -49,17 +54,23 @@ Main specs at `openspec/specs/`, delta specs at `openspec/changes/<name>/specs/`
 
 ```
 src/
-  app/        — Shell, stores, localStorage export/import
-  features/   — tasks/, timer/, groups/, settings/, views/
+  app/        — Shell, settings/ui stores, localStorage export/import, legacy migration
+    shell/    — SettingsDrawer
+  features/
+    tasks/    — store, queries (selectOverdue/selectForDate/selectTodayTasks/selectBacklog), AddTaskRow, TaskList, TaskRow
+    timer/    — store, alarm (WebAudio synth), TimerBar, TimerSettingsPanel
+    groups/   — store, GroupLens, GroupSettingsPanel, GroupTag
+    planner/  — view components: Today, Tomorrow, Week, Backlog, DateBrowser
   shared/
     lib/      — cn() utility (clsx + tailwind-merge)
-    ui/       — shadcn-style base-ui wrappers: Button, NumberInput, Toggle, RangeSlider, SelectMenu, AlertDialog, SidePanel, Popover
-    types, dates, keyboard, notifications, EmptyState
+    ui/       — shadcn-style base-ui wrappers (see Stack)
+    types, id, dates, keyboard, notifications, EmptyState
 ```
 
-- **Two Zustand stores**: `app/store.ts` (persisted with migrate-on-read) and `app/timerStore.ts` (isolated — 1Hz tick doesn't re-render task list)
-- **Dark mode**: class strategy via `document.documentElement.classList.toggle('dark', ...)` in `App.tsx`
+- **Per-domain Zustand stores** with their own localStorage keys (see Stack). The legacy single-store key `daybox-app-store` is migrated on first read by `App.tsx` into the new stores; the key is then removed.
+- **Dark mode**: class strategy via `document.documentElement.classList.toggle('dark', theme === 'dark')` in `App.tsx`
 - **TypeScript**: `verbatimModuleSyntax` — use `import type` for type-only imports; `erasableSyntaxOnly` — no `enum`, no legacy decorators; `noUnusedLocals` / `noUnusedParameters` enabled
 - **Design tokens**: Tailwind v4 `@theme` in `src/index.css`; CSS custom properties for runtime (dark mode overrides)
-- **Export/import**: `downloadExport(exportData(state))` and file input → `parseImport()` → `setState()`
+- **Export/import**: `downloadExport(exportData(tasks, groups, settings))` and file input → `parseImport()` → `useTaskStore.setState()` etc.
+- **Intra-feature imports**: components inside a feature import siblings with relative paths (`./TaskRow`), not via the feature's own barrel; barrels exist only for cross-feature consumption.
 - **Prettier**: run `npm run format` before committing to match CI
