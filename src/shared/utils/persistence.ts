@@ -1,9 +1,12 @@
+import type { PersistStorage } from 'zustand/middleware'
+
 type ZodSchemaLike = {
   safeParse: (data: unknown) => { success: boolean; error?: unknown }
 }
 
-export interface ValidatedPersistOptions {
+export interface ValidatedPersistOptions<T = unknown> {
   onRehydrateStorage?: () => (state: unknown) => void
+  storage?: PersistStorage<T>
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,13 +14,15 @@ export function createValidatedPersist<TInit = any>(
   name: string,
   schema: ZodSchemaLike,
   init: TInit,
-  options?: ValidatedPersistOptions,
+  options?: ValidatedPersistOptions<TInit>,
 ) {
   const userOnRehydrate = options?.onRehydrateStorage
+  const storage = options?.storage
   let warned = false
 
   return {
     name,
+    storage,
     onRehydrateStorage:
       () => (state: Record<string, unknown> | undefined, error?: unknown) => {
         if (error) return

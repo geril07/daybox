@@ -1,4 +1,3 @@
-import { useGroupStore } from '@/features/groups'
 import {
   Select,
   SelectTrigger,
@@ -6,6 +5,8 @@ import {
   SelectContent,
   SelectItem,
 } from '@/shared/ui'
+
+import { useGroupStore } from '../store'
 
 interface GroupLensProps {
   selectedGroupId: string | null

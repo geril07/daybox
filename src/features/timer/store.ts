@@ -1,9 +1,13 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 
-import { TimerStateSchema, TimerSettingsSchema } from '@/features/timer/schema'
-import type { TimerPhase, TimerSettings } from '@/features/timer/types'
+import { createDebouncedStringStorage } from '@/shared/utils/debounced-storage'
 import { createValidatedPersist } from '@/shared/utils/persistence'
+
+import { TimerStateSchema, TimerSettingsSchema } from './schema'
+import type { TimerPhase, TimerSettings } from './types'
+
+export const timerStorage = createDebouncedStringStorage(localStorage, 1000)
 
 export const DEFAULT_TIMER_SETTINGS: TimerSettings = {
   focusDuration: 25,
@@ -177,6 +181,7 @@ export const useTimerStore = create<TimerStore>()(
         settings: DEFAULT_TIMER_SETTINGS,
       },
       {
+        storage: createJSONStorage(() => timerStorage),
         onRehydrateStorage: () => (state) => {
           const timerState = state as TimerState | undefined
           if (timerState?.isRunning && timerState.startedAt) {

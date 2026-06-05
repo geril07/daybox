@@ -1,4 +1,3 @@
-import { useTimerStore } from '@/features/timer'
 import {
   NumberInput,
   Switch,
@@ -9,6 +8,8 @@ import {
   SelectItem,
   Slider,
 } from '@/shared/ui'
+
+import { useTimerStore } from '../store'
 
 export function TimerSettingsPanel() {
   const settings = useTimerStore((s) => s.settings)

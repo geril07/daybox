@@ -2,8 +2,6 @@ import { Check, Target, Trash2, Calendar, GripVertical } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
 import { useGroupStore } from '@/features/groups'
-import { useTaskStore } from '@/features/tasks'
-import type { Task } from '@/features/tasks/types'
 import { useTimerStore } from '@/features/timer'
 import { isOverdue, formatDate, getTomorrow } from '@/shared/dates'
 import {
@@ -14,6 +12,9 @@ import {
   PopoverContent,
 } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
+
+import { useTaskStore } from '../store'
+import type { Task } from '../types'
 
 interface TaskRowProps {
   task: Task

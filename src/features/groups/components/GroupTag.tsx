@@ -1,4 +1,4 @@
-import { useGroupStore } from '@/features/groups'
+import { useGroupStore } from '../store'
 
 interface GroupTagProps {
   groupId: string

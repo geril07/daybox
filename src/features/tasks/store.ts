@@ -2,12 +2,13 @@ import { z } from 'zod'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { TaskSchema } from '@/features/tasks/schema'
-import type { Task } from '@/features/tasks/types'
+import { DEFAULT_GROUP_ID } from '@/features/groups'
+import { useTimerStore } from '@/features/timer'
 import { generateId } from '@/shared/id'
 import { createValidatedPersist } from '@/shared/utils/persistence'
 
-const DEFAULT_GROUP_ID = 'default'
+import { TaskSchema } from './schema'
+import type { Task } from './types'
 
 const TaskStateSchema = z.object({
   tasks: z.array(TaskSchema),
@@ -18,7 +19,11 @@ interface TaskState {
 }
 
 interface TaskActions {
-  addTask: (title: string, groupId?: string, date?: string | null) => Task
+  addTask: (
+    title: string,
+    groupId?: string,
+    date?: string | null,
+  ) => Task | null
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
   toggleTask: (id: string) => void
@@ -31,97 +36,112 @@ export type TaskStore = TaskState & TaskActions
 
 const taskInit: TaskState = { tasks: [] }
 
-function createPlaceholderTask(): Task {
-  return {
-    id: '',
-    title: '',
-    groupId: '',
-    date: null,
-    pomoEstimate: 0,
-    pomoCompleted: 0,
-    sortOrder: 0,
-    completed: false,
-    completedAt: null,
-    createdAt: '',
-  }
-}
-
 export const useTaskStore = create<TaskStore>()(
   persist(
-    (set) => ({
-      tasks: [],
-
-      addTask: (title: string, groupId?: string, date?: string | null) => {
-        const trimmed = title.trim()
-        if (trimmed.length === 0 || trimmed.length > 280) {
-          console.warn(
-            `[daybox] Task title ${trimmed.length > 280 ? `exceeds 280 character limit (${trimmed.length})` : 'is empty'}`,
-          )
-          return createPlaceholderTask()
+    (set, get) => {
+      const clearFocusIfMatching = (taskId: string | null) => {
+        if (taskId === null) return
+        const focused = useTimerStore.getState().focusedTaskId
+        if (focused === taskId) {
+          useTimerStore.getState().setFocusedTaskId(null)
         }
-        const task: Task = {
-          id: generateId(),
-          title: trimmed,
-          groupId: groupId || DEFAULT_GROUP_ID,
-          date: date !== undefined ? date : null,
-          pomoEstimate: 0,
-          pomoCompleted: 0,
-          sortOrder: 0,
-          completed: false,
-          completedAt: null,
-          createdAt: new Date().toISOString(),
-        }
-        set((state) => {
-          const sortOrder = state.tasks.filter(
-            (t) => t.date === (date !== undefined ? date : null),
-          ).length
-          return { tasks: [...state.tasks, { ...task, sortOrder }] }
-        })
-        return task
-      },
+      }
 
-      updateTask: (id, updates) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === id ? { ...t, ...updates } : t,
-          ),
-        })),
+      return {
+        tasks: [],
 
-      deleteTask: (id) =>
-        set((state) => ({
-          tasks: state.tasks.filter((t) => t.id !== id),
-        })),
+        addTask: (title: string, groupId?: string, date?: string | null) => {
+          const trimmed = title.trim()
+          if (trimmed.length === 0 || trimmed.length > 280) {
+            console.warn(
+              `[daybox] Task title ${trimmed.length > 280 ? `exceeds 280 character limit (${trimmed.length})` : 'is empty'}`,
+            )
+            return null
+          }
+          const task: Task = {
+            id: generateId(),
+            title: trimmed,
+            groupId: groupId || DEFAULT_GROUP_ID,
+            date: date !== undefined ? date : null,
+            pomoEstimate: 0,
+            pomoCompleted: 0,
+            sortOrder: 0,
+            completed: false,
+            completedAt: null,
+            createdAt: new Date().toISOString(),
+          }
+          set((state) => {
+            const sortOrder = state.tasks.filter(
+              (t) => t.date === (date !== undefined ? date : null),
+            ).length
+            return { tasks: [...state.tasks, { ...task, sortOrder }] }
+          })
+          return task
+        },
 
-      toggleTask: (id) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.id === id
-              ? {
-                  ...t,
-                  completed: !t.completed,
-                  completedAt: !t.completed ? new Date().toISOString() : null,
-                }
-              : t,
-          ),
-        })),
+        updateTask: (id, updates) =>
+          set((state) => ({
+            tasks: state.tasks.map((t) =>
+              t.id === id ? { ...t, ...updates } : t,
+            ),
+          })),
 
-      reorderTasks: (tasks) =>
-        set({
-          tasks: tasks.map((t, i) => ({ ...t, sortOrder: i })),
-        }),
+        deleteTask: (id) => {
+          clearFocusIfMatching(id)
+          set((state) => ({
+            tasks: state.tasks.filter((t) => t.id !== id),
+          }))
+        },
 
-      reassignTasks: (fromGroupId, toGroupId) =>
-        set((state) => ({
-          tasks: state.tasks.map((t) =>
-            t.groupId === fromGroupId ? { ...t, groupId: toGroupId } : t,
-          ),
-        })),
+        toggleTask: (id) =>
+          set((state) => ({
+            tasks: state.tasks.map((t) =>
+              t.id === id
+                ? {
+                    ...t,
+                    completed: !t.completed,
+                    completedAt: !t.completed ? new Date().toISOString() : null,
+                  }
+                : t,
+            ),
+          })),
 
-      deleteTasksByGroupId: (groupId) =>
-        set((state) => ({
-          tasks: state.tasks.filter((t) => t.groupId !== groupId),
-        })),
-    }),
+        reorderTasks: (tasks) =>
+          set({
+            tasks: tasks.map((t, i) => ({ ...t, sortOrder: i })),
+          }),
+
+        reassignTasks: (fromGroupId, toGroupId) => {
+          const focused = useTimerStore.getState().focusedTaskId
+          const focusedInFromGroup =
+            focused !== null &&
+            get().tasks.some(
+              (t) => t.id === focused && t.groupId === fromGroupId,
+            )
+          set((state) => ({
+            tasks: state.tasks.map((t) =>
+              t.groupId === fromGroupId ? { ...t, groupId: toGroupId } : t,
+            ),
+          }))
+          if (focusedInFromGroup) {
+            useTimerStore.getState().setFocusedTaskId(null)
+          }
+        },
+
+        deleteTasksByGroupId: (groupId) => {
+          const focused = useTimerStore.getState().focusedTaskId
+          const focusedInGroup =
+            focused !== null &&
+            get().tasks.some((t) => t.id === focused && t.groupId === groupId)
+          set((state) => ({
+            tasks: state.tasks.filter((t) => t.groupId !== groupId),
+          }))
+          if (focusedInGroup) {
+            useTimerStore.getState().setFocusedTaskId(null)
+          }
+        },
+      }
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createValidatedPersist('daybox-tasks', TaskStateSchema, taskInit) as any,
   ),

@@ -3,12 +3,13 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import { GROUP_COLORS } from '@/features/groups/constants'
-import { GroupSchema } from '@/features/groups/schema'
-import type { Group } from '@/features/groups/types'
 import { generateId } from '@/shared/id'
 import { createValidatedPersist } from '@/shared/utils/persistence'
 
-const DEFAULT_GROUP_ID = 'default'
+import { GroupSchema } from './schema'
+import type { Group } from './types'
+
+export const DEFAULT_GROUP_ID = 'default'
 
 const GroupStateSchema = z.object({
   groups: z.array(GroupSchema),

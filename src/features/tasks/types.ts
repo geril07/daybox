@@ -1,5 +1,5 @@
 import type { z } from 'zod'
 
-import type { TaskSchema } from '@/features/tasks/schema'
+import type { TaskSchema } from './schema'
 
 export type Task = z.infer<typeof TaskSchema>

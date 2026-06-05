@@ -1,7 +1,6 @@
 import { useState } from 'react'
 
-import { useGroupStore } from '@/features/groups'
-import type { Group } from '@/features/groups/types'
+import { DEFAULT_GROUP_ID, useGroupStore, type Group } from '@/features/groups'
 import { useTaskStore } from '@/features/tasks'
 import {
   AlertDialog,
@@ -34,7 +33,7 @@ export function GroupSettingsPanel() {
         .filter((t) => t.groupId === groupId)
         .map((t) => t.id)
       taskIds.forEach((id) =>
-        useTaskStore.getState().updateTask(id, { groupId: 'default' }),
+        useTaskStore.getState().updateTask(id, { groupId: DEFAULT_GROUP_ID }),
       )
     } else {
       const taskIds = tasks

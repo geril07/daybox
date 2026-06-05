@@ -6,7 +6,8 @@ import {
   selectInRange,
   selectUndated,
 } from '@/features/tasks'
-import type { Task } from '@/features/tasks/types'
+
+import type { Task } from './types'
 
 function createTask(overrides: Partial<Task> & { id: string }): Task {
   return {

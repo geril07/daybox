@@ -2,8 +2,10 @@ import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 import { useGroupStore } from '@/features/groups'
-import { TaskRow, useTaskStore } from '@/features/tasks'
 import { useTimerStore } from '@/features/timer'
+
+import { useTaskStore } from '../store'
+import { TaskRow } from './TaskRow'
 
 beforeEach(() => {
   useTaskStore.setState({ tasks: [] })

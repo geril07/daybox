@@ -1,4 +1,4 @@
-import type { Task } from '@/features/tasks/types'
+import type { Task } from './types'
 
 export function selectOverdue(tasks: Task[], asOf: string): Task[] {
   return tasks

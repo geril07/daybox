@@ -35,6 +35,7 @@ describe('Group Store - CRUD', () => {
   it('deletes a group and reassigns tasks', () => {
     const group = useGroupStore.getState().addGroup('Work')
     const task = useTaskStore.getState().addTask('Test', group.id)
+    if (!task) throw new Error('addTask returned null')
     useGroupStore.getState().deleteGroup(group.id)
     useTaskStore
       .getState()

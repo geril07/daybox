@@ -1,14 +1,18 @@
 import { z } from 'zod'
 
 import { getTheme, setTheme, ThemeSchema } from '@/app/theme'
-import { useGroupStore } from '@/features/groups'
-import { GroupSchema } from '@/features/groups/schema'
-import type { Group } from '@/features/groups/types'
-import { usePlannerStore, type WeekStartDay } from '@/features/planner'
-import { PlannerStateSchema } from '@/features/planner/schema'
-import { useTaskStore } from '@/features/tasks'
-import { TaskSchema } from '@/features/tasks/schema'
-import type { Task } from '@/features/tasks/types'
+import {
+  DEFAULT_GROUP_ID,
+  useGroupStore,
+  type Group,
+  GroupSchema,
+} from '@/features/groups'
+import {
+  usePlannerStore,
+  type WeekStartDay,
+  PlannerStateSchema,
+} from '@/features/planner'
+import { useTaskStore, type Task, TaskSchema } from '@/features/tasks'
 import {
   DEFAULT_TIMER_SETTINGS,
   TimerSettingsSchema,
@@ -178,7 +182,6 @@ export function parseImport(jsonString: string): ImportResult {
     }
 
     const existingGroupIds = new Set(groups.map((g) => g.id))
-    const DEFAULT_GROUP_ID = 'default'
     for (const task of tasks) {
       if (!existingGroupIds.has(task.groupId)) {
         warnings.push(
@@ -301,10 +304,40 @@ export function migrateLegacyAppStore(): void {
     const state = result.data.state
     if (!state) return
     if (state.tasks && state.tasks.length > 0) {
-      useTaskStore.setState({ tasks: state.tasks as Task[] })
+      const migratedTasks: Task[] = []
+      for (const raw of state.tasks) {
+        const record = safeParseAndRoute({
+          value: raw,
+          schema: TaskSchema,
+          layer: 'record',
+        })
+        if (record.ok) {
+          migratedTasks.push(record.data)
+        } else {
+          console.warn('[daybox] Legacy task dropped:', record.reason)
+        }
+      }
+      if (migratedTasks.length > 0) {
+        useTaskStore.setState({ tasks: migratedTasks })
+      }
     }
     if (state.groups && state.groups.length > 0) {
-      useGroupStore.setState({ groups: state.groups as Group[] })
+      const migratedGroups: Group[] = []
+      for (const raw of state.groups) {
+        const record = safeParseAndRoute({
+          value: raw,
+          schema: GroupSchema,
+          layer: 'record',
+        })
+        if (record.ok) {
+          migratedGroups.push(record.data)
+        } else {
+          console.warn('[daybox] Legacy group dropped:', record.reason)
+        }
+      }
+      if (migratedGroups.length > 0) {
+        useGroupStore.setState({ groups: migratedGroups })
+      }
     }
     if (state.settings) {
       localStorage.setItem(

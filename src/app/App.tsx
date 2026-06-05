@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 
 import { migrateLegacyAppStore, migrateLegacySettings } from '@/app/bootstrap'
 import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
-import { GroupLens } from '@/features/groups'
 import {
   DayView,
   DateBrowser,
@@ -114,7 +113,6 @@ export function App() {
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <GroupLens selectedGroupId={null} onSelect={() => {}} />
             <Button
               variant="ghost"
               size="icon"

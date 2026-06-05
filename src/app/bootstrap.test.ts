@@ -2,12 +2,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { exportData, parseImport } from '@/app/bootstrap'
 import { setTheme } from '@/app/theme'
-import { useGroupStore } from '@/features/groups'
-import { GROUP_COLORS } from '@/features/groups/constants'
-import type { Group } from '@/features/groups/types'
+import { useGroupStore, type Group, GROUP_COLORS } from '@/features/groups'
 import { usePlannerStore } from '@/features/planner'
-import { useTaskStore } from '@/features/tasks'
-import type { Task } from '@/features/tasks/types'
+import { useTaskStore, type Task } from '@/features/tasks'
 import { DEFAULT_TIMER_SETTINGS, useTimerStore } from '@/features/timer'
 
 function createTask(overrides: Partial<Task> & { id: string }): Task {

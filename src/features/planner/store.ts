@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { PlannerStateSchema } from '@/features/planner/schema'
 import { formatDate } from '@/shared/dates'
 import { createValidatedPersist } from '@/shared/utils/persistence'
+
+import { PlannerStateSchema } from './schema'
 
 export type WeekStartDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 

@@ -1,4 +1,6 @@
 export * from './store'
+export * from './types'
+export * from './schema'
 export * from './queries'
 export * from './components/AddTaskRow'
 export * from './components/TaskList'

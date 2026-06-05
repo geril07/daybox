@@ -1,22 +1,5 @@
 export { Button, buttonVariants } from './button'
 
-export { Input } from './input'
-
-export { Label } from './label'
-
-export { Separator } from './separator'
-
-export { Badge, badgeVariants } from './badge'
-
-export {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from './card'
-
 export {
   Select,
   SelectContent,

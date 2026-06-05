@@ -4,6 +4,7 @@ import {
   useTimerStore,
   getNextPhase,
   DEFAULT_TIMER_SETTINGS,
+  timerStorage,
 } from '@/features/timer'
 
 beforeEach(() => {
@@ -175,6 +176,7 @@ describe('Timer settings slice', () => {
 
   it('persists settings to the daybox-timer key', () => {
     useTimerStore.getState().setTimerSettings({ alarmRepeat: 5 })
+    timerStorage.flush()
     const persisted = JSON.parse(localStorage.getItem('daybox-timer') ?? '{}')
     expect(persisted.state.settings.alarmRepeat).toBe(5)
   })

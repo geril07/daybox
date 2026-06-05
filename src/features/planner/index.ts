@@ -1,4 +1,5 @@
 export * from './store'
+export * from './schema'
 export * from './queries'
 export * from './components/DayView'
 export * from './components/DateBrowser'
