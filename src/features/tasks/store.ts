@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware'
 import { TaskSchema } from '@/features/tasks/schema'
 import type { Task } from '@/features/tasks/types'
 import { generateId } from '@/shared/id'
-import { createValidatedPersist } from '@/shared/lib/persistence'
+import { createValidatedPersist } from '@/shared/utils/persistence'
 
 const DEFAULT_GROUP_ID = 'default'
 

@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 
 import { TimerStateSchema, TimerSettingsSchema } from '@/features/timer/schema'
 import type { TimerPhase, TimerSettings } from '@/features/timer/types'
-import { createValidatedPersist } from '@/shared/lib/persistence'
+import { createValidatedPersist } from '@/shared/utils/persistence'
 
 export const DEFAULT_TIMER_SETTINGS: TimerSettings = {
   focusDuration: 25,

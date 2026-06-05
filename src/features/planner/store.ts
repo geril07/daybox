@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 
 import { PlannerStateSchema } from '@/features/planner/schema'
 import { formatDate } from '@/shared/dates'
-import { createValidatedPersist } from '@/shared/lib/persistence'
+import { createValidatedPersist } from '@/shared/utils/persistence'
 
 export type WeekStartDay = 0 | 1 | 2 | 3 | 4 | 5 | 6
 

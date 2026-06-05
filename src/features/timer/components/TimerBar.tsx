@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 
 import { useTaskStore } from '@/features/tasks'
 import { playAlarm, useTimerStore } from '@/features/timer'
-import { cn } from '@/shared/lib/utils'
+import { cn } from '@/shared/utils/cn'
 import { sendNotification } from '@/shared/notifications'
 import { Button } from '@/shared/ui'
 

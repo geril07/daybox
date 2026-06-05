@@ -1,7 +1,7 @@
 import { Input as InputPrimitive } from '@base-ui/react/input'
 import * as React from 'react'
 
-import { cn } from '@/shared/lib'
+import { cn } from '@/shared/utils/cn'
 
 function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
   return (

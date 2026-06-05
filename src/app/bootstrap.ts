@@ -15,7 +15,7 @@ import {
   useTimerStore,
   type TimerSettings,
 } from '@/features/timer'
-import { safeParseAndRoute } from '@/shared/lib/import-validation'
+import { safeParseAndRoute } from '@/shared/utils/import-validation'
 
 const CURRENT_VERSION = 3
 

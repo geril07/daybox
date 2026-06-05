@@ -6,7 +6,7 @@ import { GROUP_COLORS } from '@/features/groups/constants'
 import { GroupSchema } from '@/features/groups/schema'
 import type { Group } from '@/features/groups/types'
 import { generateId } from '@/shared/id'
-import { createValidatedPersist } from '@/shared/lib/persistence'
+import { createValidatedPersist } from '@/shared/utils/persistence'
 
 const DEFAULT_GROUP_ID = 'default'
 

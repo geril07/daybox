@@ -6,7 +6,7 @@ import { useTaskStore } from '@/features/tasks'
 import type { Task } from '@/features/tasks/types'
 import { useTimerStore } from '@/features/timer'
 import { isOverdue, formatDate, getTomorrow } from '@/shared/dates'
-import { cn } from '@/shared/lib/utils'
+import { cn } from '@/shared/utils/cn'
 import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 
 interface TaskRowProps {
