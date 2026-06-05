@@ -3,8 +3,8 @@ import { describe, it, expect } from 'vitest'
 import {
   selectOverdue,
   selectForDate,
-  selectTodayTasks,
-  selectBacklog,
+  selectInRange,
+  selectUndated,
 } from '@/features/tasks'
 import type { Task } from '@/features/tasks/types'
 
@@ -24,12 +24,14 @@ function createTask(overrides: Partial<Task> & { id: string }): Task {
 }
 
 describe('selectOverdue', () => {
+  const asOf = '2025-01-01'
+
   it('returns incomplete tasks with past dates', () => {
     const tasks = [
       createTask({ id: '1', date: '2024-01-01', completed: false }),
       createTask({ id: '2', date: '2024-01-02', completed: false }),
     ]
-    expect(selectOverdue(tasks)).toHaveLength(2)
+    expect(selectOverdue(tasks, asOf)).toHaveLength(2)
   })
 
   it('excludes completed tasks', () => {
@@ -37,7 +39,7 @@ describe('selectOverdue', () => {
       createTask({ id: '1', date: '2024-01-01', completed: true }),
       createTask({ id: '2', date: '2024-01-02', completed: false }),
     ]
-    expect(selectOverdue(tasks)).toHaveLength(1)
+    expect(selectOverdue(tasks, asOf)).toHaveLength(1)
   })
 
   it('excludes tasks without a date', () => {
@@ -45,11 +47,11 @@ describe('selectOverdue', () => {
       createTask({ id: '1', date: null }),
       createTask({ id: '2', date: '2024-01-01' }),
     ]
-    expect(selectOverdue(tasks)).toHaveLength(1)
+    expect(selectOverdue(tasks, asOf)).toHaveLength(1)
   })
 
   it('returns empty array when no overdue tasks', () => {
-    expect(selectOverdue([])).toEqual([])
+    expect(selectOverdue([], asOf)).toEqual([])
   })
 
   it('sorts by date then sortOrder', () => {
@@ -58,7 +60,7 @@ describe('selectOverdue', () => {
       createTask({ id: '2', date: '2024-01-01', sortOrder: 1 }),
       createTask({ id: '3', date: '2024-01-01', sortOrder: 0 }),
     ]
-    const result = selectOverdue(tasks)
+    const result = selectOverdue(tasks, asOf)
     expect(result.map((t) => t.id)).toEqual(['3', '2', '1'])
   })
 })
@@ -88,21 +90,13 @@ describe('selectForDate', () => {
   })
 })
 
-describe('selectTodayTasks', () => {
-  it('calls selectForDate with today date', () => {
-    const tasks = [createTask({ id: '1', date: '2025-06-04' })]
-    const result = selectTodayTasks(tasks)
-    expect(Array.isArray(result)).toBe(true)
-  })
-})
-
-describe('selectBacklog', () => {
+describe('selectUndated', () => {
   it('returns tasks with null date', () => {
     const tasks = [
       createTask({ id: '1', date: null }),
       createTask({ id: '2', date: '2025-06-04' }),
     ]
-    expect(selectBacklog(tasks)).toHaveLength(1)
+    expect(selectUndated(tasks)).toHaveLength(1)
   })
 
   it('sorts by sortOrder', () => {
@@ -110,12 +104,46 @@ describe('selectBacklog', () => {
       createTask({ id: '1', date: null, sortOrder: 2 }),
       createTask({ id: '2', date: null, sortOrder: 0 }),
     ]
-    const result = selectBacklog(tasks)
+    const result = selectUndated(tasks)
     expect(result.map((t) => t.id)).toEqual(['2', '1'])
   })
 
-  it('returns empty array when no backlog tasks', () => {
+  it('returns empty array when no undated tasks', () => {
     const tasks = [createTask({ id: '1', date: '2025-06-04' })]
-    expect(selectBacklog(tasks)).toHaveLength(0)
+    expect(selectUndated(tasks)).toHaveLength(0)
+  })
+})
+
+describe('selectInRange', () => {
+  it('returns tasks within the date range', () => {
+    const tasks = [
+      createTask({ id: '1', date: '2025-06-01' }),
+      createTask({ id: '2', date: '2025-06-15' }),
+      createTask({ id: '3', date: '2025-07-01' }),
+    ]
+    expect(selectInRange(tasks, '2025-06-01', '2025-06-30')).toHaveLength(2)
+  })
+
+  it('sorts by date then sortOrder', () => {
+    const tasks = [
+      createTask({ id: '1', date: '2025-06-02', sortOrder: 2 }),
+      createTask({ id: '2', date: '2025-06-01', sortOrder: 1 }),
+      createTask({ id: '3', date: '2025-06-01', sortOrder: 0 }),
+    ]
+    const result = selectInRange(tasks, '2025-06-01', '2025-06-07')
+    expect(result.map((t) => t.id)).toEqual(['3', '2', '1'])
+  })
+
+  it('excludes tasks without a date', () => {
+    const tasks = [
+      createTask({ id: '1', date: null }),
+      createTask({ id: '2', date: '2025-06-04' }),
+    ]
+    expect(selectInRange(tasks, '2025-06-01', '2025-06-30')).toHaveLength(1)
+  })
+
+  it('returns empty array when no tasks in range', () => {
+    const tasks = [createTask({ id: '1', date: '2025-05-01' })]
+    expect(selectInRange(tasks, '2025-06-01', '2025-06-30')).toHaveLength(0)
   })
 })

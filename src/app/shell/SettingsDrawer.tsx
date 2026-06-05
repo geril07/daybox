@@ -5,7 +5,7 @@ import {
   downloadExport,
   exportData,
   parseImport,
-} from '@/app/localStorage'
+} from '@/app/bootstrap'
 import { useTheme } from '@/app/theme'
 import { GroupSettingsPanel } from '@/features/groups'
 import { usePlannerStore } from '@/features/planner'

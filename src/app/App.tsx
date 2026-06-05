@@ -2,27 +2,21 @@ import { Settings } from 'lucide-react'
 import { MotionConfig } from 'motion/react'
 import { useState, useEffect, useRef } from 'react'
 
-import {
-  migrateLegacyAppStore,
-  migrateLegacySettings,
-} from '@/app/localStorage'
+import { migrateLegacyAppStore, migrateLegacySettings } from '@/app/bootstrap'
 import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
 import { GroupLens } from '@/features/groups'
 import {
-  BacklogView,
+  DayView,
   DateBrowser,
-  TodayView,
-  TomorrowView,
   WeekView,
   usePlannerStore,
+  type View,
 } from '@/features/planner'
 import { AddTaskRow } from '@/features/tasks'
 import { TimerBar, useTimerStore } from '@/features/timer'
 import { formatDate, getTomorrow } from '@/shared/dates'
 import { registerShortcuts } from '@/shared/keyboard'
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui'
-
-type View = 'today' | 'tomorrow' | 'week' | 'backlog' | 'date'
 
 export function App() {
   const [view, setView] = useState<View>('today')
@@ -84,17 +78,15 @@ export function App() {
   const renderView = () => {
     switch (view) {
       case 'today':
-        return <TodayView />
       case 'tomorrow':
-        return <TomorrowView />
+      case 'backlog':
+        return <DayView view={view} />
       case 'week':
         return <WeekView />
-      case 'backlog':
-        return <BacklogView />
       case 'date':
         return <DateBrowser />
       default:
-        return <TodayView />
+        return <DayView view="today" />
     }
   }
 

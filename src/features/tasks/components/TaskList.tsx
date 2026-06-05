@@ -12,7 +12,7 @@ import {
   TRANSITION_ENTER,
   TRANSITION_MOVE,
   TRANSITION_TOGGLE,
-} from '@/shared/motion'
+} from '@/shared/lib/motion'
 
 interface TaskListProps {
   tasks: Task[]

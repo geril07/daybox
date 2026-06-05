@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-import { exportData, parseImport } from '@/app/localStorage'
+import { exportData, parseImport } from '@/app/bootstrap'
 import { setTheme } from '@/app/theme'
 import { useGroupStore } from '@/features/groups'
 import { GROUP_COLORS } from '@/features/groups/constants'
@@ -249,7 +249,7 @@ describe('Import validation pipeline', () => {
 
 describe('Legacy migrations', () => {
   it('migrates a valid daybox-app-store to the new feature stores', async () => {
-    const { migrateLegacyAppStore } = await import('@/app/localStorage')
+    const { migrateLegacyAppStore } = await import('@/app/bootstrap')
     localStorage.setItem(
       'daybox-app-store',
       JSON.stringify({
@@ -270,7 +270,7 @@ describe('Legacy migrations', () => {
   })
 
   it('removes the daybox-app-store key and warns on invalid shape', async () => {
-    const { migrateLegacyAppStore } = await import('@/app/localStorage')
+    const { migrateLegacyAppStore } = await import('@/app/bootstrap')
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     localStorage.setItem('daybox-app-store', 'not-valid-json-shape')
     migrateLegacyAppStore()
@@ -280,7 +280,7 @@ describe('Legacy migrations', () => {
   })
 
   it('migrates a valid daybox-settings to the new feature stores', async () => {
-    const { migrateLegacySettings } = await import('@/app/localStorage')
+    const { migrateLegacySettings } = await import('@/app/bootstrap')
     localStorage.setItem(
       'daybox-settings',
       JSON.stringify({
@@ -300,7 +300,7 @@ describe('Legacy migrations', () => {
   })
 
   it('removes the daybox-settings key and warns on invalid shape', async () => {
-    const { migrateLegacySettings } = await import('@/app/localStorage')
+    const { migrateLegacySettings } = await import('@/app/bootstrap')
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     localStorage.setItem('daybox-settings', 'not-valid-json-shape')
     migrateLegacySettings()
