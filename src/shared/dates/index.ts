@@ -5,6 +5,7 @@ export {
   getTomorrow,
   getWeekDays,
   getWeekRange,
+  getWeekSectionLabel,
   isOverdue,
   isToday,
   isTomorrow,

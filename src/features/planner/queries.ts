@@ -6,8 +6,9 @@ import {
   selectUndated,
   selectOverdue,
   useTaskStore,
+  type Task,
 } from '@/features/tasks'
-import { formatDate, getWeekDays } from '@/shared/dates'
+import { formatDate, getWeekDays, getWeekSectionLabel } from '@/shared/dates'
 
 import { usePlannerStore } from './store'
 
@@ -22,6 +23,16 @@ export type DayViewMeta = {
   title: string
   emptyTitle: string
   emptyDescription: string
+}
+
+export type SectionTone = 'default' | 'destructive'
+
+export type Section = {
+  key: string
+  label: string
+  tone?: SectionTone
+  tasks: Task[]
+  emptyHint?: string
 }
 
 export const viewMetaMap: Record<
@@ -102,4 +113,58 @@ export function useFilteredTasks(view: View) {
 
     return { tasks: filtered, overdue }
   }, [tasks, view, weekStartDay])
+}
+
+export function defaultDateForView(
+  view: View,
+  weekStartDay: 0 | 1 | 2 | 3 | 4 | 5 | 6,
+  browseDate?: string | null,
+): string | undefined {
+  if (view === 'date') return browseDate ?? undefined
+
+  const today = formatDate(new Date())
+  const range = viewToRange(view, weekStartDay, today)
+
+  switch (range.kind) {
+    case 'date':
+      return range.date
+    case 'range':
+      return today
+    case 'undated':
+      return undefined
+  }
+}
+
+export function useWeekSections(): Section[] {
+  const tasks = useTaskStore((s) => s.tasks)
+  const weekStartDay = usePlannerStore((s) => s.weekStartDay)
+
+  return useMemo(() => {
+    const today = formatDate(new Date())
+    const sections: Section[] = []
+
+    const overdue = selectOverdue(tasks, today)
+    if (overdue.length > 0) {
+      sections.push({
+        key: 'overdue',
+        label: 'Overdue',
+        tone: 'destructive',
+        tasks: overdue,
+      })
+    }
+
+    for (const day of getWeekDays(weekStartDay)) {
+      const dateStr = formatDate(day)
+      if (dateStr < today) continue
+
+      sections.push({
+        key: dateStr,
+        label: getWeekSectionLabel(day),
+        tasks: selectForDate(tasks, dateStr),
+        emptyHint: 'Nothing planned',
+      })
+    }
+
+    return sections
+  }, [tasks, weekStartDay])
 }

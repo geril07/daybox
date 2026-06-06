@@ -9,39 +9,25 @@ import {
   DateBrowser,
   WeekView,
   usePlannerStore,
+  defaultDateForView,
   type View,
 } from '@/features/planner'
 import { AddTaskRow } from '@/features/tasks'
 import { TimerBar, useTimerStore } from '@/features/timer'
-import { formatDate, getTomorrow } from '@/shared/dates'
 import { registerShortcuts } from '@/shared/keyboard'
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui'
 
 export function App() {
   const [view, setView] = useState<View>('today')
   const browseDate = usePlannerStore((s) => s.browseDate)
+  const weekStartDay = usePlannerStore((s) => s.weekStartDay)
 
   const migrationDone = useRef(false)
   const settingsMigrationDone = useRef(false)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const defaultDate: string | undefined = (() => {
-    switch (view) {
-      case 'today':
-        return formatDate(new Date())
-      case 'tomorrow':
-        return formatDate(getTomorrow())
-      case 'week':
-        return formatDate(new Date())
-      case 'backlog':
-        return undefined
-      case 'date':
-        return browseDate ?? undefined
-      default:
-        return formatDate(new Date())
-    }
-  })()
+  const defaultDate = defaultDateForView(view, weekStartDay, browseDate)
 
   useEffect(() => {
     const cleanup = registerShortcuts({

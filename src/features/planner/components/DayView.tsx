@@ -2,6 +2,7 @@ import { TaskList } from '@/features/tasks'
 import { EmptyState } from '@/shared/ui'
 
 import { viewMetaMap, useFilteredTasks } from '../queries'
+import { SectionHeader } from './SectionHeader'
 
 type SingleDayView = 'today' | 'tomorrow' | 'backlog'
 
@@ -25,17 +26,11 @@ export function DayView({ view }: DayViewProps) {
     <div>
       {overdue.length > 0 && (
         <div>
-          <div className="section-label text-destructive pt-5 pb-2 text-xs font-semibold tracking-widest uppercase">
-            Overdue
-          </div>
+          <SectionHeader label="Overdue" tone="destructive" />
           <TaskList tasks={overdue} />
         </div>
       )}
-      {view === 'today' && (
-        <div className="section-label text-muted-foreground pt-5 pb-2 text-xs font-semibold tracking-widest uppercase">
-          Today
-        </div>
-      )}
+      <SectionHeader label={meta.title} />
       <TaskList tasks={tasks} />
     </div>
   )

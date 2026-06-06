@@ -54,6 +54,19 @@ export function getDayName(date: Date): string {
   return date.toLocaleDateString('en-US', { weekday: 'long' })
 }
 
+export function getWeekSectionLabel(date: Date): string {
+  const dateStr = formatDate(date)
+  if (isToday(dateStr)) return 'Today'
+  if (isTomorrow(dateStr)) return 'Tomorrow'
+
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' })
+  const monthDay = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+  return `${weekday} · ${monthDay}`
+}
+
 export function getFormattedDate(date: Date): string {
   const today = new Date()
   const tomorrow = new Date(today)
