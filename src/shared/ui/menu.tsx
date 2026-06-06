@@ -67,11 +67,13 @@ function MenuRadioGroup({ ...props }: MenuPrimitive.RadioGroup.Props) {
 function MenuRadioItem({
   className,
   children,
+  closeOnClick = true,
   ...props
 }: MenuPrimitive.RadioItem.Props) {
   return (
     <MenuPrimitive.RadioItem
       data-slot="menu-radio-item"
+      closeOnClick={closeOnClick}
       className={cn(
         "data-highlighted:bg-muted data-highlighted:text-foreground relative flex w-full cursor-default items-center gap-2 rounded py-2 pr-8 pl-3 text-left text-sm outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
