@@ -64,7 +64,7 @@ export function GroupSettingsPanel() {
           onChange={(e) => setNewGroupName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
           placeholder="Add group..."
-          className="border-border bg-background text-foreground flex-1 rounded-[6px] border px-2.5 py-1.5 text-xs transition-colors duration-140 outline-none"
+          className="border-border bg-background text-foreground flex-1 rounded-xl border px-2.5 py-1.5 text-xs transition-colors duration-140 outline-none"
         />
         <Button variant="default" onClick={handleAddGroup}>
           Add
@@ -99,9 +99,9 @@ function GroupItem({
   }
 
   return (
-    <div className="border-border bg-background flex items-center gap-2 rounded-[6px] border px-2.5 py-2">
+    <div className="border-border bg-background flex items-center gap-2 rounded-xl border px-2.5 py-2">
       <span
-        className="h-[10px] w-[10px] shrink-0 rounded-full"
+        className="size-2.5 shrink-0 rounded-full"
         style={{ background: group.color }}
       />
       {editing ? (
@@ -122,7 +122,7 @@ function GroupItem({
         />
       ) : (
         <span
-          className="text-foreground flex-1 text-[13.5px]"
+          className="text-foreground flex-1 text-sm"
           onClick={() => setEditing(true)}
         >
           {group.name}

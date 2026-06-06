@@ -134,7 +134,7 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
           onChange={handleInput}
           onKeyDown={handleKeyDown}
           placeholder="Add a task — type #group to assign..."
-          className="text-foreground flex-1 border-none bg-transparent py-2 text-[14.5px] outline-none"
+          className="text-foreground flex-1 border-none bg-transparent py-2 text-sm outline-none"
         />
         {showGroupUi && (
           <GroupChip
@@ -182,7 +182,7 @@ function GroupChip({
   return (
     <Popover>
       <PopoverTrigger>
-        <span className="border-border text-muted-foreground flex shrink-0 items-center gap-1.5 rounded-[4px] border px-2 py-1 text-xs transition-colors duration-140">
+        <span className="border-border text-muted-foreground flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs transition-colors duration-140">
           <span
             className="h-[7px] w-[7px] shrink-0 rounded-full"
             style={{ background: group.color }}
@@ -198,13 +198,13 @@ function GroupChip({
             variant="ghost"
             size="none"
             className={cn(
-              'w-full justify-start gap-2 rounded-[4px] px-3 py-2 text-left text-sm duration-100',
+              'w-full justify-start gap-2 rounded px-3 py-2 text-left text-sm duration-100',
               g.id === group.id ? 'text-accent' : 'text-fg-2',
             )}
             onClick={() => onSelect(g.id)}
           >
             <span
-              className="h-[8px] w-[8px] shrink-0 rounded-full"
+              className="size-2 shrink-0 rounded-full"
               style={{ background: g.color }}
             />
             {g.name}
@@ -250,7 +250,7 @@ function GroupTypeahead({
           tabIndex={-1}
           data-highlighted={i === highlightIndex ? 'true' : undefined}
           className={cn(
-            'text-fg-2 w-full justify-start gap-2 rounded-[4px] px-3 py-2 text-left text-sm duration-100',
+            'text-fg-2 w-full justify-start gap-2 rounded px-3 py-2 text-left text-sm duration-100',
             i === highlightIndex && 'bg-muted text-foreground',
           )}
           onClick={() => onSelect(g)}

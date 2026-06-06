@@ -20,7 +20,7 @@ export function TimerSettingsPanel() {
   return (
     <>
       <div className="flex flex-col gap-3">
-        <div className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.9px] uppercase">
+        <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
           Timer
         </div>
         <SettingRow label="Focus duration">
@@ -65,7 +65,7 @@ export function TimerSettingsPanel() {
         </SettingRow>
       </div>
       <div className="flex flex-col gap-3">
-        <div className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.9px] uppercase">
+        <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
           Auto-start
         </div>
         <SettingRow label="Auto-start breaks">
@@ -84,7 +84,7 @@ export function TimerSettingsPanel() {
         </SettingRow>
       </div>
       <div className="flex flex-col gap-3">
-        <div className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.9px] uppercase">
+        <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
           Alarm
         </div>
         <SettingRow label="Sound">
@@ -118,7 +118,7 @@ export function TimerSettingsPanel() {
             min={0}
             max={1}
             step={0.05}
-            className="w-[80px]"
+            className="w-20"
           />
         </SettingRow>
         <SettingRow label="Repeat count">
@@ -145,7 +145,7 @@ function SettingRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-foreground text-[13.5px]">{label}</span>
+      <span className="text-foreground text-sm">{label}</span>
       {children}
     </div>
   )

@@ -95,7 +95,7 @@ export function SettingsDrawer({
           <TimerSettingsPanel />
 
           <div className="flex flex-col gap-3">
-            <div className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.9px] uppercase">
+            <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
               Display
             </div>
             <SettingRow label="First day of week">
@@ -127,14 +127,14 @@ export function SettingsDrawer({
           </div>
 
           <div className="flex flex-col gap-3">
-            <div className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.9px] uppercase">
+            <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
               Groups
             </div>
             <GroupSettingsPanel />
           </div>
 
           <div className="flex flex-col gap-3">
-            <div className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.9px] uppercase">
+            <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
               Data
             </div>
             <Button variant="outline" onClick={handleExport}>
@@ -182,7 +182,7 @@ function SettingRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-foreground text-[13.5px]">{label}</span>
+      <span className="text-foreground text-sm">{label}</span>
       {children}
     </div>
   )

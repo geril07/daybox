@@ -25,14 +25,14 @@ export function DayView({ view }: DayViewProps) {
     <div>
       {overdue.length > 0 && (
         <div>
-          <div className="section-label text-destructive pt-5 pb-2 text-[10.5px] font-semibold tracking-[0.9px] uppercase">
+          <div className="section-label text-destructive pt-5 pb-2 text-xs font-semibold tracking-widest uppercase">
             Overdue
           </div>
           <TaskList tasks={overdue} />
         </div>
       )}
       {view === 'today' && (
-        <div className="section-label text-muted-foreground pt-5 pb-2 text-[10.5px] font-semibold tracking-[0.9px] uppercase">
+        <div className="section-label text-muted-foreground pt-5 pb-2 text-xs font-semibold tracking-widest uppercase">
           Today
         </div>
       )}

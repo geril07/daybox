@@ -94,7 +94,7 @@ export function App() {
       <header className="border-border bg-card sticky top-0 z-30 border-b">
         <div className="header-top mx-auto flex max-w-[680px] items-center justify-between px-7 py-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="bg-accent flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px]">
+            <div className="bg-accent flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-xl">
               <svg
                 width="14"
                 height="14"
@@ -108,7 +108,7 @@ export function App() {
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
             </div>
-            <span className="text-foreground text-[15.5px] font-semibold tracking-[-0.3px]">
+            <span className="text-foreground text-base font-semibold tracking-tight">
               DayBox
             </span>
           </div>
@@ -140,7 +140,7 @@ export function App() {
         </nav>
       </header>
 
-      <main className="app-content flex-1 pb-[72px]">
+      <main className="app-content flex-1 pb-18">
         <div className="container mx-auto w-full max-w-[680px] px-7">
           <MotionConfig reducedMotion="user">
             <div className="task-list-area py-1 pb-10">

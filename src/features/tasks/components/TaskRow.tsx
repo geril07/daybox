@@ -74,7 +74,7 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   return (
     <div
       className={cn(
-        'transition-background border-border flex min-h-[46px] items-center gap-2.5 rounded-[4px] border-b px-1.5 py-2 duration-120',
+        'transition-background border-border flex min-h-[46px] items-center gap-2.5 rounded border-b px-1.5 py-2 duration-120',
         isFocused && 'bg-accent-bg',
         !isFocused && overdue && 'bg-overdue-bg',
       )}
@@ -115,13 +115,13 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
             onChange={(e) => setEditTitle(e.target.value)}
             onBlur={handleSaveEdit}
             onKeyDown={handleKeyDown}
-            className="text-foreground w-full border-none bg-transparent text-[14.5px] font-[450] outline-none"
+            className="text-foreground w-full border-none bg-transparent text-sm font-[450] outline-none"
             style={{ caretColor: 'var(--accent)' }}
           />
         ) : (
           <span
             className={cn(
-              'block cursor-text truncate text-[14.5px] leading-snug font-[450]',
+              'block cursor-text truncate text-sm leading-snug font-[450]',
               task.completed ? 'text-fg-3 line-through' : 'text-fg',
             )}
             onClick={handleStartEdit}
@@ -144,7 +144,7 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       )}
 
       {overdue && (
-        <span className="text-destructive bg-overdue-bg border-overdue-border shrink-0 rounded-full border px-[7px] py-[2px] text-xs font-medium">
+        <span className="text-destructive bg-overdue-bg border-overdue-border shrink-0 rounded-full border px-[7px] py-0.5 text-xs font-medium">
           OVERDUE
         </span>
       )}
@@ -199,9 +199,9 @@ function PomoArea({ task }: { task: Task }) {
   return (
     <Popover>
       <PopoverTrigger>
-        <span className="relative flex min-w-[32px] shrink-0 cursor-pointer items-center">
-          <span className="flex flex-col items-start gap-[1px]">
-            <span className="text-fg-2 text-[11.5px] leading-none tabular-nums">
+        <span className="relative flex min-w-8 shrink-0 cursor-pointer items-center">
+          <span className="flex flex-col items-start gap-px">
+            <span className="text-fg-2 text-xs leading-none tabular-nums">
               {task.pomoCompleted}/{task.pomoEstimate}
             </span>
             <span className="relative block h-[1.5px] w-full">
@@ -215,7 +215,7 @@ function PomoArea({ task }: { task: Task }) {
       </PopoverTrigger>
       <PopoverContent className="z-40 w-fit flex-row gap-3 p-3">
         <div className="flex min-w-[100px] flex-col items-center gap-2">
-          <label className="text-muted-foreground text-[11px] font-medium tracking-[0.5px] uppercase">
+          <label className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
             Estimate
           </label>
           <NumberInput
@@ -226,7 +226,7 @@ function PomoArea({ task }: { task: Task }) {
           />
         </div>
         <div className="flex min-w-[100px] flex-col items-center gap-2">
-          <label className="text-muted-foreground text-[11px] font-medium tracking-[0.5px] uppercase">
+          <label className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
             Completed
           </label>
           <NumberInput
@@ -248,7 +248,7 @@ function DatePickerButton({ task }: { task: Task }) {
     <Popover>
       <PopoverTrigger>
         <span
-          className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded-[4px] transition-all duration-120"
+          className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded transition-all duration-120"
           title="Schedule"
         >
           <Calendar size={14} />
@@ -268,7 +268,7 @@ function DatePickerButton({ task }: { task: Task }) {
               key={preset.label}
               variant="ghost"
               size="none"
-              className="border-border hover:border-accent hover:text-accent hover:bg-accent-bg flex-1 shrink rounded-[4px] px-1 py-1.5 text-center text-xs duration-120"
+              className="border-border hover:border-accent hover:text-accent hover:bg-accent-bg flex-1 shrink rounded px-1 py-1.5 text-center text-xs duration-120"
               onClick={() => updateTask(task.id, { date: preset.value })}
             >
               {preset.label}
@@ -277,7 +277,7 @@ function DatePickerButton({ task }: { task: Task }) {
         </div>
         <input
           type="date"
-          className="border-border bg-background text-foreground w-full rounded-[4px] border px-2 py-1.5 text-xs transition-colors duration-140 outline-none"
+          className="border-border bg-background text-foreground w-full rounded border px-2 py-1.5 text-xs transition-colors duration-140 outline-none"
           onChange={(e) =>
             updateTask(task.id, { date: e.target.value || null })
           }

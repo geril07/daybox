@@ -191,9 +191,9 @@ export function TimerBar() {
       className="bg-card transition-colors duration-300"
       style={tintBg ? { background: tintBg } : undefined}
     >
-      <div className="bg-border h-[2px] overflow-hidden">
+      <div className="bg-border h-0.5 overflow-hidden">
         <div
-          className="linear h-full rounded-r-[2px] transition-[width] duration-900"
+          className="linear h-full rounded-r-xs transition-[width] duration-900"
           style={{ width: `${progress * 100}%`, background: phaseColor }}
         />
       </div>
@@ -210,7 +210,7 @@ export function TimerBar() {
             <div className="flex items-center gap-3">
               <span
                 className={cn(
-                  'min-w-[80px] shrink-0 font-mono text-[30px] leading-none font-medium tracking-[1px] tabular-nums transition-colors duration-300',
+                  'min-w-20 shrink-0 font-mono text-3xl leading-none font-medium tracking-wide tabular-nums transition-colors duration-300',
                   isIdle ? 'text-fg-3' : 'text-fg',
                 )}
               >
@@ -239,7 +239,7 @@ export function TimerBar() {
               <Button
                 variant="none"
                 size="none"
-                className="h-[40px] w-[40px] rounded-full border-0 text-white shadow-sm duration-140 hover:scale-105 hover:opacity-90"
+                className="size-10 rounded-full border-0 text-white shadow-sm duration-140 hover:scale-105 hover:opacity-90"
                 style={{ background: phaseColor }}
                 onClick={togglePlayPause}
                 title={isRunning ? 'Pause' : 'Start'}
@@ -266,26 +266,26 @@ export function TimerBar() {
                   <span
                     key={i}
                     className={cn(
-                      'h-[6px] w-[6px] rounded-full',
+                      'size-1.5 rounded-full',
                       i < sessionPomoCount ? 'opacity-100' : 'opacity-50',
                     )}
                     style={{ background: phaseColor }}
                   />
                 ))}
               </div>
-              <span className="text-muted-foreground hidden truncate text-[11px] tabular-nums sm:block">
+              <span className="text-muted-foreground hidden truncate text-xs tabular-nums sm:block">
                 {cycleLabel}
               </span>
             </div>
           </div>
         </div>
         <div className="flex min-w-0 items-center gap-2">
-          <span className="text-fg-3 shrink-0 text-[10.5px] font-semibold tracking-[0.8px] uppercase">
+          <span className="text-fg-3 shrink-0 text-xs font-semibold tracking-widest uppercase">
             Working on
           </span>
           <span
             className={cn(
-              'truncate text-[12.5px]',
+              'truncate text-xs',
               focusedTask ? 'text-fg-2' : 'text-fg-3',
             )}
           >
@@ -321,7 +321,7 @@ function PhaseChip({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger className="w-fit">
         <span
-          className="flex cursor-pointer items-center rounded-[3px] py-0.5 text-[10.5px] font-semibold tracking-[0.8px] uppercase transition-colors duration-140"
+          className="flex cursor-pointer items-center rounded-md py-0.5 text-xs font-semibold tracking-widest uppercase transition-colors duration-140"
           style={{ color }}
         >
           {label}
@@ -334,7 +334,7 @@ function PhaseChip({
             variant="ghost"
             size="none"
             className={cn(
-              'w-full justify-start gap-2 rounded-[4px] px-3 py-2 text-left text-sm duration-100',
+              'w-full justify-start gap-2 rounded px-3 py-2 text-left text-sm duration-100',
               opt.value === current ? 'text-foreground' : 'text-fg-2',
             )}
             onClick={() => handleSelect(opt.value)}
