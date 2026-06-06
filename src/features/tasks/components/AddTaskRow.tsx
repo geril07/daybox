@@ -191,7 +191,7 @@ function GroupChip({
           <ChevronDown size={10} />
         </span>
       </PopoverTrigger>
-      <PopoverContent className="z-50 min-w-[140px] p-2">
+      <PopoverContent className="z-50 min-w-[140px] p-2" align="end">
         {groups.map((g) => (
           <Button
             key={g.id}
