@@ -40,6 +40,7 @@ interface TimerActions {
   start: () => void
   pause: () => void
   reset: () => void
+  resetSession: () => void
   togglePlayPause: () => void
   skip: (longBreakInterval: number) => void
   advancePhase: (opts: AdvancePhaseOpts) => void
@@ -84,6 +85,15 @@ export const useTimerStore = create<TimerStore>()(
           elapsed: 0,
         }),
 
+      resetSession: () =>
+        set({
+          phase: 'focus',
+          sessionPomoCount: 0,
+          startedAt: null,
+          elapsed: 0,
+          isRunning: false,
+        }),
+
       togglePlayPause: () => {
         const state = get()
         if (state.isRunning) {
@@ -103,11 +113,15 @@ export const useTimerStore = create<TimerStore>()(
           state.sessionPomoCount,
           longBreakInterval,
         )
-        const completedFocus = state.phase === 'focus'
+        // sessionPomoCount = focus intervals completed since the last long
+        // break: a completed focus increments it, a completed long break
+        // resets it, and a completed short break leaves it unchanged.
         const nextSessionCount =
-          nextPhase === 'focus'
+          state.phase === 'longBreak'
             ? 0
-            : state.sessionPomoCount + (completedFocus ? 1 : 0)
+            : state.phase === 'focus'
+              ? state.sessionPomoCount + 1
+              : state.sessionPomoCount
         set({
           phase: nextPhase,
           startedAt: autoStart ? Date.now() : null,

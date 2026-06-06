@@ -101,6 +101,103 @@ describe('Timer Store', () => {
       expect(state.isRunning).toBe(true)
       expect(state.startedAt).not.toBeNull()
     })
+
+    it('shortBreak -> focus keeps the session count', () => {
+      useTimerStore.setState({ phase: 'shortBreak', sessionPomoCount: 2 })
+      useTimerStore.getState().advancePhase({ longBreakInterval: 4 })
+      const state = useTimerStore.getState()
+      expect(state.phase).toBe('focus')
+      expect(state.sessionPomoCount).toBe(2)
+    })
+
+    it('runs a full cycle and fires a long break at the interval', () => {
+      const advance = () =>
+        useTimerStore.getState().advancePhase({ longBreakInterval: 4 })
+      useTimerStore.setState({ phase: 'focus', sessionPomoCount: 0 })
+
+      // focus #1 -> short, count 1
+      advance()
+      expect(useTimerStore.getState().phase).toBe('shortBreak')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(1)
+      advance() // short -> focus, count stays 1
+      expect(useTimerStore.getState().phase).toBe('focus')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(1)
+
+      // focus #2 -> short, count 2
+      advance()
+      expect(useTimerStore.getState().phase).toBe('shortBreak')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(2)
+      advance()
+      expect(useTimerStore.getState().sessionPomoCount).toBe(2)
+
+      // focus #3 -> short, count 3
+      advance()
+      expect(useTimerStore.getState().sessionPomoCount).toBe(3)
+      advance()
+      expect(useTimerStore.getState().sessionPomoCount).toBe(3)
+
+      // focus #4 -> LONG break, count 4
+      advance()
+      expect(useTimerStore.getState().phase).toBe('longBreak')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(4)
+
+      // long break -> focus, count resets to 0
+      advance()
+      expect(useTimerStore.getState().phase).toBe('focus')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(0)
+    })
+  })
+
+  describe('resetSession', () => {
+    it('returns to the first focus with count 0, stopped', () => {
+      useTimerStore.setState({
+        phase: 'longBreak',
+        sessionPomoCount: 3,
+        elapsed: 5000,
+        isRunning: true,
+        startedAt: Date.now(),
+      })
+      useTimerStore.getState().resetSession()
+      const state = useTimerStore.getState()
+      expect(state.phase).toBe('focus')
+      expect(state.sessionPomoCount).toBe(0)
+      expect(state.elapsed).toBe(0)
+      expect(state.isRunning).toBe(false)
+      expect(state.startedAt).toBeNull()
+    })
+  })
+
+  describe('reset vs resetSession scope', () => {
+    it('reset zeroes the interval but preserves phase and count', () => {
+      useTimerStore.setState({
+        phase: 'shortBreak',
+        sessionPomoCount: 2,
+        elapsed: 5000,
+      })
+      useTimerStore.getState().reset()
+      const state = useTimerStore.getState()
+      expect(state.elapsed).toBe(0)
+      expect(state.phase).toBe('shortBreak')
+      expect(state.sessionPomoCount).toBe(2)
+    })
+  })
+
+  describe('setPhase', () => {
+    it('switches phase and resets the interval without changing the count', () => {
+      useTimerStore.setState({
+        phase: 'focus',
+        sessionPomoCount: 2,
+        elapsed: 5000,
+        isRunning: true,
+        startedAt: Date.now(),
+      })
+      useTimerStore.getState().setPhase('longBreak')
+      const state = useTimerStore.getState()
+      expect(state.phase).toBe('longBreak')
+      expect(state.sessionPomoCount).toBe(2)
+      expect(state.elapsed).toBe(0)
+      expect(state.isRunning).toBe(false)
+    })
   })
 
   describe('focusTask', () => {

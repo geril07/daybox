@@ -1,13 +1,14 @@
-import { RotateCcw, Pause, Play, SkipForward } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { RotateCcw, RefreshCcw, Pause, Play, SkipForward } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useTaskStore } from '@/features/tasks'
 import { sendNotification } from '@/shared/notifications'
-import { Button } from '@/shared/ui'
+import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 import { playAlarm } from '../alarm'
 import { useTimerStore } from '../store'
+import type { TimerPhase } from '../types'
 
 export function TimerBar() {
   const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
@@ -24,6 +25,8 @@ export function TimerBar() {
   const sessionPomoCount = useTimerStore((s) => s.sessionPomoCount)
   const togglePlayPause = useTimerStore((s) => s.togglePlayPause)
   const reset = useTimerStore((s) => s.reset)
+  const resetSession = useTimerStore((s) => s.resetSession)
+  const setPhase = useTimerStore((s) => s.setPhase)
   const tick = useTimerStore((s) => s.tick)
   const advancePhase = useTimerStore((s) => s.advancePhase)
 
@@ -107,8 +110,27 @@ export function TimerBar() {
     }
   }, [isRunning, minutes, seconds])
 
+  const intervalDirty = isRunning || elapsed > 0
+  const cycleDirty = sessionPomoCount > 0 || phase !== 'focus'
+  const resetMode: 'restart' | 'session' | 'disabled' = intervalDirty
+    ? 'restart'
+    : cycleDirty
+      ? 'session'
+      : 'disabled'
+
   const handleReset = () => {
-    reset()
+    if (resetMode === 'restart') {
+      reset()
+    } else if (resetMode === 'session') {
+      resetSession()
+    } else {
+      return
+    }
+    alarmPlayedRef.current = false
+  }
+
+  const handleSelectPhase = (next: TimerPhase) => {
+    setPhase(next)
     alarmPlayedRef.current = false
   }
 
@@ -143,38 +165,79 @@ export function TimerBar() {
     (_, i) => i,
   )
 
+  // Ambient phase tint: focus stays neutral (bg-card), breaks get a faint
+  // wash of their phase color so the mode reads at a glance.
+  const tintBg =
+    phase === 'focus'
+      ? undefined
+      : `color-mix(in oklch, ${phaseColor} 8%, var(--card))`
+
+  const cycleLabel =
+    phase === 'longBreak'
+      ? 'long break'
+      : `${sessionPomoCount} of ${settings.longBreakInterval}` +
+        (sessionPomoCount + 1 >= settings.longBreakInterval
+          ? ' · long next'
+          : '')
+
+  const phaseOptions: { value: TimerPhase; label: string }[] = [
+    { value: 'focus', label: 'Focus' },
+    { value: 'shortBreak', label: 'Short break' },
+    { value: 'longBreak', label: 'Long break' },
+  ]
+
   return (
-    <div className="bg-card border-border border-t">
+    <div
+      className="bg-card transition-colors duration-300"
+      style={tintBg ? { background: tintBg } : undefined}
+    >
       <div className="bg-border h-[2px] overflow-hidden">
         <div
           className="linear h-full rounded-r-[2px] transition-[width] duration-900"
           style={{ width: `${progress * 100}%`, background: phaseColor }}
         />
       </div>
-      <div className="mx-auto flex max-w-[680px] items-center gap-3.5 px-7 py-2.5">
-        <div className="flex w-full shrink-0 items-center justify-between gap-2.5">
-          <div className="flex items-center">
-            <span
-              className={cn(
-                'min-w-[80px] shrink-0 text-center font-mono text-[30px] font-medium tracking-[1px] transition-colors duration-300',
-                isIdle ? 'text-fg-3' : 'text-fg',
-              )}
-            >
-              {String(minutes).padStart(2, '0')}:
-              {String(seconds).padStart(2, '0')}
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="none"
-                className="text-muted-foreground hover:bg-bg-hover hover:text-fg h-[34px] w-[34px] rounded-full border-0 duration-140"
-                onClick={handleReset}
-                title="Reset"
+      <div className="mx-auto flex max-w-[680px] flex-col gap-1 px-7 py-2.5">
+        <div>
+          <PhaseChip
+            label={phaseLabel}
+            color={phaseColor}
+            current={phase}
+            options={phaseOptions}
+            onSelect={handleSelectPhase}
+          />
+          <div className="grid grid-cols-3">
+            <div className="flex items-center gap-3">
+              <span
+                className={cn(
+                  'min-w-[80px] shrink-0 font-mono text-[30px] leading-none font-medium tracking-[1px] tabular-nums transition-colors duration-300',
+                  isIdle ? 'text-fg-3' : 'text-fg',
+                )}
               >
-                <RotateCcw size={14} />
+                {String(minutes).padStart(2, '0')}:
+                {String(seconds).padStart(2, '0')}
+              </span>
+            </div>
+            <div className="mx-auto flex items-center gap-1">
+              <Button
+                variant="none"
+                size="none"
+                disabled={resetMode === 'disabled'}
+                className="text-muted-foreground hover:bg-bg-hover hover:text-fg h-[34px] w-[34px] rounded-full border-0 duration-140 disabled:pointer-events-none disabled:opacity-40"
+                onClick={handleReset}
+                title={resetMode === 'session' ? 'Reset session' : 'Restart'}
+                aria-label={
+                  resetMode === 'session' ? 'Reset session' : 'Restart'
+                }
+              >
+                {resetMode === 'session' ? (
+                  <RefreshCcw size={14} />
+                ) : (
+                  <RotateCcw size={14} />
+                )}
               </Button>
               <Button
-                variant="ghost"
+                variant="none"
                 size="none"
                 className="h-[40px] w-[40px] rounded-full border-0 text-white shadow-sm duration-140 hover:scale-105 hover:opacity-90"
                 style={{ background: phaseColor }}
@@ -188,7 +251,7 @@ export function TimerBar() {
                 )}
               </Button>
               <Button
-                variant="ghost"
+                variant="none"
                 size="none"
                 className="text-muted-foreground hover:bg-bg-hover hover:text-fg h-[34px] w-[34px] rounded-full border-0 duration-140"
                 onClick={handleSkip}
@@ -196,7 +259,9 @@ export function TimerBar() {
               >
                 <SkipForward size={14} />
               </Button>
-              <div className="flex min-w-[40px] shrink-0 items-center gap-[3px]">
+            </div>
+            <div className="ms-auto flex min-w-0 shrink items-center gap-2">
+              <div className="flex shrink-0 items-center gap-[3px]">
                 {sessionDots.map((i) => (
                   <span
                     key={i}
@@ -208,26 +273,90 @@ export function TimerBar() {
                   />
                 ))}
               </div>
+              <span className="text-muted-foreground hidden truncate text-[11px] tabular-nums sm:block">
+                {cycleLabel}
+              </span>
             </div>
           </div>
-          <div className="flex min-w-0 flex-col gap-[1px]">
-            <span
-              className="text-[10.5px] font-semibold tracking-[0.8px] uppercase"
-              style={{ color: phaseColor }}
-            >
-              {phaseLabel}
-            </span>
-            <span
-              className={cn(
-                'truncate text-[12.5px]',
-                focusedTask ? 'text-fg-2' : 'text-fg-3',
-              )}
-            >
-              {focusedTask ? focusedTask.title : 'No task focused'}
-            </span>
-          </div>
+        </div>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="text-fg-3 shrink-0 text-[10.5px] font-semibold tracking-[0.8px] uppercase">
+            Working on
+          </span>
+          <span
+            className={cn(
+              'truncate text-[12.5px]',
+              focusedTask ? 'text-fg-2' : 'text-fg-3',
+            )}
+          >
+            {focusedTask ? focusedTask.title : 'No task focused'}
+          </span>
         </div>
       </div>
     </div>
+  )
+}
+
+function PhaseChip({
+  label,
+  color,
+  current,
+  options,
+  onSelect,
+}: {
+  label: string
+  color: string
+  current: TimerPhase
+  options: { value: TimerPhase; label: string }[]
+  onSelect: (phase: TimerPhase) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  const handleSelect = (phase: TimerPhase) => {
+    onSelect(phase)
+    setOpen(false)
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger className="w-fit">
+        <span
+          className="flex cursor-pointer items-center rounded-[3px] py-0.5 text-[10.5px] font-semibold tracking-[0.8px] uppercase transition-colors duration-140"
+          style={{ color }}
+        >
+          {label}
+        </span>
+      </PopoverTrigger>
+      <PopoverContent className="z-50 gap-0 p-1" align="start">
+        {options.map((opt) => (
+          <Button
+            key={opt.value}
+            variant="ghost"
+            size="none"
+            className={cn(
+              'w-full justify-start gap-2 rounded-[4px] px-3 py-2 text-left text-sm duration-100',
+              opt.value === current ? 'text-foreground' : 'text-fg-2',
+            )}
+            onClick={() => handleSelect(opt.value)}
+          >
+            <span
+              className={cn(
+                'h-[7px] w-[7px] shrink-0 rounded-full',
+                opt.value === current ? 'opacity-100' : 'opacity-30',
+              )}
+              style={{
+                background:
+                  opt.value === 'focus'
+                    ? 'var(--accent)'
+                    : opt.value === 'shortBreak'
+                      ? 'var(--break-color)'
+                      : 'var(--lbreak-color)',
+              }}
+            />
+            {opt.label}
+          </Button>
+        ))}
+      </PopoverContent>
+    </Popover>
   )
 }
