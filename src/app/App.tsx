@@ -57,14 +57,14 @@ export function App() {
     { label: 'Today', value: 'today' },
     { label: 'Tomorrow', value: 'tomorrow' },
     { label: 'This Week', value: 'week' },
-    { label: 'Backlog', value: 'backlog' },
+    { label: 'Unscheduled', value: 'unscheduled' },
   ]
 
   const renderView = () => {
     switch (view) {
       case 'today':
       case 'tomorrow':
-      case 'backlog':
+      case 'unscheduled':
         return <DayView view={view} />
       case 'week':
         return <WeekView />

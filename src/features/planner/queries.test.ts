@@ -154,8 +154,8 @@ describe('defaultDateForView', () => {
     expect(defaultDateForView('week', 0)).toBe('2026-06-10')
   })
 
-  it('returns undefined for the backlog view', () => {
-    expect(defaultDateForView('backlog', 1)).toBeUndefined()
+  it('returns undefined for the unscheduled view', () => {
+    expect(defaultDateForView('unscheduled', 1)).toBeUndefined()
   })
 
   it('returns browseDate for the date view', () => {

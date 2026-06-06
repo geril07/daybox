@@ -262,7 +262,7 @@ function DatePickerButton({ task }: { task: Task }) {
               label: 'Tomorrow',
               value: formatDate(getTomorrow()),
             },
-            { label: 'Unsched.', value: null },
+            { label: 'Unscheduled', value: null },
           ].map((preset) => (
             <Button
               key={preset.label}

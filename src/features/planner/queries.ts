@@ -12,7 +12,7 @@ import { formatDate, getWeekDays, getWeekSectionLabel } from '@/shared/dates'
 
 import { usePlannerStore } from './store'
 
-export type View = 'today' | 'tomorrow' | 'week' | 'backlog' | 'date'
+export type View = 'today' | 'tomorrow' | 'week' | 'unscheduled' | 'date'
 
 export type TaskRange =
   | { kind: 'date'; date: string }
@@ -42,15 +42,15 @@ export const viewMetaMap: Record<
   today: {
     title: 'Today',
     emptyTitle: 'Nothing scheduled for today',
-    emptyDescription: 'Pull tasks from Backlog or add a new one.',
+    emptyDescription: 'Pull unscheduled tasks or add a new one.',
   },
   tomorrow: {
     title: 'Tomorrow',
     emptyTitle: 'Nothing planned for tomorrow yet.',
     emptyDescription: 'Add a task or reschedule one from today.',
   },
-  backlog: {
-    title: 'Backlog',
+  unscheduled: {
+    title: 'Unscheduled',
     emptyTitle: 'No unscheduled tasks.',
     emptyDescription: 'Capture whatever comes to mind.',
   },
@@ -77,7 +77,7 @@ export function viewToRange(
         end: formatDate(days[6]),
       }
     }
-    case 'backlog':
+    case 'unscheduled':
       return { kind: 'undated' }
     case 'date':
       return { kind: 'date', date: today }

@@ -4,7 +4,7 @@ import { EmptyState } from '@/shared/ui'
 import { viewMetaMap, useFilteredTasks } from '../queries'
 import { SectionHeader } from './SectionHeader'
 
-type SingleDayView = 'today' | 'tomorrow' | 'backlog'
+type SingleDayView = 'today' | 'tomorrow' | 'unscheduled'
 
 interface DayViewProps {
   view: SingleDayView

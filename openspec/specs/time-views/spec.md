@@ -1,6 +1,6 @@
 ## Purpose
 
-Four time views (Today, Tomorrow, This Week, Backlog) plus a date browser for arbitrary dates. Overdue tasks surface in Today and This Week. Each view has a contextual empty state.
+Four time views (Today, Tomorrow, This Week, Unscheduled) plus a date browser for arbitrary dates. Overdue tasks surface in Today and This Week. Each view has a contextual empty state.
 
 ## Requirements
 
@@ -76,14 +76,14 @@ A day section with no tasks SHALL still render its header followed by a quiet, m
 - **THEN** that day's header is still shown
 - **AND** a muted "nothing planned" placeholder line appears under it
 
-### Requirement: Backlog view shows unscheduled tasks
+### Requirement: Unscheduled view shows tasks with no date
 
 The system SHALL display all tasks with no date set under a single titled section, using the shared section-header style used by the Today view.
 
-#### Scenario: Backlog view
+#### Scenario: Unscheduled view
 
-- **WHEN** user navigates to Backlog view
-- **THEN** all tasks with date=null are shown beneath a "Backlog" section header
+- **WHEN** user navigates to Unscheduled view
+- **THEN** all tasks with date=null are shown beneath an "Unscheduled" section header
 - **AND** the header uses the same style as the Today view's section header
 
 ### Requirement: Date browser shows any specific date
@@ -102,7 +102,7 @@ The system SHALL display a contextual empty state message per view when it has n
 #### Scenario: Empty Today view
 
 - **WHEN** Today has no tasks and no overdue tasks
-- **THEN** an empty state shows: "Nothing scheduled for today. Pull tasks from Backlog or add a new one."
+- **THEN** an empty state shows: "Nothing scheduled for today. Pull unscheduled tasks or add a new one."
 
 #### Scenario: Empty Tomorrow view
 
@@ -114,9 +114,9 @@ The system SHALL display a contextual empty state message per view when it has n
 - **WHEN** there are no overdue tasks and no tasks from today through the end of the week
 - **THEN** an empty state shows: "No tasks this week. Add or reschedule something."
 
-#### Scenario: Empty Backlog view
+#### Scenario: Empty Unscheduled view
 
-- **WHEN** Backlog has no tasks
+- **WHEN** Unscheduled has no tasks
 - **THEN** an empty state shows: "No unscheduled tasks. Capture whatever comes to mind."
 
 #### Scenario: Empty date browser
