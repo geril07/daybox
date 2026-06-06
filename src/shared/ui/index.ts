@@ -53,6 +53,16 @@ export {
 } from './popover'
 
 export {
+  Menu,
+  MenuContent,
+  MenuGroupLabel,
+  MenuItem,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuTrigger,
+} from './menu'
+
+export {
   Tabs,
   TabsList,
   TabsTrigger,

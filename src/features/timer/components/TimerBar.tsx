@@ -1,9 +1,16 @@
 import { RotateCcw, RefreshCcw, Pause, Play, SkipForward } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 import { useTaskStore } from '@/features/tasks'
 import { sendNotification } from '@/shared/notifications'
-import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
+import {
+  Button,
+  Menu,
+  MenuTrigger,
+  MenuContent,
+  MenuRadioGroup,
+  MenuRadioItem,
+} from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 import { playAlarm } from '../alarm'
@@ -310,53 +317,41 @@ function PhaseChip({
   options: { value: TimerPhase; label: string }[]
   onSelect: (phase: TimerPhase) => void
 }) {
-  const [open, setOpen] = useState(false)
-
-  const handleSelect = (phase: TimerPhase) => {
-    onSelect(phase)
-    setOpen(false)
-  }
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className="w-fit">
-        <span
-          className="flex cursor-pointer items-center rounded-md py-0.5 text-xs font-semibold tracking-widest uppercase transition-colors duration-140"
-          style={{ color }}
+    <Menu>
+      <MenuTrigger
+        className="flex w-fit cursor-pointer items-center rounded-md py-0.5 text-xs font-semibold tracking-widest uppercase transition-colors duration-140 outline-none"
+        style={{ color }}
+      >
+        {label}
+      </MenuTrigger>
+      <MenuContent className="gap-0 p-1" align="start">
+        <MenuRadioGroup
+          value={current}
+          onValueChange={(value) => onSelect(value as TimerPhase)}
         >
-          {label}
-        </span>
-      </PopoverTrigger>
-      <PopoverContent className="z-50 gap-0 p-1" align="start">
-        {options.map((opt) => (
-          <Button
-            key={opt.value}
-            variant="ghost"
-            size="none"
-            className={cn(
-              'w-full justify-start gap-2 rounded px-3 py-2 text-left text-sm duration-100',
-              opt.value === current ? 'text-foreground' : 'text-fg-2',
-            )}
-            onClick={() => handleSelect(opt.value)}
-          >
-            <span
-              className={cn(
-                'h-[7px] w-[7px] shrink-0 rounded-full',
-                opt.value === current ? 'opacity-100' : 'opacity-30',
-              )}
-              style={{
-                background:
-                  opt.value === 'focus'
-                    ? 'var(--accent)'
-                    : opt.value === 'shortBreak'
-                      ? 'var(--break-color)'
-                      : 'var(--lbreak-color)',
-              }}
-            />
-            {opt.label}
-          </Button>
-        ))}
-      </PopoverContent>
-    </Popover>
+          {options.map((opt) => (
+            <MenuRadioItem
+              key={opt.value}
+              value={opt.value}
+              className="text-fg-2 data-checked:text-foreground"
+            >
+              <span
+                className="h-[7px] w-[7px] shrink-0 rounded-full"
+                style={{
+                  background:
+                    opt.value === 'focus'
+                      ? 'var(--accent)'
+                      : opt.value === 'shortBreak'
+                        ? 'var(--break-color)'
+                        : 'var(--lbreak-color)',
+                }}
+              />
+              {opt.label}
+            </MenuRadioItem>
+          ))}
+        </MenuRadioGroup>
+      </MenuContent>
+    </Menu>
   )
 }
