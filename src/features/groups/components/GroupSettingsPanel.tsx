@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import { Pencil, Trash2 } from 'lucide-react'
+import { Check, Pencil, Trash2, X } from 'lucide-react'
 
 import { DEFAULT_GROUP_ID, useGroupStore, type Group } from '@/features/groups'
 import { useTaskStore } from '@/features/tasks'
@@ -111,7 +111,10 @@ function GroupItem({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onBlur={handleSave}
+          onBlur={(e) => {
+            if (e.relatedTarget?.closest('[data-cancel]')) return
+            handleSave()
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') handleSave()
             if (e.key === 'Escape') {
@@ -126,14 +129,28 @@ function GroupItem({
         <span className="text-foreground flex-1 text-sm">{group.name}</span>
       )}
       <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="xs"
-          onClick={() => setEditing(true)}
-          disabled={editing}
-        >
-          <Pencil className="size-3.5" />
-        </Button>
+        {editing ? (
+          <>
+            <Button variant="ghost" size="xs" onClick={handleSave}>
+              <Check className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="xs"
+              data-cancel
+              onClick={() => {
+                setName(group.name)
+                setEditing(false)
+              }}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </>
+        ) : (
+          <Button variant="ghost" size="xs" onClick={() => setEditing(true)}>
+            <Pencil className="size-3.5" />
+          </Button>
+        )}
         <AlertDialog>
           <AlertDialogTrigger
             render={<Button variant="ghostDestructive" size="xs" disabled={isLast} />}
