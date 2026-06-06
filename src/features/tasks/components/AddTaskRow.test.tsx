@@ -1,11 +1,5 @@
-import {
-  render,
-  screen,
-  fireEvent,
-  cleanup,
-  within,
-  act,
-} from '@testing-library/react'
+import { render, screen, cleanup, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 import { useGroupStore } from '@/features/groups'
@@ -53,124 +47,120 @@ function isPopoverOpen(): boolean {
   )
 }
 
-function type(value: string) {
-  const input = getAddInput()
-  act(() => {
-    fireEvent.change(input, { target: { value } })
-  })
-}
-
 describe('AddTaskRow', () => {
-  it('does not render the suggestions popover when input has no trailing #', () => {
+  it('does not render the suggestions popover when input has no trailing #', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
-    type('Write report')
+    const input = getAddInput()
+    await user.click(input)
+    await user.type(input, 'Write report')
     expect(isPopoverOpen()).toBe(false)
   })
 
-  it('renders the suggestions popover when input has a trailing #', () => {
+  it('renders the suggestions popover when input has a trailing #', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
-    type('Buy milk #')
+    const input = getAddInput()
+    await user.click(input)
+    await user.type(input, 'Buy milk #')
     expect(isPopoverOpen()).toBe(true)
     const popover = getPopoverContent()!
     expect(within(popover).getByText('General')).toBeTruthy()
     expect(within(popover).getByText('Work')).toBeTruthy()
   })
 
-  it('filters suggestions by the typed prefix', () => {
+  it('filters suggestions by the typed prefix', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
-    type('Buy milk #wo')
+    const input = getAddInput()
+    await user.click(input)
+    await user.type(input, 'Buy milk #wo')
     const popover = getPopoverContent()!
     expect(within(popover).getByText('Work')).toBeTruthy()
     expect(within(popover).queryByText('General')).toBeNull()
   })
 
-  it('opening the popover does not move focus from the input', () => {
+  it('opening the popover does not move focus from the input', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
     const input = getAddInput()
-    input.focus()
-    type('Buy milk #')
+    await user.click(input)
+    await user.type(input, 'Buy milk #')
     expect(isPopoverOpen()).toBe(true)
     expect(document.activeElement).toBe(input)
   })
 
-  it('Tab does not enter the suggestions popover', () => {
+  it('Tab does not enter the suggestions popover', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
     const input = getAddInput()
-    input.focus()
-    type('Buy milk #wo')
+    await user.click(input)
+    await user.type(input, 'Buy milk #wo')
     const popover = getPopoverContent()!
     const workButton = within(popover).getByText('Work').closest('button')!
     expect(workButton.tabIndex).toBe(-1)
   })
 
-  it('ArrowDown highlights the first suggestion, then the second', () => {
+  it('ArrowDown highlights the first suggestion, then the second', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
-    type('Buy milk #')
-    const popover = getPopoverContent()!
     const input = getAddInput()
-    act(() => {
-      fireEvent.keyDown(input, { key: 'ArrowDown' })
-    })
+    await user.click(input)
+    await user.type(input, 'Buy milk #')
+    const popover = getPopoverContent()!
+    await user.keyboard('{ArrowDown}')
     const firstHighlighted = popover.querySelector(
       '[data-highlighted="true"]',
     ) as HTMLElement
     expect(firstHighlighted).not.toBeNull()
     expect(firstHighlighted.textContent).toContain('General')
-    act(() => {
-      fireEvent.keyDown(input, { key: 'ArrowDown' })
-    })
+    await user.keyboard('{ArrowDown}')
     const secondHighlighted = popover.querySelector(
       '[data-highlighted="true"]',
     ) as HTMLElement
     expect(secondHighlighted.textContent).toContain('Work')
   })
 
-  it('ArrowUp from no highlight sets the last suggestion; ArrowUp from first wraps to last', () => {
+  it('ArrowUp from no highlight sets the last suggestion; ArrowUp from first wraps to last', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
-    type('Buy milk #')
-    const popover = getPopoverContent()!
     const input = getAddInput()
-    act(() => {
-      fireEvent.keyDown(input, { key: 'ArrowUp' })
-    })
+    await user.click(input)
+    await user.type(input, 'Buy milk #')
+    const popover = getPopoverContent()!
+    await user.keyboard('{ArrowUp}')
     let highlighted = popover.querySelector(
       '[data-highlighted="true"]',
     ) as HTMLElement
     expect(highlighted.textContent).toContain('Work')
-    act(() => {
-      fireEvent.keyDown(input, { key: 'ArrowUp' })
-    })
+    await user.keyboard('{ArrowUp}')
     highlighted = popover.querySelector(
       '[data-highlighted="true"]',
     ) as HTMLElement
     expect(highlighted.textContent).toContain('General')
   })
 
-  it('Enter on a highlighted suggestion accepts it and does not submit', () => {
+  it('Enter on a highlighted suggestion accepts it and does not submit', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
     const input = getAddInput()
-    input.focus()
-    type('Buy milk #wo')
-    act(() => {
-      fireEvent.keyDown(input, { key: 'ArrowDown' })
-    })
-    act(() => {
-      fireEvent.keyDown(input, { key: 'Enter' })
-    })
+    await user.click(input)
+    await user.type(input, 'Buy milk #wo')
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{Enter}')
     expect(input.value).toBe('Buy milk #Work ')
     expect(isPopoverOpen()).toBe(false)
     expect(document.activeElement).toBe(input)
     expect(useTaskStore.getState().tasks).toHaveLength(0)
   })
 
-  it('Enter with the popover open but no highlight submits the form', () => {
+  it('Enter with the popover open but no highlight submits the form', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
     const input = getAddInput()
-    input.focus()
-    type('Buy milk #work')
-    act(() => {
-      fireEvent.keyDown(input, { key: 'Enter' })
-    })
+    await user.click(input)
+    await user.type(input, 'Buy milk #work')
+    await user.keyboard('{Enter}')
     const tasks = useTaskStore.getState().tasks
     expect(tasks).toHaveLength(1)
     expect(tasks[0]?.title).toBe('Buy milk')
@@ -178,37 +168,38 @@ describe('AddTaskRow', () => {
     expect(isPopoverOpen()).toBe(false)
   })
 
-  it('Enter with the popover closed submits the form', () => {
+  it('Enter with the popover closed submits the form', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
     const input = getAddInput()
-    input.focus()
-    type('Write report')
-    act(() => {
-      fireEvent.keyDown(input, { key: 'Enter' })
-    })
+    await user.click(input)
+    await user.type(input, 'Write report')
+    await user.keyboard('{Enter}')
     const tasks = useTaskStore.getState().tasks
     expect(tasks).toHaveLength(1)
     expect(tasks[0]?.title).toBe('Write report')
   })
 
-  it('clicking a suggestion rewrites the input, closes the popover, clears the highlight, and refocuses the input', () => {
+  it('clicking a suggestion rewrites the input, closes the popover, clears the highlight, and refocuses the input', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
     const input = getAddInput()
-    input.focus()
-    type('Buy milk #wo')
+    await user.click(input)
+    await user.type(input, 'Buy milk #wo')
     const popover = getPopoverContent()!
     const workButton = within(popover).getByText('Work').closest('button')!
-    act(() => {
-      fireEvent.click(workButton)
-    })
+    await user.click(workButton)
     expect(input.value).toBe('Buy milk #Work ')
     expect(isPopoverOpen()).toBe(false)
     expect(document.activeElement).toBe(input)
   })
 
-  it('shows the "Press Enter to create" hint when no group matches and the hint is not a button', () => {
+  it('shows the "Press Enter to create" hint when no group matches and the hint is not a button', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
-    type('Buy milk #brandnew')
+    const input = getAddInput()
+    await user.click(input)
+    await user.type(input, 'Buy milk #brandnew')
     const popover = getPopoverContent()!
     const hint = within(popover).getByText(
       'Press Enter to create group "brandnew"',
@@ -217,24 +208,22 @@ describe('AddTaskRow', () => {
     expect(hint.closest('button')).toBeNull()
   })
 
-  it('Escape closes the popover, clears the highlight, leaves the input value and focus intact', () => {
+  it('Escape closes the popover, clears the highlight, leaves the input value and focus intact', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
     const input = getAddInput()
-    input.focus()
-    type('Buy milk #wo')
-    act(() => {
-      fireEvent.keyDown(input, { key: 'ArrowDown' })
-    })
+    await user.click(input)
+    await user.type(input, 'Buy milk #wo')
+    await user.keyboard('{ArrowDown}')
     expect(isPopoverOpen()).toBe(true)
-    act(() => {
-      fireEvent.keyDown(input, { key: 'Escape' })
-    })
+    await user.keyboard('{Escape}')
     expect(isPopoverOpen()).toBe(false)
     expect(input.value).toBe('Buy milk #wo')
     expect(document.activeElement).toBe(input)
   })
 
-  it('outside click closes the popover and clears the highlight; the input value is preserved', () => {
+  it('outside click closes the popover and clears the highlight; the input value is preserved', async () => {
+    const user = userEvent.setup()
     render(
       <div>
         <button data-testid="outside">outside</button>
@@ -242,43 +231,38 @@ describe('AddTaskRow', () => {
       </div>,
     )
     const input = getAddInput()
-    input.focus()
-    type('Buy milk #wo')
-    act(() => {
-      fireEvent.keyDown(input, { key: 'ArrowDown' })
-    })
+    await user.click(input)
+    await user.type(input, 'Buy milk #wo')
+    await user.keyboard('{ArrowDown}')
     expect(isPopoverOpen()).toBe(true)
-    act(() => {
-      fireEvent.mouseDown(screen.getByTestId('outside'))
-      fireEvent.click(screen.getByTestId('outside'))
-    })
+    await user.click(screen.getByTestId('outside'))
     expect(isPopoverOpen()).toBe(false)
     expect(input.value).toBe('Buy milk #wo')
   })
 
-  it('removing the trailing # closes the popover and clears the highlight', () => {
+  it('removing the trailing # closes the popover and clears the highlight', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
     const input = getAddInput()
-    input.focus()
-    type('Buy milk #wo')
-    act(() => {
-      fireEvent.keyDown(input, { key: 'ArrowDown' })
-    })
-    type('Buy milk #')
+    await user.click(input)
+    await user.type(input, 'Buy milk #wo')
+    await user.keyboard('{ArrowDown}')
+    await user.clear(input)
+    await user.type(input, 'Buy milk #')
     const popover = getPopoverContent()!
     expect(popover.querySelector('[data-highlighted="true"]')).toBeNull()
-    type('Buy milk ')
+    await user.clear(input)
+    await user.type(input, 'Buy milk ')
     expect(isPopoverOpen()).toBe(false)
   })
 
-  it('Enter on #unmatched with popover open and no highlight creates the group and the task', () => {
+  it('Enter on #unmatched with popover open and no highlight creates the group and the task', async () => {
+    const user = userEvent.setup()
     render(<AddTaskRow />)
     const input = getAddInput()
-    input.focus()
-    type('Buy milk #brandnew')
-    act(() => {
-      fireEvent.keyDown(input, { key: 'Enter' })
-    })
+    await user.click(input)
+    await user.type(input, 'Buy milk #brandnew')
+    await user.keyboard('{Enter}')
     const groups = useGroupStore.getState().groups
     const brandnew = groups.find((g) => g.name === 'brandnew')
     expect(brandnew).toBeDefined()

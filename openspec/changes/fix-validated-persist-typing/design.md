@@ -23,11 +23,13 @@ The four stores persist their **entire** store object (no `partialize`); action 
 ## Goals / Non-Goals
 
 **Goals:**
+
 - `createValidatedPersist` returns a correctly typed `PersistOptions<S, S>`; no `as any` and no eslint-disable at any call site or in the helper.
 - The rehydrate callback `state` is typed `S`; `init` is typed `Partial<S>`; the `options` (`storage`, `onRehydrateStorage`) are typed against zustand's real shapes.
 - Runtime behavior is byte-for-byte identical (validation, reset, single warn, timer wall-clock correction, debounced timer storage).
 
 **Non-Goals:**
+
 - No switch to explicit `partialize` / minimal persisted payloads (considered below, deferred).
 - No change to storage keys, schemas, export/import, or legacy migration code.
 - No change to the persisted shape on disk.
@@ -72,7 +74,7 @@ This is strictly better than `as any`: the type argument documents the store and
 
 ### Decision 3: Omit the `storage` key when no storage option is provided
 
-zustand's persist builds its options as `{ storage: createJSONStorage(() => localStorage), partialize, version, merge, ...baseOptions }`. Because the spread comes last, any key *present* in our returned object wins — including `storage: undefined`. The previous helper always returned a `storage` key, so the three stores that pass no storage (`tasks`, `groups`, `planner`) returned `storage: undefined`, which overwrote zustand's localStorage default. zustand then saw a falsy storage, substituted a no-op that logs `the given storage is currently unavailable`, and those stores never persisted at all.
+zustand's persist builds its options as `{ storage: createJSONStorage(() => localStorage), partialize, version, merge, ...baseOptions }`. Because the spread comes last, any key _present_ in our returned object wins — including `storage: undefined`. The previous helper always returned a `storage` key, so the three stores that pass no storage (`tasks`, `groups`, `planner`) returned `storage: undefined`, which overwrote zustand's localStorage default. zustand then saw a falsy storage, substituted a no-op that logs `the given storage is currently unavailable`, and those stores never persisted at all.
 
 The helper now spreads the key conditionally — `...(storage ? { storage } : {})` — so when no storage is supplied the key is absent and zustand's `createJSONStorage(() => localStorage)` default applies.
 

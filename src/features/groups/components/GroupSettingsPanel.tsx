@@ -1,6 +1,5 @@
-import { useState } from 'react'
-
 import { Check, Pencil, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
 
 import { DEFAULT_GROUP_ID, useGroupStore, type Group } from '@/features/groups'
 import { useTaskStore } from '@/features/tasks'
@@ -153,27 +152,29 @@ function GroupItem({
         )}
         <AlertDialog>
           <AlertDialogTrigger
-            render={<Button variant="ghostDestructive" size="xs" disabled={isLast} />}
+            render={
+              <Button variant="ghostDestructive" size="xs" disabled={isLast} />
+            }
           >
             <Trash2 className="size-3.5" />
           </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogTitle>Delete &quot;{group.name}&quot;</AlertDialogTitle>
-          <AlertDialogDescription>
-            What should happen to tasks in this group?
-          </AlertDialogDescription>
-          <div className="flex flex-col gap-2">
-            <AlertDialogCancel onClick={() => onDelete(group.id, true)}>
-              Move tasks to General
-            </AlertDialogCancel>
-            <AlertDialogCancel
-              variant="destructive"
-              onClick={() => onDelete(group.id, false)}
-            >
-              Delete all tasks
-            </AlertDialogCancel>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-          </div>
+          <AlertDialogContent>
+            <AlertDialogTitle>Delete &quot;{group.name}&quot;</AlertDialogTitle>
+            <AlertDialogDescription>
+              What should happen to tasks in this group?
+            </AlertDialogDescription>
+            <div className="flex flex-col gap-2">
+              <AlertDialogCancel onClick={() => onDelete(group.id, true)}>
+                Move tasks to General
+              </AlertDialogCancel>
+              <AlertDialogCancel
+                variant="destructive"
+                onClick={() => onDelete(group.id, false)}
+              >
+                Delete all tasks
+              </AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+            </div>
           </AlertDialogContent>
         </AlertDialog>
       </div>

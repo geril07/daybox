@@ -13,6 +13,7 @@ This is a presentation + state-machine fix within the existing feature. No new d
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Make `sessionPomoCount` correct so long breaks fire and the dots are meaningful.
 - Surface phase identity on the timer itself (ambient tint + chip), decoupled from the task label.
 - Let the user jump to any phase via the chip (wire up `setPhase`).
@@ -20,6 +21,7 @@ This is a presentation + state-machine fix within the existing feature. No new d
 - Remove the redundant top border.
 
 **Non-Goals:**
+
 - Focus mode / expand view (separate change `add-timer-focus-mode`, which depends on this).
 - Any change to the task-level pomo counter (`pomoCompleted`/`pomoEstimate`) — that is distinct from the timer's `sessionPomoCount`.
 - Layout/structural changes to the app shell; the bar stays a bottom bar.
@@ -40,9 +42,9 @@ on advancePhase (interval just completed = state.phase):
             : state.sessionPomoCount        // short break: unchanged
 ```
 
-`getNextPhase` is already correct *given a correct count* — it checks `(sessionPomoCount + 1) % longBreakInterval === 0`. Because the count will now actually reach `longBreakInterval - 1` at a focus-end, the long-break branch fires. **No change to `getNextPhase`.**
+`getNextPhase` is already correct _given a correct count_ — it checks `(sessionPomoCount + 1) % longBreakInterval === 0`. Because the count will now actually reach `longBreakInterval - 1` at a focus-end, the long-break branch fires. **No change to `getNextPhase`.**
 
-*Alternative considered:* derive long-break timing from a monotonic total-pomos counter modulo interval. Rejected — more state, and the existing modulo check works once the count is maintained correctly.
+_Alternative considered:_ derive long-break timing from a monotonic total-pomos counter modulo interval. Rejected — more state, and the existing modulo check works once the count is maintained correctly.
 
 ### D2 — Reset becomes a single progressive control
 
@@ -59,13 +61,13 @@ intervalDirty            → "Restart"      → restart current interval
 
 Implementation: keep `reset()` as the restart-interval action (it already does exactly this). Add a `resetSession()` action that sets `{ phase: 'focus', sessionPomoCount: 0, elapsed: 0, startedAt: null, isRunning: false }`. The component computes which of the two is armed and renders the matching label/tooltip, calling the matching action. Disabled state suppresses the click.
 
-*Alternative considered:* a confirm dialog before reset-session. Rejected — the progressive model already makes session-reset a deliberate second action (the interval must be clean first), and an interstitial would slow the common restart case.
+_Alternative considered:_ a confirm dialog before reset-session. Rejected — the progressive model already makes session-reset a deliberate second action (the interval must be clean first), and an interstitial would slow the common restart case.
 
 ### D3 — Wire `setPhase` for manual phase switching; keep count untouched
 
 The chip popover calls the existing `setPhase(phase)`, which already does `{ phase, startedAt: null, elapsed: 0, isRunning: false }`. Confirm `setPhase` does **not** touch `sessionPomoCount` (it currently does not) — manual switching changes only what you're doing now, never the cycle count. The count moves solely through `advancePhase` on completion (D1).
 
-*Consequence:* if a user manually switches to `longBreak` and lets it complete, `advancePhase` sees `state.phase === 'longBreak'` and resets the count to 0 (D1) — consistent with "a long break is a cycle boundary, however reached."
+_Consequence:_ if a user manually switches to `longBreak` and lets it complete, `advancePhase` sees `state.phase === 'longBreak'` and resets the count to 0 (D1) — consistent with "a long break is a cycle boundary, however reached."
 
 ### D4 — Phase identity: ambient tint + chip, task decoupled
 

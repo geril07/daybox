@@ -15,9 +15,11 @@ The This Week view hides any day that has no tasks (`if (dayTasks.length === 0) 
 ## Capabilities
 
 ### New Capabilities
+
 <!-- None. The shared section-header component is an internal implementation detail captured in design.md, not spec-level behavior. -->
 
 ### Modified Capabilities
+
 - `time-views`: The "This Week view" requirement changes from a flat Mon–Sun day grouping (empty days hidden) to an ordered section model — an Overdue section, then today-through-end-of-week day sections with relative Today/Tomorrow labels, with empty future days kept visible. The Week empty-state condition is restated in terms of "no overdue and no tasks today→end of week."
 
 ## Impact

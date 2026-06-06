@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 import { useGroupStore } from '@/features/groups'
@@ -50,13 +51,11 @@ function createMockTask(overrides = {}) {
   }
 }
 
-function openPomoPopover() {
+async function openPomoPopover(user: ReturnType<typeof userEvent.setup>) {
   const trigger = document.querySelector(
     '[data-slot="popover-trigger"]',
   ) as HTMLElement
-  act(() => {
-    fireEvent.click(trigger)
-  })
+  await user.click(trigger)
 }
 
 function visibleInput(value: string): HTMLInputElement {
@@ -73,59 +72,64 @@ describe('TaskRow', () => {
     expect(titles.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('toggles completion on checkbox click', () => {
+  it('toggles completion on checkbox click', async () => {
+    const user = userEvent.setup()
     const task = createMockTask()
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
     const checkbox = document.querySelector(
       '.rounded-full.border',
     ) as HTMLButtonElement
-    fireEvent.click(checkbox)
+    await user.click(checkbox)
     const storeTask = useTaskStore
       .getState()
       .tasks.find((t) => t.id === task.id)
     expect(storeTask?.completed).toBe(true)
   })
 
-  it('enters and exits edit mode', () => {
+  it('enters and exits edit mode', async () => {
+    const user = userEvent.setup()
     const task = createMockTask()
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
     const title = screen.getAllByText('Test Task')[0]
-    fireEvent.click(title)
+    await user.click(title)
     const input = document.querySelector(
       'input[type="text"]',
     ) as HTMLInputElement
     expect(input).not.toBeNull()
-    fireEvent.change(input, { target: { value: 'Edited' } })
-    fireEvent.keyDown(input, { key: 'Enter' })
+    await user.clear(input)
+    await user.type(input, 'Edited')
+    await user.keyboard('{Enter}')
     const storeTask = useTaskStore
       .getState()
       .tasks.find((t) => t.id === task.id)
     expect(storeTask?.title).toBe('Edited')
   })
 
-  it('deletes task on delete button click', () => {
+  it('deletes task on delete button click', async () => {
+    const user = userEvent.setup()
     const task = createMockTask()
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
     const deleteBtn = document.querySelector(
       '[title="Delete"]',
     ) as HTMLButtonElement
-    fireEvent.click(deleteBtn)
+    await user.click(deleteBtn)
     expect(
       useTaskStore.getState().tasks.find((t) => t.id === task.id),
     ).toBeUndefined()
   })
 
-  it('focuses task on focus button click', () => {
+  it('focuses task on focus button click', async () => {
+    const user = userEvent.setup()
     const task = createMockTask()
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
     const focusBtn = document.querySelector(
       '[title="Focus"]',
     ) as HTMLButtonElement
-    fireEvent.click(focusBtn)
+    await user.click(focusBtn)
     expect(useTimerStore.getState().focusedTaskId).toBe('test-1')
   })
 
@@ -143,66 +147,70 @@ describe('TaskRow', () => {
     expect(screen.getByText('0/0')).toBeTruthy()
   })
 
-  it('popover contains two NumberInputs labelled for estimate and completed', () => {
+  it('popover contains two NumberInputs labelled for estimate and completed', async () => {
+    const user = userEvent.setup()
     const task = createMockTask({ pomoEstimate: 3, pomoCompleted: 1 })
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
-    openPomoPopover()
+    await openPomoPopover(user)
     expect(screen.getByText('Estimate')).toBeTruthy()
     expect(screen.getByText('Completed')).toBeTruthy()
     expect(visibleInput('3')).toBeTruthy()
     expect(visibleInput('1')).toBeTruthy()
   })
 
-  it('lowering estimate below completed clamps completed in a single store call', () => {
+  it('lowering estimate below completed clamps completed in a single store call', async () => {
+    const user = userEvent.setup()
     const task = createMockTask({ pomoEstimate: 5, pomoCompleted: 5 })
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
-    openPomoPopover()
+    await openPomoPopover(user)
     const estimateInput = visibleInput('5')
-    act(() => {
-      fireEvent.change(estimateInput, { target: { value: '3' } })
-    })
+    await user.clear(estimateInput)
+    await user.type(estimateInput, '3')
     const updated = useTaskStore.getState().tasks[0]
     expect(updated?.pomoEstimate).toBe(3)
     expect(updated?.pomoCompleted).toBe(3)
   })
 
-  it('increasing completed does not affect estimate', () => {
+  it('increasing completed does not affect estimate', async () => {
+    const user = userEvent.setup()
     const task = createMockTask({ pomoEstimate: 5, pomoCompleted: 2 })
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
-    openPomoPopover()
+    await openPomoPopover(user)
     const completedInput = visibleInput('2')
-    act(() => {
-      fireEvent.change(completedInput, { target: { value: '4' } })
-    })
+    await user.clear(completedInput)
+    await user.type(completedInput, '4')
     const updated = useTaskStore.getState().tasks[0]
     expect(updated?.pomoEstimate).toBe(5)
     expect(updated?.pomoCompleted).toBe(4)
   })
 
-  it('disables the + control on completed when completed === estimate', () => {
+  it('disables the + control on completed when completed === estimate', async () => {
+    const user = userEvent.setup()
     const task = createMockTask({ pomoEstimate: 5, pomoCompleted: 5 })
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
-    openPomoPopover()
+    await openPomoPopover(user)
     const plusButtons = screen.getAllByText('+')
     const completedPlus = plusButtons[1] as HTMLButtonElement
     expect(completedPlus.disabled).toBe(true)
   })
 
-  it('disables the − control on completed when completed === 0', () => {
+  it('disables the − control on completed when completed === 0', async () => {
+    const user = userEvent.setup()
     const task = createMockTask({ pomoEstimate: 5, pomoCompleted: 0 })
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
-    openPomoPopover()
+    await openPomoPopover(user)
     const minusButtons = screen.getAllByText('−')
     const completedMinus = minusButtons[1] as HTMLButtonElement
     expect(completedMinus.disabled).toBe(true)
   })
 
-  it('does not toggle task.completed when manually setting completed = estimate', () => {
+  it('does not toggle task.completed when manually setting completed = estimate', async () => {
+    const user = userEvent.setup()
     const task = createMockTask({
       pomoEstimate: 5,
       pomoCompleted: 3,
@@ -210,25 +218,23 @@ describe('TaskRow', () => {
     })
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
-    openPomoPopover()
+    await openPomoPopover(user)
     const completedInput = visibleInput('3')
-    act(() => {
-      fireEvent.change(completedInput, { target: { value: '5' } })
-    })
+    await user.clear(completedInput)
+    await user.type(completedInput, '5')
     const updated = useTaskStore.getState().tasks[0]
     expect(updated?.pomoCompleted).toBe(5)
     expect(updated?.completed).toBe(false)
   })
 
-  it('clearing the estimate input is a no-op (prior value preserved)', () => {
+  it('clearing the estimate input is a no-op (prior value preserved)', async () => {
+    const user = userEvent.setup()
     const task = createMockTask({ pomoEstimate: 5, pomoCompleted: 2 })
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
-    openPomoPopover()
+    await openPomoPopover(user)
     const estimateInput = visibleInput('5')
-    act(() => {
-      fireEvent.change(estimateInput, { target: { value: '' } })
-    })
+    await user.clear(estimateInput)
     const updated = useTaskStore.getState().tasks[0]
     expect(updated?.pomoEstimate).toBe(5)
   })

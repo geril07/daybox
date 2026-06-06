@@ -9,6 +9,7 @@ Current `WeekView` selects `getWeekDays(weekStartDay)` and renders each day that
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Make the Week view render an ordered `Section[]` (Overdue, then today→end-of-week days) through one shared section-header component.
 - Keep the week's shape visible: empty future days still render with a muted placeholder.
 - Surface overdue tasks in the Week view.
@@ -16,6 +17,7 @@ Current `WeekView` selects `getWeekDays(weekStartDay)` and renders each day that
 - Design the section primitive so the other views can adopt it later.
 
 **Non-Goals:**
+
 - Migrating Today / Tomorrow / Backlog / DateBrowser onto the shared primitive (follow-up).
 - Fixing the orphaned `date` view (no UI entry point) or the `App.defaultDate` duplication of `viewToRange`.
 - Global cleanup of the `text-fg-2` vs `muted-foreground` token split across the app.

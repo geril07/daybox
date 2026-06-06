@@ -4,9 +4,17 @@
 
 ```tsx
 // DayView.tsx
-{overdue.length > 0 && <div className="section-label text-destructive ...">Overdue</div>}
-{view === 'today' && <div className="section-label text-muted-foreground ...">Today</div>}
-<TaskList tasks={tasks} />
+{
+  overdue.length > 0 && (
+    <div className="section-label text-destructive ...">Overdue</div>
+  )
+}
+{
+  view === 'today' && (
+    <div className="section-label text-muted-foreground ...">Today</div>
+  )
+}
+;<TaskList tasks={tasks} />
 ```
 
 So Tomorrow and Backlog (both `DayView` with `view !== 'today'`) render no header. `DayView` already gets per-view copy from `viewMetaMap` in `queries.ts` (titles + empty-state strings), and `useFilteredTasks(view)` returns `{ tasks, overdue }`.
@@ -16,11 +24,13 @@ Separately, `App.defaultDate` (`App.tsx:29-44`) re-implements the view→date ma
 ## Goals / Non-Goals
 
 **Goals:**
+
 - `DayView` renders its sections through `SectionHeader`, matching the Today view's style.
 - Tomorrow and Backlog show a titled header ("Tomorrow" / "Backlog").
 - One source of truth for a view's default add-task date.
 
 **Non-Goals:**
+
 - Touching the date browser / `'date'` view / `browseDate` (parked).
 - Consolidating `text-fg-2` vs `muted-foreground` (separate evaluation).
 - Promoting `SectionHeader` to `shared/ui`, or moving `view` state into the store.

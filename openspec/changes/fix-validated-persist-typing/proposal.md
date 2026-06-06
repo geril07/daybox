@@ -1,6 +1,6 @@
 ## Why
 
-`createValidatedPersist` is not generic over the store type, so its return value cannot match zustand's `PersistOptions<S, U>`. Every one of the four feature stores papers over this with `as any`, which disables type-checking of the *entire* persist options object — a typo'd `name`, a wrong `storage`, or a malformed `onRehydrateStorage` would all be silently accepted. This is a latent-bug hazard sitting on the one code path that decides whether persisted user data is trusted or reset.
+`createValidatedPersist` is not generic over the store type, so its return value cannot match zustand's `PersistOptions<S, U>`. Every one of the four feature stores papers over this with `as any`, which disables type-checking of the _entire_ persist options object — a typo'd `name`, a wrong `storage`, or a malformed `onRehydrateStorage` would all be silently accepted. This is a latent-bug hazard sitting on the one code path that decides whether persisted user data is trusted or reset.
 
 ## What Changes
 

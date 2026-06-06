@@ -60,7 +60,9 @@ describe('useWeekSections', () => {
   it('labels today "Today", tomorrow "Tomorrow", and later days by date', () => {
     const { result } = renderHook(() => useWeekSections())
 
-    const byKey = Object.fromEntries(result.current.map((s) => [s.key, s.label]))
+    const byKey = Object.fromEntries(
+      result.current.map((s) => [s.key, s.label]),
+    )
     expect(byKey['2026-06-10']).toBe('Today')
     expect(byKey['2026-06-11']).toBe('Tomorrow')
     expect(byKey['2026-06-12']).toBe('Fri · Jun 12')
@@ -71,7 +73,11 @@ describe('useWeekSections', () => {
       tasks: [
         makeTask({ date: '2026-06-05' }),
         makeTask({ date: '2026-06-01' }),
-        makeTask({ date: '2026-06-03', completed: true, completedAt: '2026-06-03T00:00:00.000Z' }),
+        makeTask({
+          date: '2026-06-03',
+          completed: true,
+          completedAt: '2026-06-03T00:00:00.000Z',
+        }),
         makeTask({ date: '2026-06-10' }), // today, not overdue
       ],
     })
@@ -81,7 +87,10 @@ describe('useWeekSections', () => {
     const overdue = result.current[0]
     expect(overdue.key).toBe('overdue')
     expect(overdue.tone).toBe('destructive')
-    expect(overdue.tasks.map((t) => t.date)).toEqual(['2026-06-01', '2026-06-05'])
+    expect(overdue.tasks.map((t) => t.date)).toEqual([
+      '2026-06-01',
+      '2026-06-05',
+    ])
   })
 
   it('omits the overdue section when there are no overdue tasks', () => {

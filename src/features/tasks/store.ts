@@ -142,6 +142,10 @@ export const useTaskStore = create<TaskStore>()(
         },
       }
     },
-    createValidatedPersist<TaskStore>('daybox-tasks', TaskStateSchema, taskInit),
+    createValidatedPersist<TaskStore>(
+      'daybox-tasks',
+      TaskStateSchema,
+      taskInit,
+    ),
   ),
 )
