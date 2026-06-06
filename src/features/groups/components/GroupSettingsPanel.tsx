@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+import { Pencil, Trash2 } from 'lucide-react'
+
 import { DEFAULT_GROUP_ID, useGroupStore, type Group } from '@/features/groups'
 import { useTaskStore } from '@/features/tasks'
 import {
@@ -121,19 +123,23 @@ function GroupItem({
           autoFocus
         />
       ) : (
-        <span
-          className="text-foreground flex-1 text-sm"
-          onClick={() => setEditing(true)}
-        >
-          {group.name}
-        </span>
+        <span className="text-foreground flex-1 text-sm">{group.name}</span>
       )}
-      <AlertDialog>
-        <AlertDialogTrigger
-          render={<Button variant="ghost" size="xs" disabled={isLast} />}
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="xs"
+          onClick={() => setEditing(true)}
+          disabled={editing}
         >
-          Delete
-        </AlertDialogTrigger>
+          <Pencil className="size-3.5" />
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={<Button variant="ghostDestructive" size="xs" disabled={isLast} />}
+          >
+            <Trash2 className="size-3.5" />
+          </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogTitle>Delete &quot;{group.name}&quot;</AlertDialogTitle>
           <AlertDialogDescription>
@@ -151,8 +157,9 @@ function GroupItem({
             </AlertDialogCancel>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
           </div>
-        </AlertDialogContent>
-      </AlertDialog>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   )
 }
