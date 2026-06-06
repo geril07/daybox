@@ -109,8 +109,11 @@ export const useGroupStore = create<GroupStore>()(
 
       setStickyGroupId: (id) => set({ stickyGroupId: id }),
     }),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    createValidatedPersist('daybox-groups', GroupStateSchema, groupInit) as any,
+    createValidatedPersist<GroupStore>(
+      'daybox-groups',
+      GroupStateSchema,
+      groupInit,
+    ),
   ),
 )
 

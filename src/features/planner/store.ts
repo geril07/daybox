@@ -40,11 +40,10 @@ export const usePlannerStore = create<PlannerStore>()(
         set({ browseDate: formatDate(base) })
       },
     }),
-    createValidatedPersist(
+    createValidatedPersist<PlannerStore>(
       'daybox-planner',
       PlannerStateSchema,
       plannerInit,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ) as any,
+    ),
   ),
 )

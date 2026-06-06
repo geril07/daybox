@@ -182,7 +182,7 @@ export const useTimerStore = create<TimerStore>()(
         set({ settings: merged as TimerSettings })
       },
     }),
-    createValidatedPersist(
+    createValidatedPersist<TimerStore>(
       'daybox-timer',
       TimerStateSchema,
       {
@@ -205,8 +205,7 @@ export const useTimerStore = create<TimerStore>()(
           }
         },
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ) as any,
+    ),
   ),
 )
 

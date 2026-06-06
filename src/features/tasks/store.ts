@@ -142,7 +142,6 @@ export const useTaskStore = create<TaskStore>()(
         },
       }
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    createValidatedPersist('daybox-tasks', TaskStateSchema, taskInit) as any,
+    createValidatedPersist<TaskStore>('daybox-tasks', TaskStateSchema, taskInit),
   ),
 )
