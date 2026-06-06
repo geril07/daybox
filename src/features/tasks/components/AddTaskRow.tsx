@@ -136,13 +136,13 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
           placeholder="Add a task — type #group to assign..."
           className="text-foreground flex-1 border-none bg-transparent py-2 text-sm outline-none"
         />
-        {showGroupUi && (
+        {/* {showGroupUi && (
           <GroupChip
             group={currentGroup}
             groups={groups}
             onSelect={setStickyGroupId}
           />
-        )}
+        )} */}
       </div>
       <Popover
         open={showTypeahead}
