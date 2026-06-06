@@ -195,7 +195,7 @@ export function TimerBar() {
 
   return (
     <div
-      className="bg-card transition-colors duration-300"
+      className="bg-card sticky bottom-0 z-20 transition-colors duration-300"
       style={tintBg ? { background: tintBg } : undefined}
     >
       <div className="bg-border h-0.5 overflow-hidden">

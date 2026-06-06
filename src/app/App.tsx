@@ -126,7 +126,7 @@ export function App() {
         </nav>
       </header>
 
-      <main className="app-content flex-1 pb-18">
+      <main className="app-content flex-1">
         <div className="container mx-auto w-full max-w-[680px] px-7">
           <MotionConfig reducedMotion="user">
             <div className="task-list-area py-1 pb-10">
