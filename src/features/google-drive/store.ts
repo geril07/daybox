@@ -249,18 +249,18 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
         }
       },
     }),
-    createValidatedPersist<GoogleDriveStore>(
+    createValidatedPersist<GoogleDriveStore, PersistedSlice>(
       'daybox-google-drive',
       PersistedSliceSchema,
-      googleDriveInit as Partial<GoogleDriveStore>,
+      googleDriveInit,
       {
-        partialize: ((state: GoogleDriveStore) => ({
+        partialize: (state: GoogleDriveStore) => ({
           accessToken: state.accessToken,
           expiresAt: state.expiresAt,
           email: state.email,
           dayboxFileId: state.dayboxFileId,
           lastBackupAt: state.lastBackupAt,
-        })) as never,
+        }),
       },
     ),
   ),

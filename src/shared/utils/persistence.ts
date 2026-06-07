@@ -1,21 +1,28 @@
-import type { PersistOptions, PersistStorage } from 'zustand/middleware'
+import type { PersistOptions } from 'zustand/middleware'
 
 type ZodSchemaLike = {
   safeParse: (data: unknown) => { success: boolean; error?: unknown }
 }
 
-export interface ValidatedPersistOptions<S> {
-  onRehydrateStorage?: PersistOptions<S, S>['onRehydrateStorage']
-  storage?: PersistStorage<S>
-  partialize?: PersistOptions<S, S>['partialize']
-}
+export type ValidatedPersistOptions<
+  S,
+  PersistedState = S,
+  PersistReturn = unknown,
+> = Pick<
+  PersistOptions<S, PersistedState, PersistReturn>,
+  'onRehydrateStorage' | 'partialize' | 'storage'
+>
 
-export function createValidatedPersist<S>(
+export function createValidatedPersist<
+  S,
+  PersistedState = S,
+  PersistReturn = unknown,
+>(
   name: string,
   schema: ZodSchemaLike,
   init: Partial<S>,
-  options?: ValidatedPersistOptions<S>,
-): PersistOptions<S, S> {
+  options?: ValidatedPersistOptions<S, PersistedState, PersistReturn>,
+): PersistOptions<S, PersistedState, PersistReturn> {
   const userOnRehydrate = options?.onRehydrateStorage
   const storage = options?.storage
   let warned = false
