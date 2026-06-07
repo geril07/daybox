@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { createDebouncedStringStorage } from '@/shared/utils/debounced-storage'
-import { createValidatedPersist } from '@/shared/utils/persistence'
+import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
 import { TimerStateSchema, TimerSettingsSchema } from './schema'
 import type { TimerPhase, TimerSettings } from './types'
@@ -19,6 +19,16 @@ export const DEFAULT_TIMER_SETTINGS: TimerSettings = {
   alarmSound: 'bell',
   alarmVolume: 0.5,
   alarmRepeat: 3,
+}
+
+const timerInit: TimerState = {
+  phase: 'focus' as TimerPhase,
+  startedAt: null as number | null,
+  elapsed: 0,
+  sessionPomoCount: 0,
+  isRunning: false,
+  focusedTaskId: null as string | null,
+  settings: DEFAULT_TIMER_SETTINGS,
 }
 
 interface TimerState {
@@ -182,30 +192,22 @@ export const useTimerStore = create<TimerStore>()(
         set({ settings: merged as TimerSettings })
       },
     }),
-    createValidatedPersist<TimerStore>(
-      'daybox-timer',
-      TimerStateSchema,
-      {
-        phase: 'focus' as TimerPhase,
-        startedAt: null as number | null,
-        elapsed: 0,
-        sessionPomoCount: 0,
-        isRunning: false,
-        focusedTaskId: null as string | null,
-        settings: DEFAULT_TIMER_SETTINGS,
-      },
-      {
-        storage: createJSONStorage(() => timerStorage),
-        onRehydrateStorage: () => (state) => {
-          const timerState = state as TimerState | undefined
-          if (timerState?.isRunning && timerState.startedAt) {
+    {
+      name: 'daybox-timer',
+      storage: createJSONStorage(() => timerStorage),
+      onRehydrateStorage: createValidatedRehydrate<TimerStore>({
+        name: 'daybox-timer',
+        schema: TimerStateSchema,
+        init: timerInit,
+        afterValidate: (state) => {
+          if (state.isRunning && state.startedAt) {
             const now = Date.now()
-            timerState.elapsed += now - timerState.startedAt
-            timerState.startedAt = now
+            state.elapsed += now - state.startedAt
+            state.startedAt = now
           }
         },
-      },
-    ),
+      }),
+    },
   ),
 )
 

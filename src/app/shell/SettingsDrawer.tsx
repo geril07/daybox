@@ -86,7 +86,7 @@ export function SettingsDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="right" className="w-[310px] max-w-[85vw]">
+      <SheetContent side="right" className="w-[310px] max-w-[85vw] gap-0">
         <SheetHeader>
           <SheetTitle>Settings</SheetTitle>
         </SheetHeader>

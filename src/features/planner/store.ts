@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import { formatDate } from '@/shared/dates'
-import { createValidatedPersist } from '@/shared/utils/persistence'
+import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
 import { PlannerStateSchema } from './schema'
 
@@ -40,10 +40,13 @@ export const usePlannerStore = create<PlannerStore>()(
         set({ browseDate: formatDate(base) })
       },
     }),
-    createValidatedPersist<PlannerStore>(
-      'daybox-planner',
-      PlannerStateSchema,
-      plannerInit,
-    ),
+    {
+      name: 'daybox-planner',
+      onRehydrateStorage: createValidatedRehydrate<PlannerStore>({
+        name: 'daybox-planner',
+        schema: PlannerStateSchema,
+        init: plannerInit,
+      }),
+    },
   ),
 )

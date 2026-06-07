@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware'
 
 import { GROUP_COLORS } from '@/features/groups/constants'
 import { generateId } from '@/shared/id'
-import { createValidatedPersist } from '@/shared/utils/persistence'
+import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
 import { GroupSchema } from './schema'
 import type { Group } from './types'
@@ -110,11 +110,14 @@ export const useGroupStore = create<GroupStore>()(
 
       setStickyGroupId: (id) => set({ stickyGroupId: id }),
     }),
-    createValidatedPersist<GroupStore>(
-      'daybox-groups',
-      GroupStateSchema,
-      groupInit,
-    ),
+    {
+      name: 'daybox-groups',
+      onRehydrateStorage: createValidatedRehydrate<GroupStore>({
+        name: 'daybox-groups',
+        schema: GroupStateSchema,
+        init: groupInit,
+      }),
+    },
   ),
 )
 

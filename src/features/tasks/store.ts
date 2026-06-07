@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware'
 import { DEFAULT_GROUP_ID } from '@/features/groups'
 import { useTimerStore } from '@/features/timer'
 import { generateId } from '@/shared/id'
-import { createValidatedPersist } from '@/shared/utils/persistence'
+import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
 import { TaskSchema } from './schema'
 import type { Task } from './types'
@@ -150,10 +150,13 @@ export const useTaskStore = create<TaskStore>()(
         },
       }
     },
-    createValidatedPersist<TaskStore>(
-      'daybox-tasks',
-      TaskStateSchema,
-      taskInit,
-    ),
+    {
+      name: 'daybox-tasks',
+      onRehydrateStorage: createValidatedRehydrate<TaskStore>({
+        name: 'daybox-tasks',
+        schema: TaskStateSchema,
+        init: taskInit,
+      }),
+    },
   ),
 )

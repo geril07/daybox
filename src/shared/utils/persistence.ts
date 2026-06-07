@@ -4,55 +4,38 @@ type ZodSchemaLike = {
   safeParse: (data: unknown) => { success: boolean; error?: unknown }
 }
 
-export type ValidatedPersistOptions<
-  S,
-  PersistedState = S,
-  PersistReturn = unknown,
-> = Pick<
-  PersistOptions<S, PersistedState, PersistReturn>,
-  'onRehydrateStorage' | 'partialize' | 'storage'
+export type OnRehydrateStorage<S> = NonNullable<
+  PersistOptions<S>['onRehydrateStorage']
 >
 
-export function createValidatedPersist<
-  S,
-  PersistedState = S,
-  PersistReturn = unknown,
->(
-  name: string,
-  schema: ZodSchemaLike,
-  init: Partial<S>,
-  options?: ValidatedPersistOptions<S, PersistedState, PersistReturn>,
-): PersistOptions<S, PersistedState, PersistReturn> {
-  const userOnRehydrate = options?.onRehydrateStorage
-  const storage = options?.storage
+export interface ValidatedRehydrateOptions<S> {
+  name: string
+  schema: ZodSchemaLike
+  init: Partial<S>
+  afterValidate?: (state: S) => void
+}
+
+export function createValidatedRehydrate<S>(
+  options: ValidatedRehydrateOptions<S>,
+): OnRehydrateStorage<S> {
+  const { name, schema, init, afterValidate } = options
   let warned = false
 
-  return {
-    name,
-    // Only set `storage` when provided. zustand builds its options as
-    // `{ storage: createJSONStorage(() => localStorage), ...baseOptions }`, so
-    // passing `storage: undefined` would clobber that default and disable
-    // persistence ("the given storage is currently unavailable").
-    ...(storage ? { storage } : {}),
-    onRehydrateStorage: (initialState) => {
-      const userInner = userOnRehydrate?.(initialState)
-      return (state, error) => {
-        if (error) return
-        if (!state) return
-        const result = schema.safeParse(state)
-        if (!result.success) {
-          if (!warned) {
-            warned = true
-            console.warn(
-              `[daybox] ${name}: persisted state invalid, resetting to defaults`,
-              result.error,
-            )
-          }
-          Object.assign(state, init)
-          return
-        }
-        userInner?.(state, error)
+  return () => (state, error) => {
+    if (error) return
+    if (!state) return
+    const result = schema.safeParse(state)
+    if (!result.success) {
+      if (!warned) {
+        warned = true
+        console.warn(
+          `[daybox] ${name}: persisted state invalid, resetting to defaults`,
+          result.error,
+        )
       }
-    },
+      Object.assign(state, init)
+      return
+    }
+    afterValidate?.(state)
   }
 }

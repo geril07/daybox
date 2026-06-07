@@ -17,7 +17,7 @@ import {
   getUserEmail,
   uploadAppDataFile,
 } from '@/shared/google-drive/drive-api'
-import { createValidatedPersist } from '@/shared/utils/persistence'
+import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
 import { GoogleDriveAuthSchema, classifyDriveError } from './schema'
 import type { BackupError, GoogleDriveAuth } from './types'
@@ -249,19 +249,20 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
         }
       },
     }),
-    createValidatedPersist<GoogleDriveStore, PersistedSlice>(
-      'daybox-google-drive',
-      PersistedSliceSchema,
-      googleDriveInit,
-      {
-        partialize: (state: GoogleDriveStore) => ({
-          accessToken: state.accessToken,
-          expiresAt: state.expiresAt,
-          email: state.email,
-          dayboxFileId: state.dayboxFileId,
-          lastBackupAt: state.lastBackupAt,
-        }),
-      },
-    ),
+    {
+      name: 'daybox-google-drive',
+      partialize: (state: GoogleDriveStore) => ({
+        accessToken: state.accessToken,
+        expiresAt: state.expiresAt,
+        email: state.email,
+        dayboxFileId: state.dayboxFileId,
+        lastBackupAt: state.lastBackupAt,
+      }),
+      onRehydrateStorage: createValidatedRehydrate<GoogleDriveStore>({
+        name: 'daybox-google-drive',
+        schema: PersistedSliceSchema,
+        init: googleDriveInit,
+      }),
+    },
   ),
 )
