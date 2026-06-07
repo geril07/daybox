@@ -112,20 +112,11 @@ export const useTaskStore = create<TaskStore>()(
           }),
 
         reassignTasks: (fromGroupId, toGroupId) => {
-          const focused = useTimerStore.getState().focusedTaskId
-          const focusedInFromGroup =
-            focused !== null &&
-            get().tasks.some(
-              (t) => t.id === focused && t.groupId === fromGroupId,
-            )
           set((state) => ({
             tasks: state.tasks.map((t) =>
               t.groupId === fromGroupId ? { ...t, groupId: toGroupId } : t,
             ),
           }))
-          if (focusedInFromGroup) {
-            useTimerStore.getState().setFocusedTaskId(null)
-          }
         },
 
         deleteTasksByGroupId: (groupId) => {

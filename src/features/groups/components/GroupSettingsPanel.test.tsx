@@ -173,7 +173,7 @@ describe('GroupSettingsPanel — delete flow', () => {
 })
 
 describe('GroupSettingsPanel — focused-task cascade', () => {
-  it("clears focus when moving the focused task's group to General", async () => {
+  it("preserves focus when moving the focused task's group to General", async () => {
     const user = userEvent.setup()
     const work = seedGroup('Work')
     const task = seedTask('Focus me', work.id)
@@ -185,9 +185,9 @@ describe('GroupSettingsPanel — focused-task cascade', () => {
       screen.getByRole('button', { name: 'Move tasks to General' }),
     )
 
-    expect(useTimerStore.getState().focusedTaskId).toBeNull()
     const moved = useTaskStore.getState().tasks.find((t) => t.id === task.id)
     expect(moved?.groupId).toBe(DEFAULT_GROUP_ID)
+    expect(useTimerStore.getState().focusedTaskId).toBe(task.id)
   })
 
   it('clears focus when deleting all tasks of the focused group', async () => {

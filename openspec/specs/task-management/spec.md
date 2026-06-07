@@ -1,9 +1,7 @@
 ## Purpose
 
 Create, edit, delete, reorder, and complete tasks. Each task has a title, group assignment, optional date, pomodoro estimate, and completion status.
-
 ## Requirements
-
 ### Requirement: User can create a task
 
 The system SHALL allow users to create tasks with a title, group assignment, optional date, and optional pomodoro estimate.
@@ -377,15 +375,18 @@ The `useTaskStore.addTask` action SHALL return `Task | null`. When the supplied 
 
 ### Requirement: Focused task id is cascade-cleared by destructive task actions
 
-When a tasks-store action removes or reassigns a task that is the currently focused task in the timer store, the action SHALL clear `useTimerStore.focusedTaskId` to `null` as part of the same store call. The cascade lives in the action body, not in any component, so the invariant holds regardless of caller (UI, import, test, migration).
+When a tasks-store action causes a task to **cease to exist** and that task is the currently focused task in the timer store, the action SHALL clear `useTimerStore.focusedTaskId` to `null` as part of the same store call. The cascade lives in the action body, not in any component, so the invariant holds regardless of caller (UI, import, test, migration).
 
 The actions that trigger the cascade are:
 
 - `deleteTask(id)` — cascade if `id === useTimerStore.focusedTaskId`
-- `reassignTasks(fromGroupId, toGroupId)` — cascade if the focused task's `groupId` equals `fromGroupId` _before_ the reassignment
 - `deleteTasksByGroupId(groupId)` — cascade if the focused task's `groupId` equals `groupId` _before_ the deletion
 
-`reorderTasks` SHALL NOT trigger the cascade (reordering preserves task identity).
+Reassigning a task to a different group is **not** a cascade trigger. A reassigned task still exists with the same `id` and remains a valid focus target. Specifically:
+
+- `reassignTasks(fromGroupId, toGroupId)` SHALL NOT clear focus, even when the focused task's `groupId` equals `fromGroupId`. The task continues to exist; its `groupId` updates and `useTimerStore.focusedTaskId` is preserved.
+- `updateTask(id, updates)` SHALL NOT clear focus (even when `updates.groupId` is set). This was already the case and remains so.
+- `reorderTasks` SHALL NOT trigger the cascade (reordering preserves task identity).
 
 The cascade SHALL use `useTimerStore.getState().setFocusedTaskId(null)`. The action SHALL NOT mutate the timer store in any other way.
 
@@ -401,12 +402,12 @@ The cascade SHALL use `useTimerStore.getState().setFocusedTaskId(null)`. The act
 - **THEN** the task is removed from `useTaskStore.tasks`
 - **AND** `useTimerStore.focusedTaskId` remains `'t-1'`
 
-#### Scenario: Reassigning the focused task's group clears focus
+#### Scenario: Reassigning the focused task's group preserves focus
 
 - **WHEN** task `'t-1'` has `groupId: 'work'` and `useTimerStore.focusedTaskId` is `'t-1'`
 - **AND** `useTaskStore.reassignTasks('work', 'general')` is called
 - **THEN** task `'t-1'` now has `groupId: 'general'`
-- **AND** `useTimerStore.focusedTaskId` becomes `null`
+- **AND** `useTimerStore.focusedTaskId` remains `'t-1'`
 
 #### Scenario: Reassigning an unrelated group leaves focus alone
 
@@ -428,3 +429,4 @@ The cascade SHALL use `useTimerStore.getState().setFocusedTaskId(null)`. The act
 - **AND** `useTaskStore.reorderTasks([…reorderedTasks])` is called
 - **THEN** the tasks are reordered
 - **AND** `useTimerStore.focusedTaskId` remains `'t-1'`
+
