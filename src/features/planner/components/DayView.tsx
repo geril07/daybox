@@ -1,3 +1,5 @@
+import { LayoutGroup } from 'motion/react'
+
 import { TaskList } from '@/features/tasks'
 import { EmptyState } from '@/shared/ui'
 
@@ -23,7 +25,7 @@ export function DayView({ view }: DayViewProps) {
   }
 
   return (
-    <div>
+    <LayoutGroup id="planner-day">
       {overdue.length > 0 && (
         <div>
           <SectionHeader label="Overdue" tone="destructive" />
@@ -32,6 +34,6 @@ export function DayView({ view }: DayViewProps) {
       )}
       <SectionHeader label={meta.title} />
       <TaskList tasks={tasks} date={bucketDate} />
-    </div>
+    </LayoutGroup>
   )
 }

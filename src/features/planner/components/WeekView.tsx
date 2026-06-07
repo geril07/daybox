@@ -1,3 +1,5 @@
+import { LayoutGroup } from 'motion/react'
+
 import { TaskList } from '@/features/tasks'
 import { EmptyState } from '@/shared/ui'
 
@@ -19,7 +21,7 @@ export function WeekView() {
   }
 
   return (
-    <div>
+    <LayoutGroup id="planner-week">
       {sections.map((section) => (
         <div key={section.key} className="mb-2">
           <SectionHeader label={section.label} tone={section.tone} />
@@ -32,6 +34,6 @@ export function WeekView() {
           )}
         </div>
       ))}
-    </div>
+    </LayoutGroup>
   )
 }

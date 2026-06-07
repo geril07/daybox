@@ -52,7 +52,7 @@ Three placements considered:
 - Stable string IDs, not `useId()` or per-render values, because motion's `LayoutGroup` is a context provider and re-keying it would force a remount of all descendants.
 - Namespacing is good hygiene even if multiple views never coexist today; the cost is three fixed strings and the benefit is zero ambiguity if a future feature renders two views side by side (e.g., a week-and-day split view).
 
-### 3. The snap pattern is encapsulated in a small `useLayoutSnap` hook, returning `{ snapLayout, snap }`
+### 3. The snap pattern is encapsulated in a small `useLayoutSnap` hook, used inside `<TaskList>`, returning `{ snapLayout, snap }`
 
 ```ts
 // src/shared/utils/motion.ts (additions)
@@ -65,6 +65,11 @@ export function useLayoutSnap() {
     return () => cancelAnimationFrame(id)
   }, [snapLayout])
 
+  // flushSync is load-bearing: it forces the React state update and the caller's
+  // store action to commit in the same render so motion measures the new layout
+  // with the snap transition. Without it, React 18+ auto-batching does not apply
+  // across the React/zustand boundary, and motion would commit a render with the
+  // snap transition but the old layout (or vice versa), causing a visible slide.
   const snap = useCallback((applyChange: () => void) => {
     flushSync(() => {
       setSnapLayout(true)
@@ -76,52 +81,68 @@ export function useLayoutSnap() {
 }
 ```
 
-- `snapLayout` is a boolean the view reads in its `<LayoutGroup transition={{ layout: snapLayout ? { duration: 0 } : TRANSITION_MOVE }}>`.
-- `snap` is a function the view passes to `<TaskList>`. `TaskList`'s `handleDragEnd` calls `props.snap(() => reorderTasks(date, ids))`. The hook wraps the React state flip and the store action in one `flushSync`.
-- The hook is ~10 lines and replaces ~18 lines of duplication across three views. Lives in `src/shared/utils/motion.ts` to keep it next to the related `TRANSITION_*` tokens.
+- `snapLayout` is a boolean the row's `motion.div` reads in its own `transition.layout` (`snapLayout ? { duration: 0 } : TRANSITION_MOVE`). The view does **not** read it.
+- `snap` is called by `<TaskList>`'s `handleDragEnd` in place of the old inline `flushSync` + `setSnapLayout(true)` + rAF triple.
+- The hook is ~10 lines and replaces ~10 lines of inlined plumbing in `<TaskList>`. Lives in `src/shared/utils/motion.ts` to keep it next to the related `TRANSITION_*` tokens.
 
 Alternatives considered:
-
-- **State duplicated in each view (no hook).** Saves the hook definition; costs 18 lines of triplication. Hook wins for 3+ views.
+- **State at the view level, passed down to rows.** Originally proposed but rejected during implementation: `<LayoutGroup>` in motion@12 only accepts `id` and `inherit` props — **not** `transition`. So the view cannot drive a snap transition through `<LayoutGroup transition={…}>`. The snap must live on each row's `transition.layout`.
+- **A view-level `<MotionConfig transition={…}>`** would also work in principle, but it would override the app-level `<MotionConfig reducedMotion="user">` set in `App.tsx:131` (nested `MotionConfig`s don't merge) and force the view to repeat the `reducedMotion` prop. Brittle.
+- **State duplicated in each view (no hook).** Saves the hook definition; costs triplication. Hook wins.
 - **State in zustand.** Mixes UI-only state into the task store; violates the architecture spec ("features own their store") and the task store's validated-persist schema. Rejected.
-- **State in a context.** The view is the only consumer; the prop-drill cost is one prop. Context is overkill.
+- **State in a context.** The consumer is just `<TaskList>` and its row children. Local state with one prop drill is simpler than a context.
 
-### 4. `useEffect` cleanup + `rAF` reset, not `useLayoutEffect` and not pure `useLayoutEffect` no-rAF
+### 4. `<LayoutGroup>` is for cross-section FLIP, not for transition overrides
+
+`<LayoutGroup>` is a context provider that synchronizes layout measurement across its descendants. A shared `layoutId` in two different `AnimatePresence` instances inside the same `<LayoutGroup>` will bridge them as one continuous FLIP flight. The `<LayoutGroup>` itself does **not** accept a `transition` prop in motion@12 — only `id` and `inherit`. To make rows animate differently (e.g., the snap), the transition must be set on the row's `motion.div` directly, or on a wrapping `MotionConfig`.
+
+This is a useful primitive to know: a `<LayoutGroup>` with no special transition just acts as a measurement sync. Cross-section FLIP "just works" once the row's `layout="position"` and `layoutId` are unchanged from the pre-change code.
+
+### 5. `useEffect` cleanup + `rAF` reset, not `useLayoutEffect` and not pure `useLayoutEffect` no-rAF
 
 `useLayoutEffect` was considered and rejected for two reasons:
-
 - `useEffect` is the idiomatic React hook for state updates and scheduled follow-ups. `useLayoutEffect` is for "read or mutate the DOM before paint." `setSnapLayout(false)` is neither.
 - The `rAF` is not load-bearing (motion commits the snap transition synchronously in its own `useLayoutEffect`), but it's a cheap defensive buffer in case a future motion version defers any work async. Removing it for the sake of removing it doesn't pay off; keeping it costs one frame.
 
 A pure `useLayoutEffect` (no `rAF`) variant — `useLayoutEffect(() => { if (snapLayout) setSnapLayout(false) }, [snapLayout])` — was considered and rejected for the same idiom reason and because it removes the buffer for no observable benefit.
 
-### 5. `flushSync` stays
+### 6. `flushSync` stays
 
 The `flushSync` in `useLayoutSnap.snap` is load-bearing: it forces the React state update (`setSnapLayout(true)`) and the zustand store update (`reorderTasks(...)`) to commit in the same render. Without it, React 18+'s auto-batching does not apply across the React/zustand boundary, and motion may commit a render with the snap transition but the old layout (or vice versa), causing either a visible slide or a confused layout.
 
 This is the only place `flushSync` is used in the planner. It is annotated in the hook with a one-line comment explaining why it is not a code smell.
 
-### 6. `popLayout` mode on the inner AnimatePresence is unchanged
+### 7. `popLayout` mode on the inner AnimatePresence is unchanged
 
-`<AnimatePresence mode="popLayout">` (`TaskList.tsx:69`) handles within-list mount/unmount layout (the "auto-shuffle" feel when a row exits and siblings flow into place). `<LayoutGroup>` is the cross-list bridge. They compose; the existing `popLayout` setting is correct under the new `LayoutGroup` parent.
+`<AnimatePresence mode="popLayout">` (`TaskList.tsx`) handles within-list mount/unmount layout (the "auto-shuffle" feel when a row exits and siblings flow into place). `<LayoutGroup>` is the cross-list bridge. They compose; the existing `popLayout` setting is correct under the new `LayoutGroup` parent.
 
-### 7. The drag handler stays in `TaskList`, but takes `snap` as a prop
+### 8. The drag handler stays in `TaskList` and uses the hook's `snap` directly
 
-`TaskList` keeps `handleDragEnd` (it owns the dnd-kit event and the validation logic). It accepts one new prop, `snap: (applyChange: () => void) => void`, and calls it in place of the local `flushSync` block:
+`TaskList` keeps `handleDragEnd` (it owns the dnd-kit event and the validation logic). It uses `useLayoutSnap()` internally and calls `snap(() => reorderTasks(date, ids))` in place of the old inline `flushSync` + `setSnapLayout(true)` + rAF triple:
 
 ```tsx
 // TaskList.tsx (post-change)
+const { snapLayout, snap } = useLayoutSnap()
+
 const handleDragEnd = (event: DragEndEvent) => {
   if (date === undefined) return
   // ... existing validation ...
-  const reordered = arrayMove(tasks, sourceIndex, targetIndex).map((t) => t.id)
+  const reordered = arrayMove(tasks, initialIndex, index).map((t) => t.id)
   snap(() => reorderTasks(date, reordered))
 }
 ```
 
-The view passes `snap` from `useLayoutSnap()`. The view also passes the `LayoutGroup`'s `transition` (driven by `snap.snapLayout`) at its own level. `TaskList` no longer knows about the snap mechanism; it just knows "after I reorder, call `snap`."
+`snapLayout` is passed down to each `SortableTaskRow` / `StaticTaskRow` as a prop, where it appears in the row's `motion.div` `transition.layout` as the snap branch:
 
-The `SortableTaskRow`'s `motion.div` no longer carries `snapLayout` in its `transition`; the `layout: { duration: 0 }` branch is gone. The motion.div's transition shrinks to `{ opacity: TRANSITION_TOGGLE, y: TRANSITION_ENTER }`.
+```tsx
+transition={{
+  opacity: TRANSITION_TOGGLE,
+  y: TRANSITION_ENTER,
+  layout: snapLayout ? { duration: 0 } : TRANSITION_MOVE,
+}}
+```
+
+The view is unaware of the snap. It only knows about `<LayoutGroup id="planner-...">`. This means the snap is a per-list concern (each `<TaskList>` has its own snap state, fine because cross-section drag is disabled by the per-bucket group key from `scope-task-reorder-by-date`), and the cross-section FLIP is a per-view concern (each `<LayoutGroup>` enables it via its `id`). Clean separation.
 
 ## Risks / Trade-offs
 
@@ -139,20 +160,19 @@ The `SortableTaskRow`'s `motion.div` no longer carries `snapLayout` in its `tran
 
 Sequential:
 
-1. **Apply `scope-task-reorder-by-date` first.** Its `reorderTasks(date, taskIds)` signature, `TaskList` `date` prop, and per-bucket `useSortable` group key are prerequisites for this change's `TaskList` shape.
+1. **Apply `scope-task-reorder-by-date` first** (now in archive as `2026-06-07-scope-task-reorder-by-date`). Its `reorderTasks(date, taskIds)` signature, `TaskList` `date` prop, and per-bucket `useSortable` group key are prerequisites for this change's `TaskList` shape.
 2. **Apply this change.** Tasks are:
    1. Add `useLayoutSnap` to `src/shared/utils/motion.ts`.
-   2. Wrap `DayView` in `<LayoutGroup id="planner-day">` with `useLayoutSnap`-driven `transition`.
-   3. Same for `WeekView` and `DateBrowser`.
-   4. Refactor `TaskList.tsx` to accept a `snap` prop, drop the local `flushSync` + `rAF` pattern, drop the `transition.layout` branch from `SortableTaskRow`'s `motion.div`, and drop the `snapLayout` prop drilling.
-   5. Run the full verification suite (`npm run format`, `npm run typecheck`, `npm run lint`, `npm run test`).
+   2. Refactor `TaskList.tsx` to use `useLayoutSnap()` internally, drop the local `flushSync` + `rAF` pattern, and pass `snapLayout` to each row (which uses it in its `transition.layout`).
+   3. Wrap `DayView`, `WeekView`, and `DateBrowser` in `<LayoutGroup id="planner-...">` to enable cross-section FLIP.
+   4. Run the full verification suite (`npm run format`, `npm run typecheck`, `npm run lint`, `npm run test`).
 
-No persistence migration; no schema change; no new files outside `src/shared/utils/motion.ts`.
+No persistence migration; no schema change; no new files outside `src/shared/utils/motion.ts` and `src/shared/utils/motion.test.ts`.
 
-Rollback: revert the four touched files and the hook addition. No state in localStorage is affected.
+Rollback: revert the five touched files and the hook + test addition. No state in localStorage is affected.
 
 ## Open Questions
 
-- **Should the hook live in `src/shared/utils/motion.ts` or a new `src/shared/hooks/useLayoutSnap.ts`?** Leaning toward `motion.ts` because the hook is conceptually an extension of the existing motion tokens. Splitting into a new directory is overhead for a single 10-line export. Decide during implementation; either is fine.
+- **Should the hook live in `src/shared/utils/motion.ts` or a new `src/shared/hooks/useLayoutSnap.ts`?** Resolved during implementation: it lives in `motion.ts`. The file is small and the hook is conceptually an extension of the existing motion tokens.
 - **Should the `LayoutGroup` `id` include a `useId()`-derived suffix?** No — see decision 2. Stable strings, not per-render.
-- **Should the snap transition live on the `<LayoutGroup>` (current design) or on a wrapping `motion.div` if we ever need finer control?** LayoutGroup is the right primitive today. Revisit only if a future change requires per-list snap behavior (it doesn't appear to).
+- **Should the snap transition live on the `<LayoutGroup>` (originally proposed) or on each row's `transition.layout` (actual implementation)?** Resolved during implementation: per-row. `<LayoutGroup>` in motion@12 does not accept a `transition` prop, and using a nested `<MotionConfig>` would override the app-level `reducedMotion` setting. The per-row approach is the only one that works without sacrificing the existing `MotionConfig reducedMotion="user"` behavior.

@@ -3,13 +3,12 @@ import { DragDropProvider } from '@dnd-kit/react'
 import type { DragEndEvent } from '@dnd-kit/react'
 import { isSortable, useSortable } from '@dnd-kit/react/sortable'
 import { AnimatePresence, motion } from 'motion/react'
-import { useState } from 'react'
-import { flushSync } from 'react-dom'
 
 import {
   TRANSITION_ENTER,
   TRANSITION_MOVE,
   TRANSITION_TOGGLE,
+  useLayoutSnap,
 } from '@/shared/utils/motion'
 
 import { useTaskStore } from '../store'
@@ -24,7 +23,7 @@ interface TaskListProps {
 
 export function TaskList({ tasks, emptyMessage, date }: TaskListProps) {
   const reorderTasks = useTaskStore((s) => s.reorderTasks)
-  const [snapLayout, setSnapLayout] = useState(false)
+  const { snapLayout, snap } = useLayoutSnap()
 
   const isDraggable = date !== undefined
   const groupKey = isDraggable ? `tasks:${date ?? 'undated'}` : null
@@ -42,11 +41,7 @@ export function TaskList({ tasks, emptyMessage, date }: TaskListProps) {
     if (initialIndex >= tasks.length || index >= tasks.length) return
 
     const reorderedIds = arrayMove(tasks, initialIndex, index).map((t) => t.id)
-    flushSync(() => {
-      setSnapLayout(true)
-      reorderTasks(date, reorderedIds)
-    })
-    requestAnimationFrame(() => setSnapLayout(false))
+    snap(() => reorderTasks(date, reorderedIds))
   }
 
   return (
@@ -80,8 +75,8 @@ export function TaskList({ tasks, emptyMessage, date }: TaskListProps) {
                       key={task.id}
                       task={task}
                       index={index}
-                      snapLayout={snapLayout}
                       groupKey={groupKey}
+                      snapLayout={snapLayout}
                     />
                   ))}
                 </AnimatePresence>
@@ -89,7 +84,11 @@ export function TaskList({ tasks, emptyMessage, date }: TaskListProps) {
             ) : (
               <AnimatePresence mode="popLayout" initial={false}>
                 {tasks.map((task) => (
-                  <StaticTaskRow key={task.id} task={task} />
+                  <StaticTaskRow
+                    key={task.id}
+                    task={task}
+                    snapLayout={snapLayout}
+                  />
                 ))}
               </AnimatePresence>
             )}
@@ -103,13 +102,13 @@ export function TaskList({ tasks, emptyMessage, date }: TaskListProps) {
 function SortableTaskRow({
   task,
   index,
-  snapLayout,
   groupKey,
+  snapLayout,
 }: {
   task: Task
   index: number
-  snapLayout: boolean
   groupKey: string
+  snapLayout: boolean
 }) {
   const { ref, handleRef } = useSortable({
     id: task.id,
@@ -125,26 +124,24 @@ function SortableTaskRow({
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: task.completed ? 0.52 : 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
-      transition={
-        snapLayout
-          ? {
-              opacity: TRANSITION_TOGGLE,
-              y: TRANSITION_ENTER,
-              layout: { duration: 0 },
-            }
-          : {
-              opacity: TRANSITION_TOGGLE,
-              y: TRANSITION_ENTER,
-              layout: TRANSITION_MOVE,
-            }
-      }
+      transition={{
+        opacity: TRANSITION_TOGGLE,
+        y: TRANSITION_ENTER,
+        layout: snapLayout ? { duration: 0 } : TRANSITION_MOVE,
+      }}
     >
       <TaskRow task={task} dragHandleRef={handleRef} />
     </motion.div>
   )
 }
 
-function StaticTaskRow({ task }: { task: Task }) {
+function StaticTaskRow({
+  task,
+  snapLayout,
+}: {
+  task: Task
+  snapLayout: boolean
+}) {
   return (
     <motion.div
       layout="position"
@@ -155,7 +152,7 @@ function StaticTaskRow({ task }: { task: Task }) {
       transition={{
         opacity: TRANSITION_TOGGLE,
         y: TRANSITION_ENTER,
-        layout: TRANSITION_MOVE,
+        layout: snapLayout ? { duration: 0 } : TRANSITION_MOVE,
       }}
     >
       <TaskRow task={task} />

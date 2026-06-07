@@ -262,8 +262,8 @@ The system SHALL animate task rows when they are added, removed, or rearranged w
 #### Scenario: Rescheduling a task to a different section animates the cross-section move
 
 - **WHEN** user changes a task's date such that it leaves one section of the current view (e.g., Overdue) and enters another (e.g., Today)
-- **THEN** the row visually leaves the source section and arrives in the destination section rather than appearing in two places
-- **AND** this behavior is achieved via a shared layout id keyed on the task's stable id
+- **THEN** the row visually travels from its source position to its destination position as a single continuous motion, with no observable gap where the row is absent from either section
+- **AND** this continuous motion is scoped to a single view: switching the active view (Today → Tomorrow) does not bridge a task from the old view to the new view
 
 #### Scenario: Toggling a task complete animates the opacity change
 
