@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { useGroupStore } from '@/features/groups'
+import { DEFAULT_GROUP_ID, useGroupStore } from '@/features/groups'
 import { useTaskStore } from '@/features/tasks'
 
 beforeEach(() => {
@@ -44,5 +44,24 @@ describe('Group Store - CRUD', () => {
       .getState()
       .tasks.find((t) => t.id === task.id)
     expect(storedTask?.groupId).toBe('default')
+  })
+
+  it('refuses to delete the default group when other groups exist', () => {
+    useGroupStore.getState().addGroup('Work')
+    useGroupStore.getState().addGroup('Home')
+    expect(useGroupStore.getState().groups).toHaveLength(3)
+
+    useGroupStore.getState().deleteGroup(DEFAULT_GROUP_ID)
+
+    const groups = useGroupStore.getState().groups
+    expect(groups).toHaveLength(3)
+    expect(groups.some((g) => g.id === DEFAULT_GROUP_ID)).toBe(true)
+  })
+
+  it('does not throw when asked to delete the default group', () => {
+    useGroupStore.getState().addGroup('Work')
+    expect(() =>
+      useGroupStore.getState().deleteGroup(DEFAULT_GROUP_ID),
+    ).not.toThrow()
   })
 })

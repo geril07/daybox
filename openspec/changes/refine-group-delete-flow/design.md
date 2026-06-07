@@ -5,18 +5,21 @@ Today `GroupSettingsPanel` triggers an `AlertDialog` on every delete click, rega
 Separately, `useGroupStore.deleteGroup` only refuses when exactly one group is left (`store.ts:96`). Nothing stops a caller from deleting the seeded "General" group, which leaves orphaned references to `DEFAULT_GROUP_ID` — both for tasks that fall back to it and for the panel's own "Move to General" option, which would point at a soon-deleted id.
 
 Relevant primitives already exist:
+
 - `Popover`, `PopoverTrigger`, `PopoverContent` in `@/shared/ui` (used by `TaskRow` and `AddTaskRow`).
 - `DEFAULT_GROUP_ID` exported from `@/features/groups`.
 
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Replace the modal confirmation with a popover anchored to the trash button, shown only when the group has ≥1 task.
 - Delete empty groups silently with no prompt.
 - Block deletion of the default group at both the UI affordance level and the store level.
 - Keep the delta minimal and surgical — touch only `GroupSettingsPanel.tsx` and `groups/store.ts`.
 
 **Non-Goals:**
+
 - Refactoring `handleDeleteGroup` to use the existing `reassignTasks` / `deleteTasksByGroupId` helpers in `tasks/store.ts`. That is a related but distinct quality issue and belongs in a follow-up change so this one stays focused on the UX and the default-group guard.
 - Adding undo for group deletion.
 - Changing any other group-related affordance (rename, add, color, ordering).
@@ -29,11 +32,13 @@ Relevant primitives already exist:
 Use `Popover` from `@/shared/ui` for the resolution prompt.
 
 **Rationale:**
+
 - The prompt is a picker, not a confirmation. Pickers belong in popovers; confirmations belong in modals.
 - Locality: the popover anchors to the trash button, keeping cause and effect visually adjacent and preserving the rest of the panel as visible context.
 - It also enables the empty-group case to degrade gracefully to "no UI at all" — a modal popping up empty would feel absurd, but the popover branch simply doesn't render.
 
 **Alternatives considered:**
+
 - _Keep `AlertDialog`, fix transparency/contrast._ Treats a symptom (the dialog feels heavy) but not the cause (wrong primitive for the job).
 - _Popover for Move, modal escalation for Delete-all._ Re-introduces ceremony for the very case the popover framing makes unnecessary, and adds a two-step UX that punishes the common path.
 
@@ -52,6 +57,7 @@ The count is computed from `useTaskStore.getState().tasks.filter(t => t.groupId 
 ### Decision 4: Button order — Move, Delete-all, Cancel
 
 In this order, top to bottom:
+
 1. **Move to General** — primary visual weight (`Button` default variant), safer choice nearest the pointer.
 2. **Delete all tasks** — destructive variant, deliberately placed below the safer option so the destructive button is _not_ where the pointer lands after click.
 3. **Cancel** — ghost variant, smaller, present for keyboard / touch users even though click-outside and Escape also dismiss.

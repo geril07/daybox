@@ -92,6 +92,7 @@ export const useGroupStore = create<GroupStore>()(
       },
 
       deleteGroup: (id) => {
+        if (id === DEFAULT_GROUP_ID) return
         const state = get()
         if (state.groups.length <= 1) return
         set((s) => ({

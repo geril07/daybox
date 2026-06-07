@@ -7,11 +7,13 @@ The `task-management` spec at `openspec/specs/task-management/spec.md:378-409` d
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Bring `handleDeleteGroup` into compliance with the focused-task cascade requirement.
 - Make the compliance explicit at the `group-management` spec level so future contributors can't regress it without changing the spec.
 - Keep the change surgical: only `handleDeleteGroup` and its tests.
 
 **Non-Goals:**
+
 - Any UX change to the group-delete flow (that's `refine-group-delete-flow`'s scope).
 - Adding new bulk helpers to the tasks store — the existing two are sufficient.
 - Adding undo for group operations.
@@ -28,6 +30,7 @@ If/when a second caller appears that operates on a group-bounded task set (e.g.,
 ### Decision 2: Keep `handleDeleteGroup` in the component
 
 The handler stays inside `GroupSettingsPanel.tsx`. Reasons:
+
 - Two single-line branches don't earn a dedicated module.
 - The handler reads from both `groups` and `tasks` stores and writes to both — its colocation with the deletion UI keeps the read/write contract visible.
 - The store actions it calls (`reassignTasks`, `deleteTasksByGroupId`, `deleteGroup`) are already the right abstractions; there's nothing left to factor out.
