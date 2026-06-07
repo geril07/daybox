@@ -10,3 +10,35 @@ class ResizeObserverMock {
 }
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock)
+
+class AudioContextMock {
+  state = 'running'
+  currentTime = 0
+  destination = {}
+  resume(): void {}
+  createOscillator() {
+    return {
+      type: 'sine' as OscillatorType,
+      frequency: {
+        setValueAtTime: () => {},
+        linearRampToValueAtTime: () => {},
+        exponentialRampToValueAtTime: () => {},
+      },
+      connect: () => {},
+      start: () => {},
+      stop: () => {},
+    }
+  }
+  createGain() {
+    return {
+      gain: {
+        setValueAtTime: () => {},
+        linearRampToValueAtTime: () => {},
+        exponentialRampToValueAtTime: () => {},
+      },
+      connect: () => {},
+    }
+  }
+}
+
+vi.stubGlobal('AudioContext', AudioContextMock)

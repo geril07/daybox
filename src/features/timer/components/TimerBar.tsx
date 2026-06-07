@@ -13,7 +13,7 @@ import {
 } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
-import { playAlarm } from '../alarm'
+import { playAlarm, togglePlayPauseWithClick } from '../alarm'
 import { useTimerStore } from '../store'
 import type { TimerPhase } from '../types'
 
@@ -30,7 +30,6 @@ export function TimerBar() {
   const startedAt = useTimerStore((s) => s.startedAt)
   const elapsed = useTimerStore((s) => s.elapsed)
   const sessionPomoCount = useTimerStore((s) => s.sessionPomoCount)
-  const togglePlayPause = useTimerStore((s) => s.togglePlayPause)
   const reset = useTimerStore((s) => s.reset)
   const resetSession = useTimerStore((s) => s.resetSession)
   const setPhase = useTimerStore((s) => s.setPhase)
@@ -248,7 +247,7 @@ export function TimerBar() {
                 size="none"
                 className="size-10 rounded-full border-0 text-white shadow-sm duration-140 hover:scale-105 hover:opacity-90"
                 style={{ background: phaseColor }}
-                onClick={togglePlayPause}
+                onClick={togglePlayPauseWithClick}
                 title={isRunning ? 'Pause' : 'Start'}
               >
                 {isRunning ? (

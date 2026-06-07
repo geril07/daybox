@@ -13,7 +13,7 @@ import {
   type View,
 } from '@/features/planner'
 import { AddTaskRow } from '@/features/tasks'
-import { TimerBar, useTimerStore } from '@/features/timer'
+import { TimerBar, togglePlayPauseWithClick } from '@/features/timer'
 import { registerShortcuts } from '@/shared/keyboard'
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui'
 
@@ -32,7 +32,7 @@ export function App() {
   useEffect(() => {
     const cleanup = registerShortcuts({
       ' ': () => {
-        useTimerStore.getState().togglePlayPause()
+        togglePlayPauseWithClick()
       },
       escape: () => {
         setSettingsOpen(false)
