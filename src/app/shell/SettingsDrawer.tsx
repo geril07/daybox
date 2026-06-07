@@ -1,12 +1,13 @@
 import { useState } from 'react'
 
-import {
-  applyImport,
-  downloadExport,
-  exportData,
-  parseImport,
-} from '@/app/bootstrap'
 import { useTheme } from '@/app/theme'
+import {
+  applySnapshot,
+  buildSnapshot,
+  downloadAsFile,
+  validateSnapshot,
+} from '@/features/data-portability'
+import { GoogleDrivePanel } from '@/features/google-drive'
 import { GroupSettingsPanel } from '@/features/groups'
 import { usePlannerStore } from '@/features/planner'
 import { TimerSettingsPanel } from '@/features/timer'
@@ -56,7 +57,7 @@ export function SettingsDrawer({
   const [importError, setImportError] = useState<string | null>(null)
 
   const handleExport = () => {
-    downloadExport(exportData())
+    downloadAsFile(JSON.stringify(buildSnapshot()), 'daybox-export.json')
   }
 
   const doImport = () => {
@@ -70,14 +71,12 @@ export function SettingsDrawer({
         const file = (e.target as HTMLInputElement).files?.[0]
         if (!file) return
         const text = await file.text()
-        const result = parseImport(text)
-        if (!result.success) {
-          setImportError(result.error ?? 'Unknown error')
+        const parsed = validateSnapshot(text)
+        if (!parsed.ok) {
+          setImportError(parsed.reason)
           return
         }
-        if (result.data) {
-          applyImport(result.data)
-        }
+        applySnapshot(parsed.data)
       } catch {
         setImportError('Failed to read file.')
       }
@@ -166,6 +165,13 @@ export function SettingsDrawer({
             {importError && (
               <div className="text-destructive mt-1 text-xs">{importError}</div>
             )}
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
+              Google Drive
+            </div>
+            <GoogleDrivePanel />
           </div>
         </div>
       </SheetContent>

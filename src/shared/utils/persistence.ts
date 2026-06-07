@@ -7,6 +7,7 @@ type ZodSchemaLike = {
 export interface ValidatedPersistOptions<S> {
   onRehydrateStorage?: PersistOptions<S, S>['onRehydrateStorage']
   storage?: PersistStorage<S>
+  partialize?: PersistOptions<S, S>['partialize']
 }
 
 export function createValidatedPersist<S>(

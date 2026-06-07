@@ -86,6 +86,7 @@ export function useLayoutSnap() {
 - The hook is ~10 lines and replaces ~10 lines of inlined plumbing in `<TaskList>`. Lives in `src/shared/utils/motion.ts` to keep it next to the related `TRANSITION_*` tokens.
 
 Alternatives considered:
+
 - **State at the view level, passed down to rows.** Originally proposed but rejected during implementation: `<LayoutGroup>` in motion@12 only accepts `id` and `inherit` props — **not** `transition`. So the view cannot drive a snap transition through `<LayoutGroup transition={…}>`. The snap must live on each row's `transition.layout`.
 - **A view-level `<MotionConfig transition={…}>`** would also work in principle, but it would override the app-level `<MotionConfig reducedMotion="user">` set in `App.tsx:131` (nested `MotionConfig`s don't merge) and force the view to repeat the `reducedMotion` prop. Brittle.
 - **State duplicated in each view (no hook).** Saves the hook definition; costs triplication. Hook wins.
@@ -101,6 +102,7 @@ This is a useful primitive to know: a `<LayoutGroup>` with no special transition
 ### 5. `useEffect` cleanup + `rAF` reset, not `useLayoutEffect` and not pure `useLayoutEffect` no-rAF
 
 `useLayoutEffect` was considered and rejected for two reasons:
+
 - `useEffect` is the idiomatic React hook for state updates and scheduled follow-ups. `useLayoutEffect` is for "read or mutate the DOM before paint." `setSnapLayout(false)` is neither.
 - The `rAF` is not load-bearing (motion commits the snap transition synchronously in its own `useLayoutEffect`), but it's a cheap defensive buffer in case a future motion version defers any work async. Removing it for the sake of removing it doesn't pay off; keeping it costs one frame.
 
