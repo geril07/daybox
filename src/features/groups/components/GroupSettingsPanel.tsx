@@ -30,20 +30,10 @@ export function GroupSettingsPanel() {
     groupId: string,
     reassignToDefault: boolean,
   ) => {
-    const taskStore = useTaskStore.getState()
-    const tasks = taskStore.tasks
     if (reassignToDefault) {
-      const taskIds = tasks
-        .filter((t) => t.groupId === groupId)
-        .map((t) => t.id)
-      taskIds.forEach((id) =>
-        useTaskStore.getState().updateTask(id, { groupId: DEFAULT_GROUP_ID }),
-      )
+      useTaskStore.getState().reassignTasks(groupId, DEFAULT_GROUP_ID)
     } else {
-      const taskIds = tasks
-        .filter((t) => t.groupId === groupId)
-        .map((t) => t.id)
-      taskIds.forEach((id) => useTaskStore.getState().deleteTask(id))
+      useTaskStore.getState().deleteTasksByGroupId(groupId)
     }
     deleteGroup(groupId)
   }

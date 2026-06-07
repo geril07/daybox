@@ -171,3 +171,53 @@ describe('GroupSettingsPanel — delete flow', () => {
     expect(defaultTrash.disabled).toBe(true)
   })
 })
+
+describe('GroupSettingsPanel — focused-task cascade', () => {
+  it("clears focus when moving the focused task's group to General", async () => {
+    const user = userEvent.setup()
+    const work = seedGroup('Work')
+    const task = seedTask('Focus me', work.id)
+    useTimerStore.getState().setFocusedTaskId(task.id)
+    render(<GroupSettingsPanel />)
+
+    await user.click(trashButtonFor('Work'))
+    await user.click(
+      screen.getByRole('button', { name: 'Move tasks to General' }),
+    )
+
+    expect(useTimerStore.getState().focusedTaskId).toBeNull()
+    const moved = useTaskStore.getState().tasks.find((t) => t.id === task.id)
+    expect(moved?.groupId).toBe(DEFAULT_GROUP_ID)
+  })
+
+  it('clears focus when deleting all tasks of the focused group', async () => {
+    const user = userEvent.setup()
+    const work = seedGroup('Work')
+    const task = seedTask('Focus me', work.id)
+    useTimerStore.getState().setFocusedTaskId(task.id)
+    render(<GroupSettingsPanel />)
+
+    await user.click(trashButtonFor('Work'))
+    await user.click(screen.getByRole('button', { name: 'Delete all tasks' }))
+
+    expect(useTimerStore.getState().focusedTaskId).toBeNull()
+    expect(
+      useTaskStore.getState().tasks.find((t) => t.id === task.id),
+    ).toBeUndefined()
+  })
+
+  it('leaves focus alone when deleting an unrelated group', async () => {
+    const user = userEvent.setup()
+    const home = seedGroup('Home')
+    const work = seedGroup('Work')
+    const focused = seedTask('Stay focused', home.id)
+    seedTask('Other task', work.id)
+    useTimerStore.getState().setFocusedTaskId(focused.id)
+    render(<GroupSettingsPanel />)
+
+    await user.click(trashButtonFor('Work'))
+    await user.click(screen.getByRole('button', { name: 'Delete all tasks' }))
+
+    expect(useTimerStore.getState().focusedTaskId).toBe(focused.id)
+  })
+})
