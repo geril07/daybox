@@ -79,12 +79,12 @@ A single helper `safeParseAndRoute({ value, schema, layer })` SHALL implement th
 
 ### Requirement: Shared persistence helper
 
-The system SHALL expose `createValidatedPersist(name, schema, init, options?)` from `src/shared/lib/persistence.ts`. The helper SHALL wrap zustand's `persist` middleware and apply the rehydration-layer policy above. All four persisted zustand stores (tasks, groups, timer, planner) SHALL use it.
+The system SHALL expose `createValidatedRehydrate({ name, schema, init, afterValidate? })` from `src/shared/utils/persistence.ts`. The helper SHALL wrap zustand's `onRehydrateStorage` field and apply the rehydration-layer policy above. All five persisted zustand stores (tasks, groups, timer, planner, google-drive) SHALL use it on their `persist` call-site options object.
 
 #### Scenario: Stores opt into validated rehydration
 
 - **WHEN** any persisted store is constructed
-- **THEN** it calls `createValidatedPersist` rather than `persist` directly
+- **THEN** it calls `createValidatedRehydrate` rather than wiring `onRehydrateStorage` directly
 - **AND** the on-disk key name matches the existing contract (no rename)
 
 ### Requirement: Defensive bounds on user-input fields

@@ -8,7 +8,7 @@ Encode the structural rules that every feature in `src/features/` must follow, a
 
 The system SHALL organize each domain (tasks, groups, timer, planner, and any future domain) as a single folder under `src/features/<domain>/`. A typical feature folder contains the following entries, with each entry present when (and only when) the feature has a use for it:
 
-- `store.ts` — the Zustand store, constructed with `createValidatedPersist`. Omitted if the feature has no persisted runtime state (e.g. a stateless utility feature).
+- `store.ts` — the Zustand store, constructed with zustand's `persist` middleware whose options object includes `name` (set to the store's localStorage key) and `onRehydrateStorage` (set to the value returned by `createValidatedRehydrate` from `@/shared/utils/persistence` for that feature's schema and init state). Optional fields `storage` and `partialize` SHALL be set directly on the `persist` call-site options object, not passed through the helper. Omitted if the feature has no persisted runtime state (e.g. a stateless utility feature).
 - `schema.ts` — the zod schemas that define the persisted and runtime shapes. Omitted if the feature has no zod validation.
 - `types.ts` — `z.infer<typeof <Name>Schema>` exports. Omitted if there is no `schema.ts` to infer from, or the types are sourced entirely from elsewhere.
 - `queries.ts` — pure selector functions and (when needed) small hooks that compose store reads. Omitted if the feature has no selectors of its own.

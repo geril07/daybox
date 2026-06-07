@@ -6,7 +6,7 @@ Define the manual, opt-in Google Drive backup feature for DayBox: connect, manua
 
 ### Requirement: User can connect to Google Drive
 
-The system SHALL allow the user to initiate a Google OAuth flow from the settings drawer. The flow SHALL use Google Identity Services loaded as a script (no npm dependency), SHALL request the `https://www.googleapis.com/auth/drive.appdata` scope (which grants access only to the app's hidden appDataFolder), and SHALL persist the resulting access token, its expiry, and the account's email under `daybox-google-drive` via `createValidatedPersist`. The OAuth Web Client ID SHALL be read from the `VITE_GOOGLE_CLIENT_ID` env var at build time.
+The system SHALL allow the user to initiate a Google OAuth flow from the settings drawer. The flow SHALL use Google Identity Services loaded as a script (no npm dependency), SHALL request the `https://www.googleapis.com/auth/drive.appdata` scope (which grants access only to the app's hidden appDataFolder), and SHALL persist the resulting access token, its expiry, and the account's email under `daybox-google-drive` via `createValidatedRehydrate`. The OAuth Web Client ID SHALL be read from the `VITE_GOOGLE_CLIENT_ID` env var at build time.
 
 #### Scenario: User connects for the first time
 

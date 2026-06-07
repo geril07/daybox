@@ -267,7 +267,7 @@ The `useTimerStore` SHALL persist its full state (runtime and configuration) und
 - A `beforeunload` event SHALL flush any pending write synchronously, so closing the tab does not lose the last in-flight second of progress.
 - A `visibilitychange` event that transitions the document to `hidden` SHALL also flush any pending write, for the same reason on mobile / tab-switch.
 
-The debounce is implemented as a wrapper around the default `localStorage` (`createDebouncedStringStorage(localStorage, 1000)`) and passed to zustand's `persist` middleware via a new `storage` option on `createValidatedPersist`. The rehydrate wall-clock-correction callback (which advances `elapsed` by `now - startedAt` and resets `startedAt` to `now` when `isRunning` is `true` on rehydrate) is unchanged and continues to live in the timer store.
+The debounce is implemented as a wrapper around the default `localStorage` (`createDebouncedStringStorage(localStorage, 1000)`) and passed to zustand's `persist` middleware as the `storage` field on the timer's `persist` call-site options object. The rehydrate wall-clock-correction callback (which advances `elapsed` by `now - startedAt` and resets `startedAt` to `now` when `isRunning` is `true` on rehydrate) is unchanged and continues to live in the timer store, passed as the `afterValidate` field to `createValidatedRehydrate`.
 
 The other persisted stores (tasks, groups, planner) SHALL continue to use the synchronous default `localStorage`; debouncing is timer-specific because the tick is the only 1Hz writer in the app.
 
