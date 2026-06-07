@@ -33,6 +33,7 @@ export type Section = {
   tone?: SectionTone
   tasks: Task[]
   emptyHint?: string
+  date?: string | null
 }
 
 export const viewMetaMap: Record<
@@ -94,16 +95,20 @@ export function useFilteredTasks(view: View) {
 
     let filtered: typeof tasks
     let overdue: typeof tasks = []
+    let bucketDate: string | null | undefined
 
     switch (range.kind) {
       case 'date':
         filtered = selectForDate(tasks, range.date)
+        bucketDate = range.date
         break
       case 'range':
         filtered = selectInRange(tasks, range.start, range.end)
+        bucketDate = undefined
         break
       case 'undated':
         filtered = selectUndated(tasks)
+        bucketDate = null
         break
     }
 
@@ -111,7 +116,7 @@ export function useFilteredTasks(view: View) {
       overdue = selectOverdue(tasks, today)
     }
 
-    return { tasks: filtered, overdue }
+    return { tasks: filtered, overdue, bucketDate }
   }, [tasks, view, weekStartDay])
 }
 
@@ -162,6 +167,7 @@ export function useWeekSections(): Section[] {
         label: getWeekSectionLabel(day),
         tasks: selectForDate(tasks, dateStr),
         emptyHint: 'Nothing planned',
+        date: dateStr,
       })
     }
 

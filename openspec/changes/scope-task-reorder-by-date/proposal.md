@@ -1,13 +1,17 @@
 ## Why
 
-`useTaskStore.reorderTasks` is destructive: it is called from `TaskList` with the **filtered subset** of tasks for the current view, but the store does `set({ tasks: subset })`, replacing the entire task array. Every task that isn't part of the visible subset (other dates, overdue, undated, the rest of the week) is silently deleted from the store and from localStorage on the next persistence flush. The bug only fails to bite when the user happens to have tasks for a single date.
+`useTaskStore.reorderTasks` has two latent bugs that compound into the user-visible "DnD doesn't persist" symptom:
 
-The fix is to scope reordering to a single date bucket: the store updates `sortOrder` only for tasks in the named bucket, and `TaskList` carries the bucket identity (the `date`) so it can call the right action and so dnd-kit's sortable group prevents cross-section drags.
+1. **The store action is destructive.** `TaskList` calls it with the **filtered subset** of tasks for the current view, but the store does `set({ tasks: subset })`, replacing the entire task array. Every task that isn't part of the visible subset (other dates, overdue, undated, the rest of the week) is silently deleted from the store and from localStorage on the next persistence flush.
+2. **The `handleDragEnd` in `TaskList` never fires the action.** It bails on `source.id === target.id`, but in `@dnd-kit/react` v0.4 sortable items, `event.operation.source` and `event.operation.target` both reference the dragged sortable itself — they share the same `id` for every sortable drag. The guard short-circuits every drop, so `reorderTasks` was never actually called and the store was never mutated. The destructive set in (1) is therefore dormant in production but would have detonated the moment (2) was fixed.
+
+The fix is to (a) scope reordering to a single date bucket in the store so it can never wipe other buckets, and (b) rewrite `handleDragEnd` to use the canonical dnd-kit v0.4 pattern (`isSortable` type guard + `source.initialIndex` / `source.index`) so drops actually trigger a reorder. `TaskList` also gains a `date` prop so it knows which bucket it's rendering, and dnd-kit's per-bucket `group` key keeps sortables isolated between sections in WeekView.
 
 ## What Changes
 
 - **BREAKING** `useTaskStore.reorderTasks` signature changes from `(tasks: Task[]) => void` to `(date: string | null, taskIds: string[]) => void`. The action mutates `sortOrder` for tasks whose `id` is in `taskIds` **and** whose `date` matches the bucket key, and leaves every other task untouched.
 - Ids passed to `reorderTasks` that do not belong to the bucket are ignored and emit a single `console.warn` (matching the style of `addTask`'s validation warning).
+- `TaskList.handleDragEnd` is rewritten to use the dnd-kit v0.4 sortable pattern: it reads `source.initialIndex` and `source.index` via the `isSortable` type guard instead of comparing `source.id`/`target.id` (which are always equal for sortable drags and were causing every drop to no-op).
 - `TaskList` gains a `date?: string | null` prop.
   - `string` or `null` → bucket key is defined; drag-and-drop is enabled; `useSortable` uses `group: \`tasks:${date ?? 'undated'}\`` so each bucket is an isolated sortable.
   - `undefined` (or absent) → drag-and-drop is not wired; the list renders as read-only rows.

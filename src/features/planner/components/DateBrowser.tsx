@@ -48,7 +48,7 @@ export function DateBrowser() {
           <ChevronRight />
         </Button>
       </div>
-      <TaskList tasks={dateTasks} />
+      <TaskList tasks={dateTasks} date={browseDate} />
     </div>
   )
 }

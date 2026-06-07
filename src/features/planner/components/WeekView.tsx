@@ -24,7 +24,7 @@ export function WeekView() {
         <div key={section.key} className="mb-2">
           <SectionHeader label={section.label} tone={section.tone} />
           {section.tasks.length > 0 ? (
-            <TaskList tasks={section.tasks} />
+            <TaskList tasks={section.tasks} date={section.date} />
           ) : (
             <div className="text-muted-foreground px-1.5 py-2 text-xs">
               {section.emptyHint}

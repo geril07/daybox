@@ -27,7 +27,7 @@ interface TaskActions {
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
   toggleTask: (id: string) => void
-  reorderTasks: (tasks: Task[]) => void
+  reorderTasks: (date: string | null, taskIds: string[]) => void
   reassignTasks: (fromGroupId: string, toGroupId: string) => void
   deleteTasksByGroupId: (groupId: string) => void
 }
@@ -106,9 +106,26 @@ export const useTaskStore = create<TaskStore>()(
             ),
           })),
 
-        reorderTasks: (tasks) =>
-          set({
-            tasks: tasks.map((t, i) => ({ ...t, sortOrder: i })),
+        reorderTasks: (date, taskIds) =>
+          set((state) => {
+            const inBucket = new Set(
+              state.tasks.filter((t) => t.date === date).map((t) => t.id),
+            )
+            const valid = taskIds.filter((id) => inBucket.has(id))
+            if (valid.length !== taskIds.length) {
+              console.warn(
+                `[daybox] reorderTasks: ignored ${taskIds.length - valid.length} id(s) not in bucket (date=${date === null ? 'null' : date})`,
+              )
+            }
+            const newOrder = new Map(valid.map((id, i) => [id, i] as const))
+            console.log('newOrder :', newOrder)
+            return {
+              tasks: state.tasks.map((t) =>
+                newOrder.has(t.id)
+                  ? { ...t, sortOrder: newOrder.get(t.id)! }
+                  : t,
+              ),
+            }
           }),
 
         reassignTasks: (fromGroupId, toGroupId) => {

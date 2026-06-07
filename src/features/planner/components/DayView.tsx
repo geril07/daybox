@@ -11,7 +11,7 @@ interface DayViewProps {
 }
 
 export function DayView({ view }: DayViewProps) {
-  const { tasks, overdue } = useFilteredTasks(view)
+  const { tasks, overdue, bucketDate } = useFilteredTasks(view)
   const meta = viewMetaMap[view]
 
   const hasContent = tasks.length > 0 || overdue.length > 0
@@ -31,7 +31,7 @@ export function DayView({ view }: DayViewProps) {
         </div>
       )}
       <SectionHeader label={meta.title} />
-      <TaskList tasks={tasks} />
+      <TaskList tasks={tasks} date={bucketDate} />
     </div>
   )
 }

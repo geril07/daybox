@@ -1,7 +1,9 @@
 ## Purpose
 
 Organize tasks into named groups with auto-assigned colors. Group UI is progressively disclosed — hidden when only one group exists.
+
 ## Requirements
+
 ### Requirement: Default group exists on fresh install
 
 The system SHALL create a single default group named "General" when no groups exist.
@@ -186,4 +188,3 @@ The system SHALL surface the focused-task cascade defined in `task-management` a
 - **WHEN** the focused task is `'t-1'` with `groupId: 'home'`
 - **AND** the user deletes group `'work'` (which does not contain `'t-1'`)
 - **THEN** `useTimerStore.focusedTaskId` remains `'t-1'`
-

@@ -1,7 +1,7 @@
 import { arrayMove } from '@dnd-kit/helpers'
 import { DragDropProvider } from '@dnd-kit/react'
 import type { DragEndEvent } from '@dnd-kit/react'
-import { useSortable } from '@dnd-kit/react/sortable'
+import { isSortable, useSortable } from '@dnd-kit/react/sortable'
 import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -19,25 +19,32 @@ import { TaskRow } from './TaskRow'
 interface TaskListProps {
   tasks: Task[]
   emptyMessage?: string
+  date?: string | null
 }
 
-export function TaskList({ tasks, emptyMessage }: TaskListProps) {
+export function TaskList({ tasks, emptyMessage, date }: TaskListProps) {
   const reorderTasks = useTaskStore((s) => s.reorderTasks)
   const [snapLayout, setSnapLayout] = useState(false)
 
+  const isDraggable = date !== undefined
+  const groupKey = isDraggable ? `tasks:${date ?? 'undated'}` : null
+
   const handleDragEnd = (event: DragEndEvent) => {
-    const { source, target } = event.operation
-    if (!source || !target) return
-    if (source.id === target.id) return
+    if (date === undefined) return
+    if (event.canceled) return
 
-    const sourceIndex = tasks.findIndex((t) => t.id === source.id)
-    const targetIndex = tasks.findIndex((t) => t.id === target.id)
-    if (sourceIndex === -1 || targetIndex === -1) return
+    const { source } = event.operation
+    if (!source || !isSortable(source)) return
 
-    const reordered = arrayMove(tasks, sourceIndex, targetIndex)
+    const { initialIndex, index } = source
+    if (initialIndex === index) return
+    if (initialIndex < 0 || index < 0) return
+    if (initialIndex >= tasks.length || index >= tasks.length) return
+
+    const reorderedIds = arrayMove(tasks, initialIndex, index).map((t) => t.id)
     flushSync(() => {
       setSnapLayout(true)
-      reorderTasks(reordered)
+      reorderTasks(date, reorderedIds)
     })
     requestAnimationFrame(() => setSnapLayout(false))
   }
@@ -65,18 +72,27 @@ export function TaskList({ tasks, emptyMessage }: TaskListProps) {
             transition={TRANSITION_ENTER}
             className="relative"
           >
-            <DragDropProvider onDragEnd={handleDragEnd}>
+            {isDraggable && groupKey ? (
+              <DragDropProvider onDragEnd={handleDragEnd}>
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {tasks.map((task, index) => (
+                    <SortableTaskRow
+                      key={task.id}
+                      task={task}
+                      index={index}
+                      snapLayout={snapLayout}
+                      groupKey={groupKey}
+                    />
+                  ))}
+                </AnimatePresence>
+              </DragDropProvider>
+            ) : (
               <AnimatePresence mode="popLayout" initial={false}>
-                {tasks.map((task, index) => (
-                  <SortableTaskRow
-                    key={task.id}
-                    task={task}
-                    index={index}
-                    snapLayout={snapLayout}
-                  />
+                {tasks.map((task) => (
+                  <StaticTaskRow key={task.id} task={task} />
                 ))}
               </AnimatePresence>
-            </DragDropProvider>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -88,15 +104,17 @@ function SortableTaskRow({
   task,
   index,
   snapLayout,
+  groupKey,
 }: {
   task: Task
   index: number
   snapLayout: boolean
+  groupKey: string
 }) {
   const { ref, handleRef } = useSortable({
     id: task.id,
     index,
-    group: 'tasks',
+    group: groupKey,
   })
 
   return (
@@ -122,6 +140,25 @@ function SortableTaskRow({
       }
     >
       <TaskRow task={task} dragHandleRef={handleRef} />
+    </motion.div>
+  )
+}
+
+function StaticTaskRow({ task }: { task: Task }) {
+  return (
+    <motion.div
+      layout="position"
+      layoutId={task.id}
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: task.completed ? 0.52 : 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{
+        opacity: TRANSITION_TOGGLE,
+        y: TRANSITION_ENTER,
+        layout: TRANSITION_MOVE,
+      }}
+    >
+      <TaskRow task={task} />
     </motion.div>
   )
 }

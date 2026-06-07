@@ -7,7 +7,7 @@ This is a polish feature, not a capability expansion. It is hardcoded: one ascen
 ## What Changes
 
 - **Add a `playStartClick` and `playPauseClick` audio primitive** to `src/features/timer/alarm.ts`. Both are 60ms sine sweeps; `playStartClick` sweeps 800 Hz → 1200 Hz (ascending), `playPauseClick` sweeps 1200 Hz → 800 Hz (descending). Volume is hardcoded to 0.15. These reuse the existing `AudioContext` lazy-init pattern.
-- **Add a `togglePlayPauseWithClick` wrapper** that reads the current `isRunning` state from `useTimerStore`, plays the matching click (`playPauseClick` if running, `playStartClick` otherwise), then calls `togglePlayPause`. The sound matches the *current* state — the gesture that is being undone, not the one being made.
+- **Add a `togglePlayPauseWithClick` wrapper** that reads the current `isRunning` state from `useTimerStore`, plays the matching click (`playPauseClick` if running, `playStartClick` otherwise), then calls `togglePlayPause`. The sound matches the _current_ state — the gesture that is being undone, not the one being made.
 - **Route both call sites through the wrapper** so the sound fires consistently for click and keyboard:
   - `src/features/timer/components/TimerBar.tsx:251` — the play button `onClick`
   - `src/app/App.tsx:34` — the spacebar shortcut

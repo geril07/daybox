@@ -1,7 +1,9 @@
 ## Purpose
 
 Create, edit, delete, reorder, and complete tasks. Each task has a title, group assignment, optional date, pomodoro estimate, and completion status.
+
 ## Requirements
+
 ### Requirement: User can create a task
 
 The system SHALL allow users to create tasks with a title, group assignment, optional date, and optional pomodoro estimate.
@@ -429,4 +431,3 @@ The cascade SHALL use `useTimerStore.getState().setFocusedTaskId(null)`. The act
 - **AND** `useTaskStore.reorderTasks([…reorderedTasks])` is called
 - **THEN** the tasks are reordered
 - **AND** `useTimerStore.focusedTaskId` remains `'t-1'`
-

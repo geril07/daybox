@@ -9,12 +9,14 @@ The change scopes reordering to one bucket — a bucket being identified by a `d
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Make `reorderTasks` non-destructive: tasks outside the named bucket are never touched.
 - Encode the bucket key explicitly in both the store API and the `TaskList` props so that the "what bucket am I reordering" question has exactly one answer.
 - Prevent cross-section drags in WeekView at the dnd-kit layer, so the store guard is defence-in-depth rather than the only line of defence.
 - Cover the bug with a regression test that would have caught it (cross-date preservation).
 
 **Non-Goals:**
+
 - Cross-date drag (rescheduling via drag-and-drop). The existing reschedule popup remains the only way to move a task to a different date.
 - Any visual affordance signalling that a list is read-only. Overdue rows look identical; they simply can't be picked up.
 - Reordering across groups, keyboard reordering, or any other DnD surface change.
@@ -63,7 +65,10 @@ reorderTasks: (date, taskIds) =>
     )
     const valid = taskIds.filter((id) => inBucket.has(id))
     if (valid.length !== taskIds.length) {
-      console.warn('[daybox] reorderTasks: ignored ids not in bucket', { date, ignored: taskIds.length - valid.length })
+      console.warn('[daybox] reorderTasks: ignored ids not in bucket', {
+        date,
+        ignored: taskIds.length - valid.length,
+      })
     }
     const newOrder = new Map(valid.map((id, i) => [id, i]))
     return {
@@ -76,26 +81,37 @@ reorderTasks: (date, taskIds) =>
 
 Preserves identity of every task object outside the bucket (zustand's referential-equality selectors won't re-trigger for unrelated subscribers). Within the bucket only the reordered subset's `sortOrder` is touched.
 
-### 6. Call site in `TaskList` becomes `reorderTasks(date, reorderedIds)`
+### 6. Call site in `TaskList` uses dnd-kit's `isSortable` type guard, not `source.id`/`target.id`
+
+In `@dnd-kit/react` v0.4, for sortable drags `event.operation.source` and `event.operation.target` both reference the **dragged sortable itself** — they share the same `id` for every drop. Code that bails on `source.id === target.id` (the shape the previous implementation used) short-circuits every drag, so the store action is never called.
+
+The canonical pattern from the dnd-kit docs is to narrow `source` with the `isSortable` type guard and read `source.initialIndex` / `source.index` for the move:
 
 ```ts
 const handleDragEnd = (event: DragEndEvent) => {
-  if (date === undefined) return            // belt: shouldn't happen, DragDropProvider isn't mounted
-  const { source, target } = event.operation
-  if (!source || !target || source.id === target.id) return
-  const sourceIndex = tasks.findIndex((t) => t.id === source.id)
-  const targetIndex = tasks.findIndex((t) => t.id === target.id)
-  if (sourceIndex === -1 || targetIndex === -1) return
-  const reordered = arrayMove(tasks, sourceIndex, targetIndex).map((t) => t.id)
+  if (date === undefined) return
+  if (event.canceled) return
+
+  const { source } = event.operation
+  if (!source || !isSortable(source)) return
+
+  const { initialIndex, index } = source
+  if (initialIndex === index) return
+  if (initialIndex < 0 || index < 0) return
+  if (initialIndex >= tasks.length || index >= tasks.length) return
+
+  const reorderedIds = arrayMove(tasks, initialIndex, index).map((t) => t.id)
   flushSync(() => {
     setSnapLayout(true)
-    reorderTasks(date, reordered)
+    reorderTasks(date, reorderedIds)
   })
   requestAnimationFrame(() => setSnapLayout(false))
 }
 ```
 
-The animation snap behaviour (`setSnapLayout` + `flushSync` + `requestAnimationFrame`) is preserved unchanged so the existing "Reordering a task via drag-and-drop snaps the result" spec scenario continues to pass.
+`arrayMove` from `@dnd-kit/helpers` is retained — it splices `tasks` by index so we can extract the new id ordering. The animation snap behaviour (`setSnapLayout` + `flushSync` + `requestAnimationFrame`) is preserved unchanged so the existing "Reordering a task via drag-and-drop snaps the result" spec scenario continues to pass.
+
+The bounds checks (`< 0`, `>= tasks.length`) are defensive in case dnd-kit ever surfaces an out-of-range index during a cancelled or interrupted drag; without them an out-of-range `arrayMove` would produce a nonsense order and then the store's bucket guard would warn-and-ignore. Failing fast at the call site is cleaner.
 
 ## Risks / Trade-offs
 
