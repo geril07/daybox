@@ -126,7 +126,7 @@ The existing reorder animation behaviour — `flushSync` + `setSnapLayout(true)`
 
 ### Requirement: User can set pomodoro estimate
 
-The system SHALL display a task's pomodoro progress as an `X/Y` text label (where `X` is `pomoCompleted` and `Y` is `pomoEstimate`) with a thin progress bar directly below the number whose width is proportional to `pomoCompleted / pomoEstimate`. The system SHALL allow the user to set or change `pomoEstimate` via a popup containing a `NumberInput` bounded to `[0, 99]`. When the user lowers `pomoEstimate` below the current `pomoCompleted`, the system SHALL set both fields in a single store call so the invariant `pomoCompleted <= pomoEstimate` is preserved.
+The system SHALL display a task's pomodoro progress as an `X/Y` text label (where `X` is `pomoCompleted` and `Y` is `pomoEstimate`) with a thin progress bar directly below the number whose width is proportional to `pomoCompleted / pomoEstimate`. The system SHALL allow the user to set or change `pomoEstimate` via a popup containing a `NumberInput` bounded to `[0, 99]`. The system SHALL NOT modify `pomoCompleted` as a side effect of changing `pomoEstimate`; the two fields are independent. Lowering `pomoEstimate` below `pomoCompleted` is allowed and leaves `pomoCompleted` unchanged.
 
 #### Scenario: Display shows X/Y with a progress bar
 
@@ -157,17 +157,17 @@ The system SHALL display a task's pomodoro progress as an `X/Y` text label (wher
 - **THEN** the task's `pomoEstimate` is updated to `25`
 - **AND** `pomoCompleted` remains `4`
 
-#### Scenario: Lower estimate clamps completed
+#### Scenario: Lower estimate does not change completed
 
 - **WHEN** a task has `pomoEstimate = 5`, `pomoCompleted = 5`, and the user lowers `pomoEstimate` to `3` via the editor
 - **THEN** the task's `pomoEstimate` is updated to `3`
-- **AND** the task's `pomoCompleted` is also updated to `3` in the same store call
+- **AND** `pomoCompleted` remains `5` (unaffected)
 
-#### Scenario: Lowering a high estimate clamps completed to the new value
+#### Scenario: Lowering a high estimate below completed does not change completed
 
 - **WHEN** a task has `pomoEstimate = 20`, `pomoCompleted = 14`, and the user lowers `pomoEstimate` to `10` via the editor
 - **THEN** the task's `pomoEstimate` is updated to `10`
-- **AND** the task's `pomoCompleted` is also updated to `10` in the same store call
+- **AND** `pomoCompleted` remains `14` (unaffected)
 
 #### Scenario: Progress bar animates on estimate change
 
@@ -176,7 +176,7 @@ The system SHALL display a task's pomodoro progress as an `X/Y` text label (wher
 
 ### Requirement: User can edit pomodoro completed count
 
-The system SHALL allow the user to set or change `pomoCompleted` via the same popup that edits `pomoEstimate`, using a `NumberInput` whose `max` is the task's current `pomoEstimate`. Increment and decrement controls SHALL be disabled at the boundaries (`0` and `pomoEstimate` respectively). Editing `pomoCompleted` SHALL NOT toggle `task.completed`.
+The system SHALL allow the user to set or change `pomoCompleted` via the same popup that edits `pomoEstimate`, using a `NumberInput` bounded to `[0, 99]` — the global cap, NOT the task's current `pomoEstimate`. Increment and decrement controls SHALL be disabled at `0` and `99` respectively. Editing `pomoCompleted` SHALL NOT toggle `task.completed`. Setting `pomoCompleted` to a value above `pomoEstimate` is allowed and is the user's explicit choice.
 
 #### Scenario: Increase completed below estimate
 
@@ -184,9 +184,15 @@ The system SHALL allow the user to set or change `pomoCompleted` via the same po
 - **THEN** the task's `pomoCompleted` is updated to `4`
 - **AND** `task.completed` remains its prior value
 
-#### Scenario: Completed input caps at current estimate
+#### Scenario: Increase completed above estimate
 
-- **WHEN** a task has `pomoEstimate = 5` and `pomoCompleted = 5`
+- **WHEN** a task has `pomoEstimate = 3`, `pomoCompleted = 1`, and the user increases `pomoCompleted` to `7` via the editor
+- **THEN** the task's `pomoCompleted` is updated to `7`
+- **AND** `pomoEstimate` remains `3`
+
+#### Scenario: Completed input caps at the global limit
+
+- **WHEN** a task has `pomoCompleted = 99`
 - **THEN** the `+` control on the `pomoCompleted` `NumberInput` is disabled
 
 #### Scenario: Completed input floors at zero
