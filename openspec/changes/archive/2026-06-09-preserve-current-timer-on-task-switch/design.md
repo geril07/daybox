@@ -2,7 +2,7 @@
 
 DayBox's Pomodoro timer keeps its active-task binding in `useTimerStore.focusedTaskId`, set exclusively by the `focusTask(id)` action (`src/features/timer/store.ts:168-182`). The only UI that triggers it is the focus button (`<Target />`) on each `TaskRow` (`src/features/tasks/components/TaskRow.tsx:156-163`).
 
-Today, `focusTask` is **not** a pure rebind. When the user clicks a *different* task, the action atomically:
+Today, `focusTask` is **not** a pure rebind. When the user clicks a _different_ task, the action atomically:
 
 - sets `focusedTaskId = id`
 - forces `phase = 'focus'`
@@ -47,13 +47,13 @@ The action becomes two paths, neither of which reads `wasRunning` or touches `ph
 
 **Alternatives considered.**
 
-- *Keep the destructive rebind but only when on a focus phase.* Rejected: it preserves the silent abandonment of a break (phase is overwritten but `sessionPomoCount` is not decremented) and leaves two different "is this on a break?" branches that have to stay in sync with `getNextPhase`. The whole reason for the bug is the action knowing about phases; remove the knowledge.
-- *Add a separate `setFocusedTaskId` setter (already exists) and have the UI call it directly.* Rejected: keeps the destructive `focusTask` around for one caller and increases the API surface. Simpler to retire the destructive code path.
-- *Add a "reset and start" button next to the focus button.* Rejected: scope creep, and the proposal's goal is "do nothing destructive on rebind", not "expose more destructive actions".
+- _Keep the destructive rebind but only when on a focus phase._ Rejected: it preserves the silent abandonment of a break (phase is overwritten but `sessionPomoCount` is not decremented) and leaves two different "is this on a break?" branches that have to stay in sync with `getNextPhase`. The whole reason for the bug is the action knowing about phases; remove the knowledge.
+- _Add a separate `setFocusedTaskId` setter (already exists) and have the UI call it directly._ Rejected: keeps the destructive `focusTask` around for one caller and increases the API surface. Simpler to retire the destructive code path.
+- _Add a "reset and start" button next to the focus button._ Rejected: scope creep, and the proposal's goal is "do nothing destructive on rebind", not "expose more destructive actions".
 
 ### Decision 2: Do not decrement `sessionPomoCount` retroactively on switch
 
-The current bug is that switching mid-break *also* fails to adjust `sessionPomoCount`. With Decision 1 in place, the break continues to run; when it ends, the existing `tick → remainingMs <= 0 → advancePhase` path in `TimerBar.tsx:87-91` runs and `sessionPomoCount` advances normally. No retroactive correction is needed.
+The current bug is that switching mid-break _also_ fails to adjust `sessionPomoCount`. With Decision 1 in place, the break continues to run; when it ends, the existing `tick → remainingMs <= 0 → advancePhase` path in `TimerBar.tsx:87-91` runs and `sessionPomoCount` advances normally. No retroactive correction is needed.
 
 **Rationale.** The break still completes. The auto-roll logic is the single source of truth for "did this break count?". Touching `sessionPomoCount` from `focusTask` would re-introduce the coupling we are removing.
 
@@ -74,11 +74,11 @@ The change touches two existing requirements and one existing scenario. Both bel
 
 ## Risks / Trade-offs
 
-- **User intent surprise on running focus** → Today, clicking a different task while on a running focus instantly resets the focus clock to 25:00. After this change, the running focus continues from wherever it was, with a different task bound. Users who relied on the implicit reset to "start a new focus on a new task" lose that affordance. *Mitigation*: the focus button's `title="Focus"` and the `Working on:` label in `TimerBar` clearly surface that this is a binding gesture, not a "start new" gesture. The `reset()` action is still available to clear the clock explicitly.
-- **Toggle-off quirk** → Clicking the focus button on the already-focused task only nulls the id; it does not pause. This is unchanged from today. *Mitigation*: out of scope; flag for a future "unfocus should pause" decision in its own change.
-- **No regression test for the mid-break `sessionPomoCount` bug** → The new tests cover the preserve behavior, but the "sessionPomoCount does not drift when a break is abandoned via switch" guarantee is implicit in the design (the break no longer gets abandoned). *Mitigation*: the design.md's Decision 2 spells this out; a future scenario could be added if a regression slips.
+- **User intent surprise on running focus** → Today, clicking a different task while on a running focus instantly resets the focus clock to 25:00. After this change, the running focus continues from wherever it was, with a different task bound. Users who relied on the implicit reset to "start a new focus on a new task" lose that affordance. _Mitigation_: the focus button's `title="Focus"` and the `Working on:` label in `TimerBar` clearly surface that this is a binding gesture, not a "start new" gesture. The `reset()` action is still available to clear the clock explicitly.
+- **Toggle-off quirk** → Clicking the focus button on the already-focused task only nulls the id; it does not pause. This is unchanged from today. _Mitigation_: out of scope; flag for a future "unfocus should pause" decision in its own change.
+- **No regression test for the mid-break `sessionPomoCount` bug** → The new tests cover the preserve behavior, but the "sessionPomoCount does not drift when a break is abandoned via switch" guarantee is implicit in the design (the break no longer gets abandoned). _Mitigation_: the design.md's Decision 2 spells this out; a future scenario could be added if a regression slips.
 - **Persisted `daybox-timer` shape** → The persisted JSON includes `phase`, `elapsed`, `startedAt`, `isRunning`, `focusedTaskId`, `sessionPomoCount`, and `settings`. The change writes only `focusedTaskId` on a switch. Old persisted blobs (with stale `phase: 'focus'`, `elapsed: 0`, `isRunning: false` snapshots from previous destructive switches) continue to work — the zustand `persist` middleware does a partial update. No migration code needed.
-- **Re-import edge case** → If a user exports during a running focus, switches the focused task in the imported data via a re-import, and the import path uses `focusTask` (not `setFocusedTaskId`), the destructive behavior is gone. The import slice in `src/features/timer/slice.ts` should be reviewed to ensure it uses the non-destructive setter. *Mitigation*: a task in `tasks.md` audits `slice.ts` and updates it to use `setFocusedTaskId` for any "imported focused task" writes.
+- **Re-import edge case** → If a user exports during a running focus, switches the focused task in the imported data via a re-import, and the import path uses `focusTask` (not `setFocusedTaskId`), the destructive behavior is gone. The import slice in `src/features/timer/slice.ts` should be reviewed to ensure it uses the non-destructive setter. _Mitigation_: a task in `tasks.md` audits `slice.ts` and updates it to use `setFocusedTaskId` for any "imported focused task" writes.
 
 ## Migration Plan
 
@@ -88,11 +88,11 @@ Rollback is a one-line revert: restore the `focusTask` body to its current 15-li
 
 ## Open Questions
 
-- *Should clicking the focus button on the already-focused task also pause the timer?* Current spec leaves it as a "toggle binding only" gesture. Out of scope for this change; recorded here so a future "unfocus pauses" change can pick it up.
+- _Should clicking the focus button on the already-focused task also pause the timer?_ Current spec leaves it as a "toggle binding only" gesture. Out of scope for this change; recorded here so a future "unfocus pauses" change can pick it up.
 
 ## Future Considerations
 
-- *Restore the "reset + auto-start on focus" workflow as an opt-in.* This change removes the implicit reset that some users relied on as a "start a fresh pomodoro on a new task" shortcut. Possible follow-ups, none decided, to be picked up in a separate change after user feedback:
+- _Restore the "reset + auto-start on focus" workflow as an opt-in._ This change removes the implicit reset that some users relied on as a "start a fresh pomodoro on a new task" shortcut. Possible follow-ups, none decided, to be picked up in a separate change after user feedback:
   - A `settings` capability addition: a "Focus click resets the clock" toggle (off by default — pure rebind is the new default). Would land a new requirement in the `settings` spec and modify the `task-management` "User can focus on a task" requirement to read the setting.
   - A modifier-key gesture (e.g., Shift-click the focus button) that performs the old reset-and-auto-start behavior.
   - A long-press / right-click menu on the focus button with "Focus", "Focus and reset", "Focus and start".

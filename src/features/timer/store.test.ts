@@ -200,22 +200,64 @@ describe('Timer Store', () => {
     })
   })
 
-  describe('focusTask', () => {
-    it('sets focused task and resets phase to focus', () => {
+  describe('focusTask (pure rebind)', () => {
+    it('rebinds focused task and preserves clock state', () => {
       useTimerStore.setState({ phase: 'shortBreak', elapsed: 5000 })
       useTimerStore.getState().focusTask('task-1')
       const state = useTimerStore.getState()
       expect(state.focusedTaskId).toBe('task-1')
+      expect(state.phase).toBe('shortBreak')
+      expect(state.elapsed).toBe(5000)
+    })
+
+    it('preserves running state when refocusing', () => {
+      const startedAt = Date.now() - 3000
+      useTimerStore.setState({
+        phase: 'focus',
+        isRunning: true,
+        startedAt,
+        elapsed: 0,
+      })
+      useTimerStore.getState().focusTask('task-1')
+      const state = useTimerStore.getState()
+      expect(state.focusedTaskId).toBe('task-1')
+      expect(state.isRunning).toBe(true)
+      expect(state.startedAt).toBe(startedAt)
       expect(state.phase).toBe('focus')
       expect(state.elapsed).toBe(0)
     })
 
-    it('preserves running state when refocusing', () => {
-      useTimerStore.setState({ isRunning: true, startedAt: Date.now() })
-      useTimerStore.getState().focusTask('task-1')
+    it('preserves running break state', () => {
+      const startedAt = Date.now() - 7500
+      useTimerStore.setState({
+        phase: 'shortBreak',
+        isRunning: true,
+        startedAt,
+        elapsed: 7500,
+      })
+      useTimerStore.getState().focusTask('task-2')
       const state = useTimerStore.getState()
+      expect(state.focusedTaskId).toBe('task-2')
+      expect(state.phase).toBe('shortBreak')
       expect(state.isRunning).toBe(true)
-      expect(state.startedAt).not.toBeNull()
+      expect(state.startedAt).toBe(startedAt)
+      expect(state.elapsed).toBe(7500)
+    })
+
+    it('preserves idle timer state', () => {
+      useTimerStore.setState({
+        phase: 'focus',
+        isRunning: false,
+        startedAt: null,
+        elapsed: 0,
+      })
+      useTimerStore.getState().focusTask('task-2')
+      const state = useTimerStore.getState()
+      expect(state.focusedTaskId).toBe('task-2')
+      expect(state.phase).toBe('focus')
+      expect(state.isRunning).toBe(false)
+      expect(state.startedAt).toBeNull()
+      expect(state.elapsed).toBe(0)
     })
 
     it('clears focus when re-focusing the same task', () => {

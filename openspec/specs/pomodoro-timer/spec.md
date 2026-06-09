@@ -1,9 +1,7 @@
 ## Purpose
 
 A persistent Pomodoro timer docked at the bottom with full focus/break cycle, configurable durations, alarm sounds, and browser notifications.
-
 ## Requirements
-
 ### Requirement: Timer displays remaining time
 
 The system SHALL display the remaining time in MM:SS format for the current focus or break phase.
@@ -341,10 +339,21 @@ The system SHALL play a short click sound when the user toggles the timer betwee
 
 - **WHEN** the user clicks a different task to focus while the timer is running
 - **THEN** no click sound plays
-- **AND** the timer continues running with elapsed reset to zero
+- **AND** `focusedTaskId` is updated to the new task
+- **AND** the timer's `phase`, `elapsed`, `startedAt`, and `isRunning` are unchanged
+
+#### Scenario: Switching focus mid-break preserves the break
+
+- **WHEN** the user clicks a different task to focus while the timer is running on a short or long break
+- **THEN** `focusedTaskId` is updated to the new task
+- **AND** `phase` remains on the break
+- **AND** `isRunning` remains `true`
+- **AND** `elapsed` is unchanged
+- **AND** when the break's `remainingMs` reaches zero, `advancePhase` runs normally and `sessionPomoCount` advances as it would have without the switch
 
 #### Scenario: Click is not user-configurable
 
 - **WHEN** the user inspects the timer settings panel
 - **THEN** there is no toggle, volume, sound picker, or other control for the click sound
 - **AND** no `daybox-timer` localStorage key changes when the user toggles play/pause
+

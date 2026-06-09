@@ -171,14 +171,7 @@ export const useTimerStore = create<TimerStore>()(
           set({ focusedTaskId: null })
           return
         }
-        const wasRunning = state.isRunning
-        set({
-          focusedTaskId: id,
-          phase: 'focus',
-          elapsed: 0,
-          startedAt: wasRunning ? Date.now() : null,
-          isRunning: wasRunning,
-        })
+        set({ focusedTaskId: id })
       },
 
       setTimerSettings: (partial) => {
