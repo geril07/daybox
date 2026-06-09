@@ -222,7 +222,7 @@ function PomoArea({ task }: { task: Task }) {
             value={task.pomoEstimate}
             onValueChange={handleEstimateChange}
             min={0}
-            max={9}
+            max={99}
           />
         </div>
         <div className="flex min-w-[100px] flex-col items-center gap-2">

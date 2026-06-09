@@ -1,4 +1,4 @@
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
@@ -171,6 +171,34 @@ describe('TaskRow', () => {
     const updated = useTaskStore.getState().tasks[0]
     expect(updated?.pomoEstimate).toBe(3)
     expect(updated?.pomoCompleted).toBe(3)
+  })
+
+  it('increasing estimate above the legacy 9 cap preserves pomoCompleted', async () => {
+    const user = userEvent.setup()
+    const task = createMockTask({ pomoEstimate: 9, pomoCompleted: 4 })
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+    await openPomoPopover(user)
+    const estimateInput = visibleInput('9')
+    await user.clear(estimateInput)
+    fireEvent.change(estimateInput, { target: { value: '25' } })
+    const updated = useTaskStore.getState().tasks[0]
+    expect(updated?.pomoEstimate).toBe(25)
+    expect(updated?.pomoCompleted).toBe(4)
+  })
+
+  it('lowering a high estimate clamps pomoCompleted to the new value in a single store call', async () => {
+    const user = userEvent.setup()
+    const task = createMockTask({ pomoEstimate: 20, pomoCompleted: 14 })
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+    await openPomoPopover(user)
+    const estimateInput = visibleInput('20')
+    await user.clear(estimateInput)
+    fireEvent.change(estimateInput, { target: { value: '10' } })
+    const updated = useTaskStore.getState().tasks[0]
+    expect(updated?.pomoEstimate).toBe(10)
+    expect(updated?.pomoCompleted).toBe(10)
   })
 
   it('increasing completed does not affect estimate', async () => {
