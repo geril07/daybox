@@ -179,11 +179,7 @@ function PomoArea({ task }: { task: Task }) {
 
   const handleEstimateChange = (n: number | null) => {
     if (n == null) return
-    const patch: Partial<Task> = { pomoEstimate: n }
-    if (n < task.pomoCompleted) {
-      patch.pomoCompleted = n
-    }
-    updateTask(task.id, patch)
+    updateTask(task.id, { pomoEstimate: n })
   }
 
   const handleCompletedChange = (n: number | null) => {
@@ -233,7 +229,7 @@ function PomoArea({ task }: { task: Task }) {
             value={task.pomoCompleted}
             onValueChange={handleCompletedChange}
             min={0}
-            max={task.pomoEstimate}
+            max={99}
           />
         </div>
       </PopoverContent>

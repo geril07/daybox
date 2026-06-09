@@ -159,7 +159,7 @@ describe('TaskRow', () => {
     expect(visibleInput('1')).toBeTruthy()
   })
 
-  it('lowering estimate below completed clamps completed in a single store call', async () => {
+  it('lowering estimate below completed does not change completed', async () => {
     const user = userEvent.setup()
     const task = createMockTask({ pomoEstimate: 5, pomoCompleted: 5 })
     useTaskStore.setState({ tasks: [task] })
@@ -170,7 +170,7 @@ describe('TaskRow', () => {
     await user.type(estimateInput, '3')
     const updated = useTaskStore.getState().tasks[0]
     expect(updated?.pomoEstimate).toBe(3)
-    expect(updated?.pomoCompleted).toBe(3)
+    expect(updated?.pomoCompleted).toBe(5)
   })
 
   it('increasing estimate above the legacy 9 cap preserves pomoCompleted', async () => {
@@ -187,7 +187,7 @@ describe('TaskRow', () => {
     expect(updated?.pomoCompleted).toBe(4)
   })
 
-  it('lowering a high estimate clamps pomoCompleted to the new value in a single store call', async () => {
+  it('lowering a high estimate does not change pomoCompleted', async () => {
     const user = userEvent.setup()
     const task = createMockTask({ pomoEstimate: 20, pomoCompleted: 14 })
     useTaskStore.setState({ tasks: [task] })
@@ -198,7 +198,7 @@ describe('TaskRow', () => {
     fireEvent.change(estimateInput, { target: { value: '10' } })
     const updated = useTaskStore.getState().tasks[0]
     expect(updated?.pomoEstimate).toBe(10)
-    expect(updated?.pomoCompleted).toBe(10)
+    expect(updated?.pomoCompleted).toBe(14)
   })
 
   it('increasing completed does not affect estimate', async () => {
@@ -215,9 +215,23 @@ describe('TaskRow', () => {
     expect(updated?.pomoCompleted).toBe(4)
   })
 
-  it('disables the + control on completed when completed === estimate', async () => {
+  it('increasing completed above estimate is accepted', async () => {
     const user = userEvent.setup()
-    const task = createMockTask({ pomoEstimate: 5, pomoCompleted: 5 })
+    const task = createMockTask({ pomoEstimate: 3, pomoCompleted: 1 })
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+    await openPomoPopover(user)
+    const completedInput = visibleInput('1')
+    await user.clear(completedInput)
+    fireEvent.change(completedInput, { target: { value: '7' } })
+    const updated = useTaskStore.getState().tasks[0]
+    expect(updated?.pomoCompleted).toBe(7)
+    expect(updated?.pomoEstimate).toBe(3)
+  })
+
+  it('disables the + control on completed at the global cap of 99', async () => {
+    const user = userEvent.setup()
+    const task = createMockTask({ pomoEstimate: 99, pomoCompleted: 99 })
     useTaskStore.setState({ tasks: [task] })
     render(<TaskRow task={task} />)
     await openPomoPopover(user)
