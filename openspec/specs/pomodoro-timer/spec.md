@@ -1,7 +1,9 @@
 ## Purpose
 
 A persistent Pomodoro timer docked at the bottom with full focus/break cycle, configurable durations, alarm sounds, and browser notifications.
+
 ## Requirements
+
 ### Requirement: Timer displays remaining time
 
 The system SHALL display the remaining time in MM:SS format for the current focus or break phase.
@@ -374,4 +376,3 @@ The system SHALL play a short click sound when the user toggles the timer betwee
 - **WHEN** the user inspects the timer settings panel
 - **THEN** there is no toggle, volume, sound picker, or other control for the click sound
 - **AND** no `daybox-timer` localStorage key changes when the user toggles play/pause
-

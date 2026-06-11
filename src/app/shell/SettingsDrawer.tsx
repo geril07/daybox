@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { useTheme } from '@/app/theme'
 import {
@@ -52,6 +52,7 @@ export function SettingsDrawer({
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
   const setWeekStartDay = usePlannerStore((s) => s.setWeekStartDay)
   const [theme, setTheme] = useTheme()
+  const sheetContentRef = useRef<HTMLDivElement | null>(null)
 
   const [importConfirmOpen, setImportConfirmOpen] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -86,7 +87,13 @@ export function SettingsDrawer({
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="right" className="w-[310px] max-w-[85vw] gap-0">
+      <SheetContent
+        ref={sheetContentRef}
+        initialFocus={sheetContentRef}
+        tabIndex={-1}
+        side="right"
+        className="w-[310px] max-w-[85vw] gap-0"
+      >
         <SheetHeader>
           <SheetTitle>Settings</SheetTitle>
         </SheetHeader>
