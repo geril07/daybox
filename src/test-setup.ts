@@ -11,6 +11,26 @@ class ResizeObserverMock {
 
 vi.stubGlobal('ResizeObserver', ResizeObserverMock)
 
+class NotificationMock {
+  static permission: NotificationPermission = 'default'
+  static requestPermission = vi.fn(
+    async () => 'granted' as NotificationPermission,
+  )
+  static instances: NotificationMock[] = []
+
+  onclick: ((this: Notification, ev: Event) => unknown) | null = null
+  title: string
+  options?: NotificationOptions
+
+  constructor(title: string, options?: NotificationOptions) {
+    this.title = title
+    this.options = options
+    NotificationMock.instances.push(this)
+  }
+}
+
+vi.stubGlobal('Notification', NotificationMock)
+
 class AudioContextMock {
   state = 'running'
   currentTime = 0

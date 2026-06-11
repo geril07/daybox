@@ -8,6 +8,7 @@ import {
 } from '@/features/timer'
 
 beforeEach(() => {
+  timerStorage.flush()
   localStorage.clear()
   useTimerStore.setState({
     phase: 'focus',
@@ -18,7 +19,25 @@ beforeEach(() => {
     focusedTaskId: null,
     settings: DEFAULT_TIMER_SETTINGS,
   })
+  timerStorage.flush()
 })
+
+function writePersistedTimerState(settings: object) {
+  localStorage.setItem(
+    'daybox-timer',
+    JSON.stringify({
+      state: {
+        phase: 'focus',
+        startedAt: null,
+        elapsed: 0,
+        sessionPomoCount: 0,
+        isRunning: false,
+        focusedTaskId: null,
+        settings,
+      },
+    }),
+  )
+}
 
 describe('Timer Store', () => {
   it('starts and pauses', () => {
@@ -318,5 +337,35 @@ describe('Timer settings slice', () => {
     timerStorage.flush()
     const persisted = JSON.parse(localStorage.getItem('daybox-timer') ?? '{}')
     expect(persisted.state.settings.alarmRepeat).toBe(5)
+  })
+
+  it('backfills notificationsEnabled when rehydrating old persisted settings', async () => {
+    const oldSettings = {
+      focusDuration: DEFAULT_TIMER_SETTINGS.focusDuration,
+      shortBreakDuration: DEFAULT_TIMER_SETTINGS.shortBreakDuration,
+      longBreakDuration: DEFAULT_TIMER_SETTINGS.longBreakDuration,
+      longBreakInterval: DEFAULT_TIMER_SETTINGS.longBreakInterval,
+      autoStartBreaks: DEFAULT_TIMER_SETTINGS.autoStartBreaks,
+      autoStartPomodoros: DEFAULT_TIMER_SETTINGS.autoStartPomodoros,
+      alarmSound: DEFAULT_TIMER_SETTINGS.alarmSound,
+      alarmVolume: DEFAULT_TIMER_SETTINGS.alarmVolume,
+      alarmRepeat: DEFAULT_TIMER_SETTINGS.alarmRepeat,
+    }
+    writePersistedTimerState(oldSettings)
+
+    await useTimerStore.persist.rehydrate()
+
+    expect(useTimerStore.getState().settings.notificationsEnabled).toBe(true)
+  })
+
+  it('preserves notificationsEnabled=false when rehydrating persisted settings', async () => {
+    writePersistedTimerState({
+      ...DEFAULT_TIMER_SETTINGS,
+      notificationsEnabled: false,
+    })
+
+    await useTimerStore.persist.rehydrate()
+
+    expect(useTimerStore.getState().settings.notificationsEnabled).toBe(false)
   })
 })

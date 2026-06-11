@@ -1,11 +1,20 @@
 import { render, cleanup } from '@testing-library/react'
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 import { useGroupStore } from '@/features/groups'
 
 import { useTaskStore } from '../../tasks/store'
-import { useTimerStore } from '../store'
+import { DEFAULT_TIMER_SETTINGS, useTimerStore } from '../store'
 import { TimerBar } from './TimerBar'
+
+type NotificationMock = typeof Notification & {
+  permission: NotificationPermission
+  instances: Array<
+    Notification & { title: string; options?: NotificationOptions }
+  >
+}
+
+const getNotificationMock = () => Notification as unknown as NotificationMock
 
 beforeEach(() => {
   useTimerStore.setState({
@@ -15,6 +24,14 @@ beforeEach(() => {
     sessionPomoCount: 0,
     isRunning: false,
     focusedTaskId: null,
+    settings: DEFAULT_TIMER_SETTINGS,
+  })
+  const notification = getNotificationMock()
+  notification.permission = 'default'
+  notification.instances = []
+  Object.defineProperty(document, 'visibilityState', {
+    configurable: true,
+    value: 'visible',
   })
   useTaskStore.setState({ tasks: [] })
   useGroupStore.setState({
@@ -32,6 +49,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
 })
 
 function createTask(overrides = {}) {
@@ -80,5 +98,43 @@ describe('TimerBar', () => {
     const updated = useTaskStore.getState().tasks[0]
     expect(updated?.pomoCompleted).toBe(4)
     expect(updated?.pomoEstimate).toBe(3)
+  })
+
+  it('does not send a notification when the tab is visible', () => {
+    const notification = getNotificationMock()
+    notification.permission = 'granted'
+    const task = createTask({ pomoEstimate: 0, pomoCompleted: 0 })
+    useTaskStore.setState({ tasks: [task] })
+    fireFocusComplete(task.id)
+
+    render(<TimerBar />)
+
+    expect(notification.instances).toHaveLength(0)
+    expect(useTaskStore.getState().tasks[0]?.pomoCompleted).toBe(1)
+  })
+
+  it('sends a notification when the tab is hidden and focuses the window on click', () => {
+    const notification = getNotificationMock()
+    const focusSpy = vi.spyOn(window, 'focus').mockImplementation(() => {})
+    notification.permission = 'granted'
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'hidden',
+    })
+    const task = createTask({ pomoEstimate: 0, pomoCompleted: 0 })
+    useTaskStore.setState({ tasks: [task] })
+    fireFocusComplete(task.id)
+
+    render(<TimerBar />)
+
+    expect(notification.instances).toHaveLength(1)
+    expect(notification.instances[0].title).toBe('Focus complete!')
+    expect(notification.instances[0].onclick).toEqual(expect.any(Function))
+
+    notification.instances[0].onclick?.call(
+      notification.instances[0],
+      new Event('click'),
+    )
+    expect(focusSpy).toHaveBeenCalledTimes(1)
   })
 })

@@ -2,7 +2,10 @@ import { RotateCcw, RefreshCcw, Pause, Play, SkipForward } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
 import { useTaskStore } from '@/features/tasks'
-import { sendNotification } from '@/shared/notifications'
+import {
+  sendNotification,
+  shouldFireIntervalEndNotification,
+} from '@/shared/notifications'
 import {
   Button,
   Menu,
@@ -77,12 +80,21 @@ export function TimerBar() {
     alarmPlayedRef.current = true
 
     playAlarm(settings.alarmSound, settings.alarmVolume, settings.alarmRepeat)
-    sendNotification(
-      phase === 'focus'
-        ? 'Focus complete!'
-        : `${phase === 'shortBreak' ? 'Short break' : 'Long break'} complete!`,
-      focusedTask ? `Task: ${focusedTask.title}` : undefined,
-    )
+    if (
+      shouldFireIntervalEndNotification({
+        documentVisible: document.visibilityState === 'visible',
+        permission: getNotificationPermission(),
+        enabled: settings.notificationsEnabled,
+      })
+    ) {
+      sendNotification(
+        phase === 'focus'
+          ? 'Focus complete!'
+          : `${phase === 'shortBreak' ? 'Short break' : 'Long break'} complete!`,
+        focusedTask ? `Task: ${focusedTask.title}` : undefined,
+        () => window.focus(),
+      )
+    }
 
     if (phase === 'focus' && focusedTask) {
       updateTask(focusedTask.id, {
@@ -301,6 +313,11 @@ export function TimerBar() {
       </div>
     </div>
   )
+}
+
+function getNotificationPermission(): NotificationPermission {
+  if (!('Notification' in window)) return 'denied'
+  return Notification.permission
 }
 
 function PhaseChip({

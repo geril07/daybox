@@ -16,6 +16,7 @@ export const DEFAULT_TIMER_SETTINGS: TimerSettings = {
   longBreakInterval: 4,
   autoStartBreaks: false,
   autoStartPomodoros: false,
+  notificationsEnabled: true,
   alarmSound: 'bell',
   alarmVolume: 0.5,
   alarmRepeat: 3,
@@ -193,6 +194,7 @@ export const useTimerStore = create<TimerStore>()(
         schema: TimerStateSchema,
         init: timerInit,
         afterValidate: (state) => {
+          state.settings.notificationsEnabled ??= true
           if (state.isRunning && state.startedAt) {
             const now = Date.now()
             state.elapsed += now - state.startedAt

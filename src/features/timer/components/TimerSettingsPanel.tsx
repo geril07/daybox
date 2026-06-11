@@ -1,4 +1,8 @@
+import { useEffect, useState } from 'react'
+
+import { requestNotificationPermission } from '@/shared/notifications'
 import {
+  Button,
   NumberInput,
   Switch,
   Select,
@@ -13,9 +17,44 @@ import { useTimerStore } from '../store'
 
 export function TimerSettingsPanel() {
   const settings = useTimerStore((s) => s.settings)
+  const [notificationPermission, setNotificationPermission] = useState(
+    getNotificationPermission,
+  )
   const updateTimerSettings = (
     partial: Partial<ReturnType<typeof useTimerStore.getState>['settings']>,
   ) => useTimerStore.getState().setTimerSettings(partial)
+
+  useEffect(() => {
+    const refreshPermission = () => {
+      if (document.visibilityState === 'visible') {
+        setNotificationPermission(getNotificationPermission())
+      }
+    }
+
+    document.addEventListener('visibilitychange', refreshPermission)
+    return () => {
+      document.removeEventListener('visibilitychange', refreshPermission)
+    }
+  }, [])
+
+  const handlePermissionClick = async () => {
+    if (notificationPermission === 'default') {
+      await requestNotificationPermission()
+      setNotificationPermission(getNotificationPermission())
+      return
+    }
+
+    if (notificationPermission === 'granted') {
+      updateTimerSettings({ notificationsEnabled: false })
+    }
+  }
+
+  const permissionButtonLabel =
+    notificationPermission === 'granted'
+      ? 'Disable notifications'
+      : notificationPermission === 'denied'
+        ? 'Blocked in browser settings'
+        : 'Enable notifications'
 
   return (
     <>
@@ -132,8 +171,48 @@ export function TimerSettingsPanel() {
           />
         </SettingRow>
       </div>
+      <div className="flex flex-col gap-3">
+        <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
+          Notifications
+        </div>
+        <SettingRow label="Notify on interval end">
+          <Switch
+            checked={settings.notificationsEnabled}
+            onCheckedChange={(v) =>
+              updateTimerSettings({ notificationsEnabled: v })
+            }
+          />
+        </SettingRow>
+        <SettingRow label="Browser permission">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={notificationPermission === 'denied'}
+            onClick={handlePermissionClick}
+          >
+            {permissionButtonLabel}
+          </Button>
+        </SettingRow>
+        {notificationPermission === 'default' ? (
+          <p className="text-muted-foreground text-xs">
+            Enable browser permission to receive OS notifications while DayBox
+            is in the background.
+          </p>
+        ) : null}
+        {notificationPermission === 'denied' ? (
+          <p className="text-muted-foreground text-xs">
+            Notifications are blocked. Use your browser site settings to allow
+            them again.
+          </p>
+        ) : null}
+      </div>
     </>
   )
+}
+
+function getNotificationPermission(): NotificationPermission {
+  if (!('Notification' in window)) return 'denied'
+  return Notification.permission
 }
 
 function SettingRow({
