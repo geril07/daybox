@@ -88,6 +88,14 @@ The change is applied at three sites: `.header-top` (App.tsx:81), `.header-nav` 
 
 This keeps the data colocated and avoids a parallel array or a translation key for one entry.
 
+### D9. AddTaskRow submits through a form, not keydown-only Enter handling
+
+The existing add-task flow only calls `handleSubmit` from the input's `onKeyDown` when `e.key === 'Enter'`. Mobile IMEs can expose submit actions without reliably dispatching a plain Enter keydown, and the UI has no explicit submit button. Wrapping the row in a native form gives both desktop Enter and mobile keyboard submit a browser-native path to `onSubmit`.
+
+The input keeps custom `onKeyDown` handling only for typeahead control: Enter accepts a highlighted `#group` suggestion and calls `preventDefault()` so it does not also submit the task. If no suggestion is highlighted, the form submit path creates the task as before.
+
+A `pointer-fine:hidden` submit button is added at the row's right edge for coarse pointers. It uses the existing `Button` primitive and `Plus` icon, is disabled while the trimmed title is empty, and calls the same form submit path as the keyboard.
+
 ## Risks / Trade-offs
 
 - **Touch users still can't get to the Pomo and Date pickers from the kebab** — those continue to live on the row as visible popover icons. The bottom sheet is **not** a full action menu; it only consolidates the actions that were unreachable (Focus, Delete). → Mitigated by the user's "preserve full functionality" constraint: the existing popover icons are already touch-friendly, so this is by design, not a gap.

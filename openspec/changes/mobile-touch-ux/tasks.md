@@ -32,10 +32,16 @@
 - [x] 6.2 In the `TabsTrigger` render, wrap the label in two `<span>`s: one with `className="hidden sm:inline"` containing `tab.label`, and one with `className="sm:hidden"` containing `tab.shortLabel ?? tab.label`. The `TabsTrigger` itself is unchanged.
 - [x] 6.3 Add a test in `App.test.tsx` (or a new `App.tabs.test.tsx`) that: (a) renders the tabs at default matchMedia (jsdom viewport), (b) asserts the `This Week` trigger's text content includes `This Week`, (c) stubs `matchMedia('(min-width: 640px)')` to return `matches: false` and re-renders, (d) asserts the trigger now reads `Week`. If the existing App tests are not yet set up, a focused unit test on the `tabs` array + a small rendering helper is acceptable.
 
-## 7. Validation
+## 7. AddTaskRow mobile submit
 
-- [ ] 7.1 Run `npm run format` and confirm the diff is empty.
-- [ ] 7.2 Run `npm run typecheck` and confirm zero errors.
-- [ ] 7.3 Run `npm run lint` and confirm zero errors.
-- [ ] 7.4 Run `npm run test` (or `npx vitest run` for a single pass) and confirm the full suite passes, including the new coarse-pointer, sheet, sensor, and tab-label tests.
-- [ ] 7.5 Smoke-render the dev server with Chrome DevTools' device emulation set to an iPhone 12 viewport (390 × 844, `pointer: coarse`): confirm the drag handle is visible, the kebab opens the sheet with Focus/Delete, the tabs read `Today / Tomorrow / Week / Unscheduled` and fit, and the column has `16 px` side gutters. Then switch to a 1280 × 800 desktop viewport (`pointer: fine`): confirm the drag handle is hover-revealed, no kebab is present, the tabs read `Today / Tomorrow / This Week / Unscheduled`, and the column has `28 px` side gutters.
+- [x] 7.1 Wrap `AddTaskRow` in a native form submit path so mobile keyboard submit does not depend on input keydown-only Enter handling.
+- [x] 7.2 Add a coarse-pointer submit button titled `Add task`, disabled for blank input, that uses the same submit path.
+- [x] 7.3 Add tests for native form submit, the mobile submit button, and highlighted typeahead Enter not submitting.
+
+## 8. Validation
+
+- [x] 8.1 Run `npm run format` and confirm the diff is empty.
+- [x] 8.2 Run `npm run typecheck` and confirm zero errors.
+- [x] 8.3 Run `npm run lint` and confirm zero errors.
+- [x] 8.4 Run `npm run test` (or `npx vitest run` for a single pass) and confirm the full suite passes, including the new coarse-pointer, sheet, sensor, tab-label, and AddTaskRow mobile-submit tests.
+- [x] 8.5 Smoke-render the dev server with Chrome DevTools' device emulation set to an iPhone 12 viewport (390 × 844, `pointer: coarse`): confirm the drag handle is visible, the kebab opens the sheet with Focus/Delete, the tabs read `Today / Tomorrow / Week / Unscheduled` and fit, the column has `16 px` side gutters, and AddTaskRow can create a task from the visible submit button. Then switch to a 1280 × 800 desktop viewport (`pointer: fine`): confirm the drag handle is hover-revealed, no kebab is present, the tabs read `Today / Tomorrow / This Week / Unscheduled`, and the column has `28 px` side gutters.

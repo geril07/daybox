@@ -1,4 +1,10 @@
-import { render, screen, cleanup, within } from '@testing-library/react'
+import {
+  render,
+  screen,
+  cleanup,
+  within,
+  fireEvent,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
@@ -35,6 +41,14 @@ function getAddInput(): HTMLInputElement {
   return document.querySelector(
     'input[placeholder^="Add a task"]',
   ) as HTMLInputElement
+}
+
+function getAddForm(): HTMLFormElement {
+  return document.querySelector('.add-task-wrap') as HTMLFormElement
+}
+
+function getAddButton(): HTMLButtonElement {
+  return screen.getByTitle('Add task') as HTMLButtonElement
 }
 
 function getPopoverContent(): HTMLElement | null {
@@ -152,6 +166,38 @@ describe('AddTaskRow', () => {
     expect(isPopoverOpen()).toBe(false)
     expect(document.activeElement).toBe(input)
     expect(useTaskStore.getState().tasks).toHaveLength(0)
+  })
+
+  it('native form submit creates a task', async () => {
+    const user = userEvent.setup()
+    render(<AddTaskRow />)
+    const input = getAddInput()
+    await user.type(input, 'Write report')
+
+    fireEvent.submit(getAddForm())
+
+    const tasks = useTaskStore.getState().tasks
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0]?.title).toBe('Write report')
+    expect(input.value).toBe('')
+  })
+
+  it('renders a coarse-pointer submit button that creates a task', async () => {
+    const user = userEvent.setup()
+    render(<AddTaskRow />)
+    const input = getAddInput()
+    const addButton = getAddButton()
+
+    expect(addButton.className).toContain('pointer-fine:hidden')
+    expect(addButton.disabled).toBe(true)
+
+    await user.type(input, 'Write report')
+    expect(addButton.disabled).toBe(false)
+    await user.click(addButton)
+
+    const tasks = useTaskStore.getState().tasks
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0]?.title).toBe('Write report')
   })
 
   it('Enter with the popover open but no highlight submits the form', async () => {

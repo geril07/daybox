@@ -1,5 +1,5 @@
 import { Plus, ChevronDown } from 'lucide-react'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, type SubmitEvent } from 'react'
 
 import { useGroupStore, type Group } from '@/features/groups'
 import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
@@ -26,34 +26,39 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
   const currentGroup =
     groups.find((g) => g.id === (stickyGroupId || groups[0].id)) || groups[0]
 
-  const handleSubmit = useCallback(() => {
-    const trimmed = title.trim()
-    if (!trimmed) return
+  const handleSubmit = useCallback(
+    (e?: SubmitEvent) => {
+      e?.preventDefault()
 
-    let taskTitle = trimmed
-    let groupId = stickyGroupId || groups[0].id
+      const trimmed = title.trim()
+      if (!trimmed) return
 
-    const hashMatch = trimmed.match(/^(.*?)\s+#(\S+)$/)
-    if (hashMatch) {
-      taskTitle = hashMatch[1] || trimmed
-      const groupName = hashMatch[2]
-      const existingGroup = groups.find(
-        (g) => g.name.toLowerCase() === groupName.toLowerCase(),
-      )
-      if (existingGroup) {
-        groupId = existingGroup.id
-      } else {
-        const newGroup = addGroup(groupName)
-        groupId = newGroup.id
+      let taskTitle = trimmed
+      let groupId = stickyGroupId || groups[0].id
+
+      const hashMatch = trimmed.match(/^(.*?)\s+#(\S+)$/)
+      if (hashMatch) {
+        taskTitle = hashMatch[1] || trimmed
+        const groupName = hashMatch[2]
+        const existingGroup = groups.find(
+          (g) => g.name.toLowerCase() === groupName.toLowerCase(),
+        )
+        if (existingGroup) {
+          groupId = existingGroup.id
+        } else {
+          const newGroup = addGroup(groupName)
+          groupId = newGroup.id
+        }
       }
-    }
 
-    addTask(taskTitle, groupId, defaultDate)
-    setTitle('')
-    setShowTypeahead(false)
-    setHighlightIndex(null)
-    inputRef.current?.focus()
-  }, [title, groups, stickyGroupId, defaultDate, addTask, addGroup])
+      addTask(taskTitle, groupId, defaultDate)
+      setTitle('')
+      setShowTypeahead(false)
+      setHighlightIndex(null)
+      inputRef.current?.focus()
+    },
+    [title, groups, stickyGroupId, defaultDate, addTask, addGroup],
+  )
 
   const typeaheadQuery = title.match(/#(\S*)$/)?.[1] || ''
   const typeaheadMatches = typeaheadQuery
@@ -92,7 +97,6 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
         handleAccept(typeaheadMatches[highlightIndex])
         return
       }
-      handleSubmit()
       return
     }
     if (e.key === 'Escape' && showTypeahead) {
@@ -122,7 +126,10 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
   }
 
   return (
-    <div className="add-task-wrap border-border border-b pt-3.5 pb-1.5">
+    <form
+      className="add-task-wrap border-border border-b pt-3.5 pb-1.5"
+      onSubmit={handleSubmit}
+    >
       <div className="flex items-center gap-2.5">
         <div className="text-muted-foreground border-border-strong flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed transition-[border-color,color] duration-140">
           <Plus size={10} strokeWidth={3} />
@@ -133,7 +140,6 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
           value={title}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          enterKeyHint="go"
           placeholder="Add a task — type #group to assign..."
           className="text-foreground flex-1 border-none bg-transparent py-2 text-sm outline-none"
         />
@@ -144,6 +150,17 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
             onSelect={setStickyGroupId}
           />
         )}
+        <Button
+          type="submit"
+          variant="ghost"
+          size="icon-sm"
+          title="Add task"
+          aria-label="Add task"
+          disabled={!title.trim()}
+          className="pointer-fine:hidden"
+        >
+          <Plus />
+        </Button>
       </div>
       <Popover
         open={showTypeahead}
@@ -167,7 +184,7 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
           />
         </PopoverContent>
       </Popover>
-    </div>
+    </form>
   )
 }
 

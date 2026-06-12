@@ -65,6 +65,32 @@ The mechanism for distinguishing pointer types SHALL be the CSS media query `(po
 - **AND** the handle transitions to `opacity: 1` while the row is hovered
 - **AND** the handle returns to `opacity: 0` when the row is no longer hovered
 
+### Requirement: AddTaskRow submits on coarse pointers
+
+The add-task row SHALL submit through a native form submit path instead of relying solely on an input `keydown` handler for `Enter`. The row SHALL render a coarse-pointer submit button titled `Add task`; the button SHALL be disabled when the trimmed task title is empty and SHALL create a task using the same parsing rules as keyboard submission when the title is non-empty.
+
+When the group typeahead is open and a suggestion is highlighted, pressing Enter SHALL accept the highlighted suggestion and SHALL NOT submit the task. When no suggestion is highlighted, submitting the form SHALL create the task as before, including existing `#group` parsing and group creation behavior.
+
+#### Scenario: Mobile submit button creates a task
+
+- **WHEN** the user types a task title into AddTaskRow on a coarse-pointer device
+- **AND** taps the `Add task` submit button
+- **THEN** the task is created
+- **AND** the input is cleared
+
+#### Scenario: Native form submit creates a task
+
+- **WHEN** the user types a task title into AddTaskRow
+- **AND** the browser dispatches a form submit event for the row
+- **THEN** the task is created using the existing title and `#group` parsing rules
+
+#### Scenario: Highlighted group Enter does not submit
+
+- **WHEN** the group typeahead is open with a highlighted suggestion
+- **AND** the user presses Enter
+- **THEN** the highlighted group is accepted into the input
+- **AND** no task is created
+
 ## MODIFIED Requirements
 
 ### Requirement: User can reorder tasks
