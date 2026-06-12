@@ -118,7 +118,6 @@ export const useTaskStore = create<TaskStore>()(
               )
             }
             const newOrder = new Map(valid.map((id, i) => [id, i] as const))
-            console.log('newOrder :', newOrder)
             return {
               tasks: state.tasks.map((t) =>
                 newOrder.has(t.id)
