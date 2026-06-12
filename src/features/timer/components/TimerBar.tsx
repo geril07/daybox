@@ -215,7 +215,7 @@ export function TimerBar() {
           style={{ width: `${progress * 100}%`, background: phaseColor }}
         />
       </div>
-      <div className="mx-auto flex max-w-[680px] flex-col gap-1 px-7 py-2.5">
+      <div className="mx-auto flex max-w-[680px] flex-col gap-1 px-4 py-2.5 sm:px-7">
         <div>
           <PhaseChip
             label={phaseLabel}

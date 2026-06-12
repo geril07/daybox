@@ -2,7 +2,9 @@ import { Settings } from 'lucide-react'
 import { MotionConfig } from 'motion/react'
 import { useState, useEffect, useRef } from 'react'
 
+import { TabLabel } from '@/app/TabLabel'
 import { migrateLegacyAppStore, migrateLegacySettings } from '@/app/bootstrap'
+import { tabs } from '@/app/plannerTabs'
 import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
 import {
   DayView,
@@ -53,13 +55,6 @@ export function App() {
     settingsMigrationDone.current = true
   }, [])
 
-  const tabs: { label: string; value: View }[] = [
-    { label: 'Today', value: 'today' },
-    { label: 'Tomorrow', value: 'tomorrow' },
-    { label: 'This Week', value: 'week' },
-    { label: 'Unscheduled', value: 'unscheduled' },
-  ]
-
   const renderView = () => {
     switch (view) {
       case 'today':
@@ -78,7 +73,7 @@ export function App() {
   return (
     <div className="app-shell bg-background text-foreground flex min-h-screen flex-col">
       <header className="border-border bg-card sticky top-0 z-30 border-b">
-        <div className="header-top mx-auto flex max-w-[680px] items-center justify-between px-7 py-3.5">
+        <div className="header-top mx-auto flex max-w-[680px] items-center justify-between px-4 py-3.5 sm:px-7">
           <div className="flex items-center gap-2.5">
             <div className="bg-accent flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-xl">
               <svg
@@ -109,7 +104,7 @@ export function App() {
             </Button>
           </div>
         </div>
-        <nav className="header-nav mx-auto flex max-w-[680px] items-center justify-between gap-2 px-7 pb-3">
+        <nav className="header-nav mx-auto flex max-w-[680px] items-center justify-between gap-2 px-4 pb-3 sm:px-7">
           <Tabs
             value={view}
             onValueChange={(v) => setView(v as View)}
@@ -118,7 +113,7 @@ export function App() {
             <TabsList>
               {tabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value}>
-                  {tab.label}
+                  <TabLabel tab={tab} />
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -127,7 +122,7 @@ export function App() {
       </header>
 
       <main className="app-content flex-1">
-        <div className="container mx-auto w-full max-w-[680px] px-7">
+        <div className="container mx-auto w-full max-w-[680px] px-4 sm:px-7">
           <MotionConfig reducedMotion="user">
             <div className="task-list-area py-1 pb-10">
               <AddTaskRow defaultDate={defaultDate} />

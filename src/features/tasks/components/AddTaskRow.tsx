@@ -133,6 +133,7 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
           value={title}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
+          enterKeyHint="go"
           placeholder="Add a task — type #group to assign..."
           className="text-foreground flex-1 border-none bg-transparent py-2 text-sm outline-none"
         />

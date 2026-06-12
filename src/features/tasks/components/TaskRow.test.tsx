@@ -1,12 +1,21 @@
-import { render, screen, cleanup, fireEvent } from '@testing-library/react'
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 import { useGroupStore } from '@/features/groups'
 import { useTimerStore } from '@/features/timer'
+import { installCoarsePointerMatchMediaStub } from '@/test-utils/matchMedia'
 
 import { useTaskStore } from '../store'
 import { TaskRow } from './TaskRow'
+
+let restoreMatchMedia: (() => void) | null = null
 
 beforeEach(() => {
   useTaskStore.setState({ tasks: [] })
@@ -33,6 +42,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  restoreMatchMedia?.()
+  restoreMatchMedia = null
 })
 
 function createMockTask(overrides = {}) {
@@ -63,6 +74,19 @@ function visibleInput(value: string): HTMLInputElement {
     .getAllByDisplayValue(value)
     .filter((el) => (el as HTMLInputElement).type !== 'hidden')
   return matches[0] as HTMLInputElement
+}
+
+function dragHandle(): HTMLElement {
+  return document.querySelector('.cursor-grab') as HTMLElement
+}
+
+function finePointerActions(): HTMLElement {
+  return document.querySelector('[title="Focus"]')?.parentElement as HTMLElement
+}
+
+function coarsePointerActions(): HTMLElement {
+  return document.querySelector('[title="More actions"]')
+    ?.parentElement as HTMLElement
 }
 
 describe('TaskRow', () => {
@@ -131,6 +155,103 @@ describe('TaskRow', () => {
     ) as HTMLButtonElement
     await user.click(focusBtn)
     expect(useTimerStore.getState().focusedTaskId).toBe('test-1')
+  })
+
+  it('keeps the drag handle hidden at rest on fine pointers', () => {
+    render(<TaskRow task={createMockTask()} />)
+    expect(dragHandle().className).toContain('opacity-0')
+    expect(dragHandle().className).toContain('group-hover:opacity-100')
+  })
+
+  it('shows the drag handle at rest on coarse pointers', () => {
+    restoreMatchMedia = installCoarsePointerMatchMediaStub()
+    render(<TaskRow task={createMockTask()} />)
+    expect(dragHandle().className).toContain('pointer-coarse:opacity-100')
+  })
+
+  it('keeps focus and delete query selectors available on fine pointers', () => {
+    render(<TaskRow task={createMockTask()} />)
+    expect(document.querySelector('[title="Focus"]')).toBeTruthy()
+    expect(document.querySelector('[title="Delete"]')).toBeTruthy()
+  })
+
+  it('uses CSS to hide the coarse actions on fine pointers', () => {
+    render(<TaskRow task={createMockTask()} />)
+    expect(screen.getByTitle('More actions')).toBeTruthy()
+    expect(coarsePointerActions().className).toContain('pointer-fine:hidden')
+  })
+
+  it('uses CSS to hide the hover actions on coarse pointers', () => {
+    restoreMatchMedia = installCoarsePointerMatchMediaStub()
+    render(<TaskRow task={createMockTask()} />)
+    expect(screen.getByTitle('More actions')).toBeTruthy()
+    expect(finePointerActions().className).toContain('pointer-coarse:hidden')
+  })
+
+  it('opens a bottom sheet from the coarse-pointer more actions button', async () => {
+    restoreMatchMedia = installCoarsePointerMatchMediaStub()
+    const user = userEvent.setup()
+    const task = createMockTask()
+    render(<TaskRow task={task} />)
+
+    await user.click(screen.getByTitle('More actions'))
+
+    expect(screen.getAllByText('Test Task').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('Focus this task')).toBeTruthy()
+    expect(screen.getAllByText('Delete').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('focuses the task from the action sheet and closes it', async () => {
+    restoreMatchMedia = installCoarsePointerMatchMediaStub()
+    const user = userEvent.setup()
+    const task = createMockTask()
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+
+    await user.click(screen.getByTitle('More actions'))
+    await user.click(screen.getByText('Focus this task'))
+
+    expect(useTimerStore.getState().focusedTaskId).toBe(task.id)
+    await waitFor(() =>
+      expect(screen.queryByText('Focus this task')).toBeNull(),
+    )
+  })
+
+  it('deletes the task from the action sheet and closes it', async () => {
+    restoreMatchMedia = installCoarsePointerMatchMediaStub()
+    const user = userEvent.setup()
+    const task = createMockTask()
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+
+    await user.click(screen.getByTitle('More actions'))
+    await user.click(screen.getAllByText('Delete')[0])
+
+    expect(
+      useTaskStore.getState().tasks.find((t) => t.id === task.id),
+    ).toBeUndefined()
+    await waitFor(() =>
+      expect(screen.queryByText('Focus this task')).toBeNull(),
+    )
+  })
+
+  it('closes the action sheet on Escape without modifying the task', async () => {
+    restoreMatchMedia = installCoarsePointerMatchMediaStub()
+    const user = userEvent.setup()
+    const task = createMockTask()
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+
+    await user.click(screen.getByTitle('More actions'))
+    await user.keyboard('{Escape}')
+
+    expect(
+      useTaskStore.getState().tasks.find((t) => t.id === task.id),
+    ).toBeTruthy()
+    expect(useTimerStore.getState().focusedTaskId).toBeNull()
+    await waitFor(() =>
+      expect(screen.queryByText('Focus this task')).toBeNull(),
+    )
   })
 
   it('renders X/Y text on the pomo trigger when both fields are set', () => {

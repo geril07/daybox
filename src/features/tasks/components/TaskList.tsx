@@ -1,5 +1,5 @@
 import { arrayMove } from '@dnd-kit/helpers'
-import { DragDropProvider } from '@dnd-kit/react'
+import { DragDropProvider, PointerSensor } from '@dnd-kit/react'
 import type { DragEndEvent } from '@dnd-kit/react'
 import { isSortable, useSortable } from '@dnd-kit/react/sortable'
 import { AnimatePresence, motion } from 'motion/react'
@@ -14,6 +14,7 @@ import {
 import { useTaskStore } from '../store'
 import type { Task } from '../types'
 import { TaskRow } from './TaskRow'
+import { taskRowActivationConstraints } from './taskDragSensor'
 
 interface TaskListProps {
   tasks: Task[]
@@ -114,6 +115,11 @@ function SortableTaskRow({
     id: task.id,
     index,
     group: groupKey,
+    sensors: [
+      PointerSensor.configure({
+        activationConstraints: taskRowActivationConstraints,
+      }),
+    ],
   })
 
   return (

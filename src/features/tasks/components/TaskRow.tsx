@@ -1,4 +1,11 @@
-import { Check, Target, Trash2, Calendar, GripVertical } from 'lucide-react'
+import {
+  Check,
+  Target,
+  Trash2,
+  Calendar,
+  GripVertical,
+  MoreHorizontal,
+} from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
 import { useGroupStore } from '@/features/groups'
@@ -15,6 +22,7 @@ import { cn } from '@/shared/utils/cn'
 
 import { useTaskStore } from '../store'
 import type { Task } from '../types'
+import { TaskActionSheet } from './TaskActionSheet'
 
 interface TaskRowProps {
   task: Task
@@ -24,7 +32,7 @@ interface TaskRowProps {
 export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
-  const [hovering, setHovering] = useState(false)
+  const [actionSheetOpen, setActionSheetOpen] = useState(false)
   const editRef = useRef<HTMLInputElement>(null)
   const toggleTask = useTaskStore((s) => s.toggleTask)
   const updateTask = useTaskStore((s) => s.updateTask)
@@ -74,19 +82,14 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   return (
     <div
       className={cn(
-        'transition-background border-border flex min-h-[46px] items-center gap-2.5 rounded border-b px-1.5 py-2 duration-120',
+        'transition-background border-border group flex min-h-[46px] items-center gap-2.5 rounded border-b px-1.5 py-2 duration-120',
         isFocused && 'bg-accent-bg',
         !isFocused && overdue && 'bg-overdue-bg',
       )}
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
     >
       <div
         ref={dragHandleRef}
-        className={cn(
-          'text-muted-foreground shrink-0 cursor-grab p-0.5 transition-opacity duration-120 active:cursor-grabbing',
-          hovering ? 'opacity-100' : 'opacity-0',
-        )}
+        className="text-muted-foreground shrink-0 cursor-grab p-0.5 opacity-0 transition-opacity duration-120 group-hover:opacity-100 active:cursor-grabbing pointer-coarse:opacity-100"
         onClick={(e) => e.stopPropagation()}
       >
         <GripVertical size={12} />
@@ -152,24 +155,41 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       <PomoArea task={task} />
       <DatePickerButton task={task} />
 
-      <div className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 hover:opacity-100">
-        <Button
-          variant="ghostDestructive"
-          size="icon-sm"
-          onClick={() => focusTask(task.id)}
-          title="Focus"
-        >
-          <Target />
-        </Button>
-        <Button
-          variant="ghostDestructive"
-          size="icon-sm"
-          onClick={() => deleteTask(task.id)}
-          title="Delete"
-        >
-          <Trash2 />
-        </Button>
-      </div>
+      <>
+        <div className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 hover:opacity-100 pointer-coarse:hidden">
+          <Button
+            variant="ghostDestructive"
+            size="icon-sm"
+            onClick={() => focusTask(task.id)}
+            title="Focus"
+          >
+            <Target />
+          </Button>
+          <Button
+            variant="ghostDestructive"
+            size="icon-sm"
+            onClick={() => deleteTask(task.id)}
+            title="Delete"
+          >
+            <Trash2 />
+          </Button>
+        </div>
+        <div className="flex shrink-0 items-center gap-0.5 pointer-fine:hidden">
+          <Button
+            variant="ghostDestructive"
+            size="icon-sm"
+            onClick={() => setActionSheetOpen(true)}
+            title="More actions"
+          >
+            <MoreHorizontal />
+          </Button>
+          <TaskActionSheet
+            task={task}
+            open={actionSheetOpen}
+            onOpenChange={setActionSheetOpen}
+          />
+        </div>
+      </>
     </div>
   )
 }
