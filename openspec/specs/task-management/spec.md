@@ -6,7 +6,7 @@ Create, edit, delete, reorder, and complete tasks. Each task has a title, group 
 
 ### Requirement: User can create a task
 
-The system SHALL allow users to create tasks with a title, group assignment, optional date, and optional pomodoro estimate.
+The system SHALL allow users to create tasks with a title, group assignment, optional date, and optional pomodoro estimate. The add-task row SHALL submit through a native form submit path instead of relying solely on an input `keydown` handler for `Enter`.
 
 #### Scenario: Create task via quick-add
 
@@ -17,6 +17,24 @@ The system SHALL allow users to create tasks with a title, group assignment, opt
 
 - **WHEN** user types "Write report #work" in the add-task input
 - **THEN** the task is created with group "work" (created if not exists)
+
+#### Scenario: Native form submit creates a task
+
+- **WHEN** the user types a task title into the add-task input
+- **AND** the browser dispatches a form submit event for the row
+- **THEN** the task is created using the existing title and `#group` parsing rules
+
+#### Scenario: Mobile submit button creates a task
+
+- **WHEN** the user types a task title into the add-task input on a coarse-pointer device
+- **AND** taps the `Add task` submit button
+- **THEN** the task is created
+- **AND** the input is cleared
+
+#### Scenario: Empty mobile submit is disabled
+
+- **WHEN** the add-task input is empty or only whitespace
+- **THEN** the coarse-pointer `Add task` submit button is disabled
 
 ### Requirement: User can edit a task title
 
@@ -60,6 +78,71 @@ The system SHALL allow users to delete a task permanently.
 - **WHEN** user clicks the delete button on a task row
 - **THEN** the task is removed from the store
 
+### Requirement: TaskRow exposes Focus and Delete on coarse pointers
+
+On a device whose primary pointer is coarse (touch), the task row SHALL render a `⋯` (more) button that opens a bottom-side sheet containing a header with the task's title and two action rows: `Focus this task` and `Delete`. On a device whose primary pointer is fine (mouse, trackpad, pen), the row SHALL NOT render the `⋯` button; the existing hover-revealed `Focus` and `Delete` icons SHALL continue to be the only path to those actions.
+
+The sheet's `Focus this task` row SHALL call `useTimerStore.focusTask(task.id)` and then close the sheet. The sheet's `Delete` row SHALL call `useTaskStore.deleteTask(task.id)` and then close the sheet. Both rows SHALL be plain buttons; neither SHALL require a confirmation step. The sheet is the existing `Sheet` primitive at `shared/ui/sheet.tsx` with `side="bottom"`.
+
+The `⋯` button itself SHALL carry `title="More actions"`. The sheet header SHALL be a non-interactive element displaying the task's title; it SHALL NOT be a button.
+
+#### Scenario: Coarse-pointer row shows the kebab
+
+- **WHEN** the user views any task list on a coarse-pointer device
+- **THEN** each `TaskRow` renders a `⋯` button in the action area
+- **AND** the existing hover-revealed `Focus` and `Delete` icons are not rendered
+
+#### Scenario: Fine-pointer row does not show the kebab
+
+- **WHEN** the user views any task list on a fine-pointer device
+- **THEN** no `TaskRow` renders a `⋯` button
+- **AND** the existing hover-revealed `Focus` and `Delete` icons are present and unchanged
+
+#### Scenario: Kebab opens the bottom sheet
+
+- **WHEN** the user taps the `⋯` button on a task row
+- **THEN** a sheet appears at the bottom of the viewport
+- **AND** the sheet's header displays the task's title
+- **AND** the sheet contains exactly two action rows: `Focus this task` and `Delete`
+
+#### Scenario: Sheet Focus row binds the timer
+
+- **WHEN** the sheet is open on a task row and the user taps `Focus this task`
+- **THEN** `useTimerStore.focusTask(task.id)` is called
+- **AND** the sheet closes
+
+#### Scenario: Sheet Delete row removes the task
+
+- **WHEN** the sheet is open on a task row and the user taps `Delete`
+- **THEN** `useTaskStore.deleteTask(task.id)` is called
+- **AND** the sheet closes
+- **AND** the row animates out per the existing delete animation requirement
+
+#### Scenario: Sheet dismisses on Escape
+
+- **WHEN** the sheet is open and the user presses Escape
+- **THEN** the sheet closes
+- **AND** the task is not modified
+
+### Requirement: TaskRow drag handle is visible on coarse pointers
+
+On a device whose primary pointer is coarse, the `TaskRow` drag handle (the `⋮` glyph in a `GripVertical` icon) SHALL be permanently visible. On a fine-pointer device, the existing hover-revealed behavior SHALL be preserved: the handle is `opacity: 0` until the row receives a mouse-enter, at which point it transitions to `opacity: 1`.
+
+The mechanism for distinguishing pointer types SHALL be the CSS media query `(pointer: coarse)` / `(pointer: fine)` via Tailwind v4's `pointer-coarse:` and `pointer-fine:` variants; no JavaScript media-query hook or React state SHALL be required to drive the visibility. The existing `useState(hovering)` / `onMouseEnter` / `onMouseLeave` logic that exists solely to toggle the handle's opacity SHALL be removed.
+
+#### Scenario: Coarse-pointer row shows the drag handle at rest
+
+- **WHEN** the user views a sortable task list on a coarse-pointer device
+- **THEN** the `⋮` handle on every row is fully visible without any user interaction
+- **AND** the row's appearance is identical at rest, after a tap, and after a scroll
+
+#### Scenario: Fine-pointer row hides the handle until hover
+
+- **WHEN** the user views a sortable task list on a fine-pointer device
+- **THEN** the `⋮` handle is `opacity: 0` at rest
+- **AND** the handle transitions to `opacity: 1` while the row is hovered
+- **AND** the handle returns to `opacity: 0` when the row is no longer hovered
+
 ### Requirement: User can reorder tasks
 
 The system SHALL allow users to reorder tasks within a single date bucket by drag-and-drop, and SHALL NOT modify tasks outside that bucket as a side effect of a reorder.
@@ -80,6 +163,8 @@ A **date bucket** is identified by a `date: string | null` key — either a YYYY
 Per-bucket `group` keys SHALL prevent dnd-kit from indicating valid drops across sections (e.g., a Monday row cannot show a drop indicator over the Tuesday list in `WeekView`).
 
 The existing reorder animation behaviour — `flushSync` + `setSnapLayout(true)` + `requestAnimationFrame(() => setSnapLayout(false))` around the `reorderTasks` call — SHALL be preserved so that the dragged row lands without a layout animation.
+
+On a coarse-pointer device, the `useSortable` instance SHALL be configured with a `PointerSensor` whose `activationConstraints` is a function returning `[PointerActivationConstraints.Delay(250, 5)]` when the triggering `PointerEvent` has `pointerType === 'touch'`, and `undefined` (default no-delay behavior) otherwise. The 250 ms press delay SHALL NOT apply to fine-pointer inputs; a mouse drag SHALL begin on the same frame as the mouse press, with no perceptible delay.
 
 #### Scenario: Reorder within a single date bucket
 
@@ -125,6 +210,21 @@ The existing reorder animation behaviour — `flushSync` + `setSnapLayout(true)`
 - **WHEN** `WeekView` renders one `TaskList` per day with each list passing its own `dateStr` as the `date` prop
 - **THEN** each list's `useSortable` calls use distinct `group` keys of the form `tasks:<dateStr>`
 - **AND** dnd-kit does not show a valid-drop indicator when a row from one day is dragged over another day's list
+
+#### Scenario: Touch drag requires a 250 ms press
+
+- **WHEN** the user touches the `⋮` handle on a sortable task row on a coarse-pointer device
+- **AND** releases the touch within 250 ms without exceeding a 5 px movement tolerance
+- **THEN** the drag is not initiated
+- **AND** no `reorderTasks` call results from the gesture
+- **AND** the row's list is unaffected (no snap, no animation)
+
+#### Scenario: Touch drag after the press delay proceeds
+
+- **WHEN** the user touches the `⋮` handle on a sortable task row on a coarse-pointer device
+- **AND** continues pressing for at least 250 ms
+- **THEN** the drag is initiated per dnd-kit's normal behavior
+- **AND** on release over a different position, `useTaskStore.reorderTasks` is called with the resulting order
 
 ### Requirement: User can set pomodoro estimate
 
