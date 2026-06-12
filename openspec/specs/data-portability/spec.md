@@ -1,98 +1,59 @@
 ## Purpose
 
-Define the cross-cutting snapshot/restore mechanics that DayBox uses for backup, restore, and portability: the per-feature `Slice<T>` contract, the canonical v3 envelope, the slice registry, the build/validate/apply pipeline, the v2-to-v3 envelope migration, and the cross-reference check that runs during apply. Behavioural rules for individual features live in their own capability files; this capability only governs the _wire format_ and the orchestrator.
+Define the cross-cutting snapshot/restore mechanics that DayBox uses for backup, restore, and portability: the explicit aggregate snapshot contract, compose-feature-schemas validation, prepare/commit pipeline, version migrations, and snapshot normalization. Behavioural rules for individual features live in their own capability files; this capability only governs the _wire format_ and the orchestrator.
 
 ## Requirements
 
-### Requirement: Features participate in snapshot/restore by exposing a slice
-
-The system SHALL allow each feature that owns a piece of persisted data to expose that data to the snapshot/restore system through a `Slice<T>` value exported from the feature's barrel. A slice is the feature's public contribution to the snapshot envelope: it knows how to read the feature's current state, how to validate incoming data against the feature's schema, and how to apply the validated data back to the feature's store.
-
-A `Slice<T>` SHALL have the shape:
-
-```ts
-interface Slice<T> {
-  name: string // unique key in the envelope
-  schema: ZodType<T> // per-record / per-slice validator
-  export: () => T // read the current state
-  apply: (data: T) => void // write the state
-}
-```
-
-The `Slice<T>` interface is defined in `src/shared/utils/slice.ts` and is imported by every feature that exposes a slice and by the data-portability feature that consumes the slices. A feature that does not participate in snapshot/restore (such as a UI-only feature) is not required to expose a slice.
-
-#### Scenario: A feature exposes a slice
-
-- **WHEN** a feature owns data that is part of the snapshot
-- **THEN** the feature folder contains a `slice.ts` that exports a `Slice<T>` value
-- **AND** the slice is re-exported from the feature's barrel (`index.ts`)
-- **AND** the slice's `name` matches the field name used in the snapshot envelope (e.g. `'tasks'`, `'groups'`, `'timer'`, `'planner'`)
-- **AND** the slice's `schema` is the zod schema that validates a single record (or the slice's full state, if the slice's state is a single object rather than an array of records)
-
-#### Scenario: A feature without persisted data does not expose a slice
-
-- **WHEN** a feature is purely UI-driven or is otherwise stateless
-- **THEN** the feature folder has no `slice.ts`
-- **AND** the feature is simply absent from the snapshot envelope
-- **AND** this is not a violation of any other requirement
-
-#### Scenario: A slice's apply rejects bad data via the schema
-
-- **WHEN** `applySnapshot` runs the slice's schema against the incoming data
-- **AND** the schema returns `success: false`
-- **THEN** the slice's `apply` is NOT called for that field
-- **AND** a warning is added to the apply result naming the dropped field and the validation reason
-- **AND** the other slices are still applied
-
 ### Requirement: The data-portability feature owns the snapshot envelope, registry, and migrations
 
-The system SHALL organise the cross-cutting snapshot/restore logic in a dedicated `data-portability` feature at `src/features/data-portability/`. The data-portability feature SHALL own:
+The system SHALL organise the cross-cutting snapshot/restore logic in a dedicated `data-portability` feature at `src/features/data-portability/`. The data-portability feature SHALL own the app-level snapshot boundary and SHALL separate the import/export pipeline into single-purpose responsibilities:
 
-- The canonical snapshot envelope schema (currently v3, with `version`, `exportedAt`, and one field per registered slice).
-- The version migrations that transform older envelope shapes into the current shape (e.g. v2 → v3).
-- The slice registry that imports each participating feature's slice and exports the canonical ordered list.
-- The `buildSnapshot` function that assembles the current envelope by calling each slice's `export`.
-- The `validateSnapshot` function that parses an incoming JSON string, detects its version, applies any required migrations, and runs the envelope schema.
-- The `applySnapshot` function that runs each slice's schema against its envelope field, calls the slice's `apply` for the valid slices, and performs any required cross-reference checks.
+- The current snapshot version constant and supported-version detection.
+- The canonical current snapshot schema and inferred current snapshot type.
+- JSON parsing and current snapshot parsing helpers.
+- Version migrations that transform supported older envelope shapes into the current shape (e.g. v2 → current).
+- Normalization of repairable domain invariants on typed current snapshots.
+- The `buildSnapshot` function that assembles the current snapshot from feature stores.
+- The preparation function that parses, migrates, validates, and normalizes an import without mutating stores.
+- The commit function that writes a `PreparedSnapshot` to feature stores.
 
-The data-portability feature SHALL NOT import from `src/app/*`. It MAY import from the barrels of other features (to read their slices) and from `src/shared/*` (for the `Slice<T>` interface, the `downloadAsFile` helper, and external packages).
+The data-portability feature SHALL NOT import from `src/app/*`. It MAY import from the barrels of other features and from `src/shared/*` because it is the explicit cross-cutting app snapshot boundary.
 
 The data-portability feature has no UI of its own. Its public surface is the functions and types in its barrel.
 
-#### Scenario: The registry imports each participating feature's slice
+#### Scenario: The pipeline has separated stages
 
-- **WHEN** the data-portability feature is initialised
-- **THEN** its `registry.ts` imports the slice from `@/features/tasks`, `@/features/groups`, `@/features/timer`, and `@/features/planner`
-- **AND** exports a `slices` array whose order is canonical (used as the iteration order for build, validate, and apply)
-- **AND** a feature that wants to participate in snapshot/restore is added by importing its slice into `registry.ts` and adding it to the array
+- **WHEN** data-portability prepares an import
+- **THEN** JSON parsing, version detection, migration, current snapshot parsing, normalization, and commit are implemented as separate stages with narrow responsibilities
+- **AND** store mutation happens only in the commit stage
 
-#### Scenario: The envelope schema defines the v3 shape
+#### Scenario: The envelope schema defines the current shape
 
-- **WHEN** `validateSnapshot` runs the envelope schema against a parsed JSON object
-- **THEN** the schema requires `version: literal(3)`, `exportedAt: string`, and one field per registered slice (currently `tasks`, `groups`, `timer`, `planner`)
-- **AND** the schema does NOT require a `theme` field — theme is intentionally excluded from the snapshot (each device keeps its own theme)
-- **AND** the schema MAY still accept an incoming `theme` field silently (backward compatibility with files exported by an earlier version) but the apply function does NOT use it
+- **WHEN** data-portability parses a current snapshot
+- **THEN** the schema requires `version: literal(CURRENT_SNAPSHOT_VERSION)`, `exportedAt: string`, and the current feature fields `tasks`, `groups`, `timer`, and `planner`
+- **AND** the schema validates the full payloads for those fields using feature-owned schemas
+- **AND** the schema does NOT require a `theme` field because theme is intentionally excluded from the snapshot
 
-#### Scenario: The v2 envelope is migrated to v3
+#### Scenario: The v2 envelope is migrated to current
 
-- **WHEN** `validateSnapshot` receives a JSON string with `version: 2`
-- **THEN** the v2-to-v3 migration function transforms the v2 shape into the v3 shape
+- **WHEN** preparation receives a JSON string with `version: 2`
+- **THEN** the v2-to-current migration function transforms the v2 shape into the current shape
 - **AND** `settings.timer` is lifted to the top-level `timer` field
 - **AND** `settings.weekStartDay` and a fresh `browseDate: null` are combined into the top-level `planner` field
-- **AND** `settings.theme` is dropped (not carried into v3)
-- **AND** `version` is set to `3` and `exportedAt` is filled in if missing
-- **AND** the resulting object is then validated by the v3 envelope schema
+- **AND** `settings.theme` is dropped
+- **AND** `version` is set to `CURRENT_SNAPSHOT_VERSION` and `exportedAt` is filled in if missing
+- **AND** the resulting value is then parsed by the current snapshot schema
 
 ### Requirement: `buildSnapshot` assembles the current envelope
 
-The system SHALL provide a `buildSnapshot` function in the data-portability feature that reads the current state of every registered slice and returns an object that conforms to the v3 envelope schema. The returned object SHALL be a plain JavaScript object (not a string); callers are responsible for serialising it.
+The system SHALL provide a `buildSnapshot` function in the data-portability feature that reads the current state needed for the app-level snapshot and returns a typed current snapshot object. The returned object SHALL be a plain JavaScript object, not a string; callers are responsible for serialising it.
 
-#### Scenario: Building a snapshot includes every registered slice
+#### Scenario: Building a snapshot includes every current snapshot field
 
 - **WHEN** `buildSnapshot` is called
-- **THEN** the returned object has `version: 3` and `exportedAt: <current ISO string>`
-- **AND** for each slice in the registry, the slice's `export()` is called and the result is stored under the slice's `name`
-- **AND** the order of fields in the returned object follows the order of slices in the registry
+- **THEN** the returned object has `version: CURRENT_SNAPSHOT_VERSION` and `exportedAt: <current ISO string>`
+- **AND** it includes `tasks`, `groups`, `timer`, and `planner` fields populated from their owning stores
+- **AND** TypeScript can represent the returned value as the current snapshot type rather than only `Record<string, unknown>`
 
 #### Scenario: Building a snapshot does not include the theme
 
@@ -100,84 +61,111 @@ The system SHALL provide a `buildSnapshot` function in the data-portability feat
 - **THEN** the returned object has no `theme` field
 - **AND** the user's theme preference is left untouched by the build
 
-### Requirement: `validateSnapshot` parses and validates an incoming snapshot
+### Requirement: Current snapshot composes feature-owned schemas
 
-The system SHALL provide a `validateSnapshot(json: string)` function that parses a JSON string, detects its version, applies any required version migrations, and runs the envelope schema. The function SHALL return a discriminated result:
+The system SHALL define a current snapshot schema in data-portability that composes the zod schemas owned by participating features. The current snapshot schema SHALL validate the full current restorable app snapshot, including `version`, `exportedAt`, `tasks`, `groups`, `timer`, and `planner`. The data-portability feature owns the aggregate wire contract; individual features continue to own their local schemas and types.
 
-```ts
-type ParseResult =
-  | { ok: true; data: Record<string, unknown>; warnings?: string[] }
-  | { ok: false; reason: string }
-```
+#### Scenario: Current snapshot validates full payloads
 
-A `ParseResult` with `ok: false` means the envelope is structurally invalid and `applySnapshot` MUST NOT be called. A `ParseResult` with `ok: true` means the envelope is valid; `applySnapshot` is then called with `result.data` to write to the stores.
+- **WHEN** a current snapshot contains invalid task, group, timer, or planner data
+- **THEN** parsing the current snapshot fails
+- **AND** the import is not eligible to be committed to stores
 
-#### Scenario: A valid v3 snapshot passes validation
+#### Scenario: Feature schemas remain source of truth
 
-- **WHEN** `validateSnapshot` receives a JSON string with `version: 3` and the four required fields present
-- **THEN** the result is `{ ok: true, data: <envelope object> }`
+- **WHEN** data-portability defines the current snapshot schema
+- **THEN** it composes `TaskSchema`, `GroupSchema`, `TimerSettingsSchema`, and `PlannerStateSchema`
+- **AND** it does not duplicate those feature-owned shape definitions by hand
 
-#### Scenario: A v2 snapshot is migrated and passes validation
+### Requirement: Current snapshot validates aggregate identifiers
 
-- **WHEN** `validateSnapshot` receives a JSON string with `version: 2` and the v2 shape
-- **THEN** the v2-to-v3 migration runs and the result is a v3 envelope
-- **AND** the result is `{ ok: true, data: <migrated v3 envelope> }`
+The system SHALL reject current snapshot payloads whose individually valid records do not form a safe aggregate. Snapshot parsing SHALL require unique task ids, unique group ids, and no duplicate canonical default group. These checks happen before normalization and before a `PreparedSnapshot` can be created.
 
-#### Scenario: A malformed JSON string is rejected
+#### Scenario: Duplicate task ids reject import preparation
 
-- **WHEN** `validateSnapshot` receives a string that is not valid JSON
-- **THEN** the result is `{ ok: false, reason: 'Corrupted file. Could not parse JSON.' }`
+- **WHEN** `prepareSnapshotImport` receives a current snapshot with two tasks that share the same `id`
+- **THEN** preparation returns `{ ok: false, reason: <message> }`
+- **AND** no store state is modified
 
-#### Scenario: An envelope with the wrong version is rejected
+#### Scenario: Duplicate group ids reject import preparation
 
-- **WHEN** `validateSnapshot` receives a JSON string with `version: 1` (or no version)
-- **THEN** the result is `{ ok: false, reason: 'Not a DayBox export file.' }`
+- **WHEN** `prepareSnapshotImport` receives a current snapshot with two groups that share the same `id`
+- **THEN** preparation returns `{ ok: false, reason: <message> }`
+- **AND** no store state is modified
 
-#### Scenario: A v3 envelope missing a required field is rejected
+#### Scenario: Duplicate default groups reject import preparation
 
-- **WHEN** `validateSnapshot` receives a JSON string with `version: 3` but missing one of the registered slice fields
-- **THEN** the result is `{ ok: false, reason: 'Not a DayBox export file.' }`
+- **WHEN** `prepareSnapshotImport` receives a current snapshot with more than one group whose `id` is the canonical default-group id
+- **THEN** preparation returns `{ ok: false, reason: <message> }`
+- **AND** normalization does not attempt to choose between the duplicate defaults
 
-### Requirement: `applySnapshot` writes to the stores and runs cross-reference checks
+### Requirement: Supported snapshot versions are explicit
 
-The system SHALL provide an `applySnapshot(data: unknown)` function in the data-portability feature that writes the validated envelope data back to the feature stores. The function SHALL iterate the registered slices, run each slice's `schema.safeParse` against its envelope field, call the slice's `apply` for each successful parse, and accumulate warnings for each dropped field. After all slices are applied, the function SHALL perform any cross-reference checks (currently: every task's `groupId` references an existing group; if not, the task is reassigned to the default group).
+The system SHALL define the current snapshot version separately from the list of supported import versions. Version detection SHALL use the supported-version list, and migrations SHALL handle supported legacy versions explicitly before current snapshot parsing. When a future current version is introduced, the code SHALL require an explicit decision about whether the previous version remains supported through migration.
 
-```ts
-type ApplyResult =
-  | { ok: true; warnings?: string[] }
-  | { ok: false; reason: string }
-```
+#### Scenario: Supported legacy version is accepted for migration
 
-#### Scenario: A clean apply has no warnings
+- **WHEN** `prepareSnapshotImport` receives a snapshot with `version: 2`
+- **THEN** version detection accepts it as a supported legacy version
+- **AND** migration converts it to the current snapshot version before current parsing
 
-- **WHEN** `applySnapshot` is called with a valid envelope whose cross-references are intact
-- **THEN** each slice's `apply` is called once
-- **AND** the result is `{ ok: true }` with no warnings
+#### Scenario: Unsupported version is rejected before parsing current payload
 
-#### Scenario: A dropped slice field generates a warning
+- **WHEN** `prepareSnapshotImport` receives a snapshot with a version not listed in supported versions
+- **THEN** preparation returns `{ ok: false, reason: 'Not a DayBox export file.' }`
+- **AND** no current snapshot parsing or store mutation occurs
 
-- **WHEN** `applySnapshot` is called and one slice's `schema.safeParse` returns `success: false`
-- **THEN** the failed slice's `apply` is NOT called
-- **AND** a warning is added to the result naming the slice and the validation reason
-- **AND** the other slices' `apply` functions are still called
+### Requirement: Snapshot import is prepared before commit
 
-#### Scenario: A dangling task.groupId is reassigned to the default group
+The system SHALL split snapshot import into a preparation phase and a commit phase. Preparation SHALL parse JSON, detect the snapshot version, migrate supported old versions to the current shape, parse the current snapshot, normalize repairable domain invariants, and return a `PreparedSnapshot` plus warnings. Preparation SHALL NOT mutate feature stores. Commit SHALL accept a `PreparedSnapshot` and apply it to feature stores. `PreparedSnapshot` SHALL be a distinct TypeScript type from `CurrentSnapshot` so callers cannot accidentally commit a current snapshot that has not passed through normalization.
 
-- **WHEN** `applySnapshot` is called and a task references a groupId that does not exist in the imported groups
-- **THEN** the task is reassigned to the canonical default-group id
-- **AND** a warning is added to the result naming the dangling groupId
+#### Scenario: Preparing a valid import does not mutate stores
 
-#### Scenario: Apply is not called when validation has failed
+- **WHEN** `prepareSnapshotImport` receives a valid import JSON string
+- **THEN** it returns `{ ok: true, snapshot: <prepared snapshot> }` with optional warnings
+- **AND** no feature store is modified before `commitSnapshotImport` is called
 
-- **WHEN** `validateSnapshot` returns `{ ok: false, ... }`
-- **THEN** the caller MUST NOT call `applySnapshot`
+#### Scenario: Committing a prepared import mutates stores
+
+- **WHEN** `commitSnapshotImport` receives a `PreparedSnapshot`
+- **THEN** it writes the snapshot's tasks, groups, timer settings, and planner state to their owning stores
+- **AND** it does not parse JSON, run migrations, or perform normalization
+
+#### Scenario: Unprepared snapshots cannot be committed directly
+
+- **WHEN** application code has a `CurrentSnapshot` value returned by the current snapshot parser
+- **THEN** TypeScript does not allow that value to be passed directly to `commitSnapshotImport`
+- **AND** the value must first pass through snapshot normalization to become a `PreparedSnapshot`
+
+#### Scenario: Invalid current payload rejects whole import
+
+- **WHEN** a snapshot has the current version and required fields but one feature payload fails its schema
+- **THEN** `prepareSnapshotImport` returns `{ ok: false, reason: <message> }`
+- **AND** `commitSnapshotImport` is not called
 - **AND** no feature store is modified
 
-### Requirement: The data-portability feature exposes a browser download helper
+### Requirement: Snapshot normalization repairs known invariants before commit
 
-The system SHALL expose a `downloadAsFile(content: string, filename: string)` function as part of the data-portability feature's public surface. The function SHALL create a `Blob` from `content`, generate an object URL, trigger a download with the given `filename`, and revoke the object URL. The function is a thin browser-API wrapper used by the file-based Export flow.
+The system SHALL normalize repairable domain invariants after current snapshot parsing and before commit. Normalization SHALL accept a typed current snapshot and return a `PreparedSnapshot`; it MAY return warnings describing repairs. The current repairable invariants are group fallback safety and task-to-group references: the prepared snapshot's groups SHALL include the canonical default group, and every prepared task's `groupId` SHALL reference a group in the prepared snapshot. Dangling task group ids are replaced with the canonical default group id.
 
-#### Scenario: A JSON string is downloaded as a file
+#### Scenario: Dangling task group is repaired during preparation
 
-- **WHEN** `downloadAsFile('{"hello":"world"}', 'daybox.json')` is called in a browser
-- **THEN** the browser triggers a download of a file named `daybox.json` with the given content as its body
+- **WHEN** `prepareSnapshotImport` receives a snapshot with valid tasks and groups, but a task references a missing group id
+- **THEN** preparation returns an ok result whose snapshot has that task's `groupId` set to the canonical default group id
+- **AND** the result includes a warning naming the dangling group id
+- **AND** no store is modified until the prepared snapshot is committed
+
+#### Scenario: Missing default group is repaired during preparation
+
+- **WHEN** `prepareSnapshotImport` receives a snapshot whose groups do not include the canonical default group id
+- **THEN** preparation returns an ok result whose snapshot includes a valid default group
+- **AND** tasks that need fallback reassignment can point at an existing default group
+- **AND** the result includes a warning that the default group was restored
+
+#### Scenario: Normalization is not a store mutation step
+
+- **WHEN** normalization repairs a current snapshot
+- **THEN** it returns a prepared snapshot value
+- **AND** it does not call any feature store setter or action
+
+

@@ -41,34 +41,44 @@ The system SHALL save tasks, groups, timer state, planner preferences, and theme
 
 ### Requirement: User can export data as JSON
 
-The system SHALL allow users to download all app data (tasks, groups, timer state, planner preferences, theme) as a JSON file with `version: 3`. View state and timer runtime state SHALL NOT be included in the export.
+The system SHALL allow users to download all restorable DayBox snapshot data as a JSON file with the current snapshot version. The snapshot SHALL include tasks, groups, timer settings, and planner preferences. View state, timer runtime state, Google Drive auth state, and theme SHALL NOT be included in the export.
 
 #### Scenario: Export data
 
 - **WHEN** user clicks "Export" in settings
-- **THEN** a JSON file (`daybox-export.json`) is downloaded with `version: 3` and the five sections `tasks`, `groups`, `timer`, `planner`, `theme`
+- **THEN** a JSON file (`daybox-export.json`) is downloaded with `version: CURRENT_SNAPSHOT_VERSION`
+- **AND** the file includes the sections `tasks`, `groups`, `timer`, and `planner`
+- **AND** the file does not include `theme`
 
 ### Requirement: User can import data from JSON
 
-The system SHALL allow users to upload a previously exported JSON file to restore data into the five persisted stores. The import MUST accept files with `version: 2` (legacy single-settings shape) and `version: 3` (current five-key shape).
+The system SHALL allow users to upload a previously exported JSON file to restore snapshot data into the owning stores. The import MUST accept supported legacy files with `version: 2` and current files with `CURRENT_SNAPSHOT_VERSION`. Import preparation SHALL parse, migrate, validate, and normalize the snapshot without mutating stores. Import commit SHALL replace the restorable stores only after preparation succeeds and the user confirms replacement.
 
-#### Scenario: Import v3 data
+#### Scenario: Import current data
 
-- **WHEN** user selects a `version: 3` JSON file via the "Import" button in settings
-- **THEN** all five persisted stores are replaced with the imported data
+- **WHEN** user selects a current-version JSON file via the "Import" button in settings
+- **THEN** the file is prepared through data-portability without mutating stores
+- **AND** after the user confirms replacement, tasks, groups, timer settings, and planner preferences are replaced with the prepared snapshot data
+- **AND** theme is left unchanged
 
 #### Scenario: Import v2 data
 
 - **WHEN** user selects a `version: 2` JSON file via the "Import" button in settings
-- **THEN** `tasks` and `groups` are restored as-is
-- **AND** `settings.timer` is written to the timer's settings slice
-- **AND** `settings.weekStartDay` is written to the planner store
-- **AND** `settings.theme` is written to the theme store
+- **THEN** the file is migrated to the current snapshot shape during preparation
+- **AND** `tasks` and `groups` are restored from the migrated snapshot after commit
+- **AND** `settings.timer` is written to the timer settings after commit
+- **AND** `settings.weekStartDay` and `browseDate: null` are combined into the top-level `planner` field after commit
+- **AND** `settings.theme` is dropped and the local theme is left unchanged
 
-#### Scenario: Import confirms before overwriting
+#### Scenario: Import confirms before committing
 
 - **WHEN** user clicks "Import"
 - **THEN** a confirmation dialog warns that current data will be replaced
+
+#### Scenario: Import cancellation preserves local data
+
+- **WHEN** user selects a JSON file that prepares successfully and then cancels the confirmation dialog
+- **THEN** no store state is modified
 
 ### Requirement: One-shot migration from single store
 
@@ -103,30 +113,39 @@ The system SHALL migrate existing localStorage data from the intermediate `daybo
 
 ### Requirement: Import applies a per-layer validation policy
 
-The system SHALL validate every imported export JSON through a per-layer policy: envelope hard-fail, per-record warn+skip, cross-reference warn+reassign, optional-field coerce. The full policy is defined in the `data-validation` capability. `parseImport` SHALL return `{ success: false, error }` on envelope failure, and `{ success: true, data, warnings? }` otherwise. `warnings` SHALL be present whenever any record was dropped or any reference was reassigned.
+The system SHALL prepare imported snapshot JSON through the data-portability pipeline. Envelope failures and current snapshot payload failures SHALL reject the whole import. Repairable cross-reference failures SHALL be normalized before commit and returned as warnings. Prepared imports SHALL be committed all-or-nothing; the app SHALL NOT partially apply valid snapshot sections when another current snapshot section is invalid.
 
-#### Scenario: v3 import with a malformed task
+#### Scenario: Current import with a malformed task is rejected
 
-- **WHEN** a user imports a v3 file containing 10 valid tasks and 1 task missing its `id`
-- **THEN** the result is `{ success: true, data: { tasks: <10 valid tasks>, ... } }`
-- **AND** `warnings` contains a reason naming the dropped task
+- **WHEN** a user imports a current snapshot containing 10 valid tasks and 1 task missing its `id`
+- **THEN** preparation returns `{ ok: false, reason: <message> }`
+- **AND** no task, group, timer, or planner data is committed
 
-#### Scenario: v3 import with a dangling groupId
+#### Scenario: Current import with duplicate ids is rejected
 
-- **WHEN** a user imports a v3 file where task T points at group G that does not exist
-- **THEN** task T is imported with `groupId: 'default'`
+- **WHEN** a user imports a current snapshot whose tasks or groups contain duplicate `id` values
+- **THEN** preparation returns `{ ok: false, reason: <message> }`
+- **AND** no task, group, timer, or planner data is committed
+
+#### Scenario: Current import with a dangling groupId is normalized
+
+- **WHEN** a user imports a current snapshot where task T points at group G that does not exist
+- **THEN** preparation returns `{ ok: true, snapshot: <prepared snapshot>, warnings: [...] }`
+- **AND** task T is prepared with `groupId: DEFAULT_GROUP_ID`
 - **AND** `warnings` notes the dangling reference
+- **AND** no store state is modified until the prepared snapshot is committed
 
-#### Scenario: v3 import with an unrecognized theme
+#### Scenario: Current import missing default group is normalized
 
-- **WHEN** a user imports a v3 file with `theme: 'sepia'`
-- **THEN** the imported theme is `'light'` (default)
-- **AND** no warning is added (optional-layer coercion is silent)
+- **WHEN** a user imports a current snapshot whose groups do not include the canonical default group
+- **THEN** preparation returns `{ ok: true, snapshot: <prepared snapshot>, warnings: [...] }`
+- **AND** the prepared snapshot includes a valid default group
+- **AND** `warnings` notes that the default group was restored
 
 #### Scenario: Envelope failure rejects the import
 
 - **WHEN** a user imports a JSON file missing the `version` field
-- **THEN** the result is `{ success: false, error: 'Not a DayBox export file.' }`
+- **THEN** the result is `{ ok: false, reason: 'Not a DayBox export file.' }`
 - **AND** no store state is modified
 
 ### Requirement: Persist rehydration validates and falls back

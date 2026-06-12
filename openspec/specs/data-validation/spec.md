@@ -30,40 +30,46 @@ The system SHALL define each persisted shape once as a zod schema co-located wit
 
 ### Requirement: Per-layer validation policy
 
-The system SHALL route `safeParse` failures through one of five layers, each with an explicit policy:
+The system SHALL route validation failures according to the layer that owns the failure. Snapshot import SHALL use whole-snapshot current validation after migration: invalid current snapshot payloads hard-fail the import and do not mutate stores. Legacy one-shot localStorage migrations MAY still use record-level warn-and-skip behavior where explicitly specified by their owning requirement. Rehydration SHALL continue to reset affected stores on persisted-blob failure.
 
-| Layer     | Trigger                                                         | Policy                                                          |
-| --------- | --------------------------------------------------------------- | --------------------------------------------------------------- |
-| envelope  | Top-level shape (version present, object root, required arrays) | hard fail: return `{ success: false, error }`                   |
-| record    | Per-row shape (Task, Group)                                     | warn + skip: append reason to `warnings[]`, drop the row        |
-| reference | Cross-row pointers (task.groupId → group.id)                    | warn + reassign to default group, append reason to `warnings[]` |
-| optional  | Optional / derived fields (browseDate, theme, alarmVolume)      | coerce to schema default                                        |
-| rehydrate | zustand persist rehydration on app load                         | reset affected store to initial state, log `console.warn` once  |
+| Layer            | Trigger                                                                    | Policy                                                                |
+| ---------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| envelope         | JSON root, version, supported envelope shape                               | hard fail: return `{ ok: false, reason }`                             |
+| current snapshot | Current typed snapshot payload and aggregate id invariants after migration | hard fail: return `{ ok: false, reason }`                             |
+| normalization    | Repairable cross-snapshot invariants, e.g. task.groupId                    | return repaired `PreparedSnapshot` plus warnings                      |
+| legacy record    | Per-row shape during explicitly legacy migrations only                     | warn + skip: append reason to warnings/logs, drop the row             |
+| optional legacy  | Optional / derived fields in explicitly legacy migrations only             | coerce to schema default when the migration requirement says to do so |
+| rehydrate        | zustand persist rehydration on app load                                    | reset affected store to initial state, log `console.warn` once        |
 
-A single helper `safeParseAndRoute({ value, schema, layer })` SHALL implement the routing. The policy table SHALL be encoded in that helper, not duplicated at call sites.
+The shared `safeParseAndRoute` helper MAY continue to implement legacy migration and rehydration routing where used. The current snapshot import pipeline SHALL NOT depend on per-record salvage as its default behavior.
 
 #### Scenario: Envelope failure hard-fails the import
 
-- **WHEN** `parseImport` receives a JSON file missing the `version` field
-- **THEN** the result is `{ success: false, error: 'Not a DayBox export file.' }`
+- **WHEN** `prepareSnapshotImport` receives a JSON file missing the `version` field
+- **THEN** the result is `{ ok: false, reason: 'Not a DayBox export file.' }`
+- **AND** no store state is modified
 
-#### Scenario: Record failure is reported as a warning
+#### Scenario: Current snapshot payload failure hard-fails the import
 
-- **WHEN** `parseImport` receives a v3 export where one task is missing its `id` field
-- **THEN** the result is `{ success: true, warnings: [...], data: { tasks: [<valid tasks>], ... } }`
-- **AND** the warnings array includes a reason identifying the dropped task
+- **WHEN** `prepareSnapshotImport` receives a current snapshot where one task is missing its `id` field
+- **THEN** the result is `{ ok: false, reason: <message> }`
+- **AND** the valid parts of the snapshot are not partially committed
+- **AND** no store state is modified
 
-#### Scenario: Reference failure reassigns to the default group
+#### Scenario: Current snapshot aggregate failure hard-fails the import
 
-- **WHEN** `parseImport` receives an export where a task's `groupId` does not match any group
-- **THEN** the task is imported with `groupId: 'default'`
+- **WHEN** `prepareSnapshotImport` receives a current snapshot whose records pass their local schemas but contain duplicate task ids or duplicate group ids
+- **THEN** the result is `{ ok: false, reason: <message> }`
+- **AND** the snapshot is not normalized or committed
+- **AND** no store state is modified
+
+#### Scenario: Reference failure is repaired during normalization
+
+- **WHEN** `prepareSnapshotImport` receives a current snapshot where a task's `groupId` does not match any imported group
+- **THEN** preparation returns an ok result with a `PreparedSnapshot`
+- **AND** the task's `groupId` is reassigned to the canonical default group id
 - **AND** the warnings array notes the dangling reference
-
-#### Scenario: Optional field invalid coerces to default
-
-- **WHEN** `parseImport` receives an export with `theme: 'sepia'`
-- **THEN** the imported theme is `'light'`
-- **AND** no warning is added (the optional-field layer is silent)
+- **AND** no store state is modified until commit
 
 #### Scenario: Rehydration failure resets the affected store
 
