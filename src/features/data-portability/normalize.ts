@@ -23,7 +23,7 @@ function createDefaultGroup(): Group {
   }
 }
 
-export function normalizeSnapshot(
+export function normalizeCrossSliceInvariants(
   snapshot: CurrentSnapshot,
 ): NormalizeSnapshotResult {
   const warnings: string[] = []

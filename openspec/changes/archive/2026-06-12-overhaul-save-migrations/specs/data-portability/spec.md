@@ -127,6 +127,8 @@ The system SHALL split snapshot import into a preparation phase and a commit pha
 
 The system SHALL normalize repairable cross-slice domain invariants after all slices prepare successfully and before commit. Normalization SHALL accept prepared current slice values and return a `PreparedSnapshot`; it MAY return warnings describing repairs. The current repairable invariants are group fallback safety and task-to-group references: the prepared groups slice SHALL include the canonical default group, and every prepared task's `groupId` SHALL reference a group in the prepared groups slice. Dangling task group ids are replaced with the canonical default group id.
 
+The normalizer SHOULD be named to reflect this ownership boundary, for example `normalizeCrossSliceInvariants`, because feature-owned `prepareImport` functions own slice-local shape validation and migrations while data-portability owns relationships between prepared slices.
+
 #### Scenario: Dangling task group is repaired during preparation
 
 - **WHEN** `prepareSnapshotImport` receives a save snapshot with valid tasks and groups, but a task references a missing group id
@@ -160,6 +162,13 @@ The system SHALL represent each save-participating feature as a save slice. A sa
 - **WHEN** a feature defines a historical slice schema
 - **THEN** the schema models the data that DayBox may have actually saved for that slice version
 - **AND** the schema does not import a future/current feature schema that could make old save files fail before migration
+
+#### Scenario: Current feature schemas alias latest versioned schemas
+
+- **WHEN** a feature defines its current public schema (for example `TaskSchema`)
+- **THEN** the schema entrypoint aliases the latest versioned feature schema (for example `TaskV1Schema`)
+- **AND** save slice version schemas import the frozen versioned feature schema for their own version instead of copy-pasting entity shapes
+- **AND** adding a future feature schema version updates the current alias without changing older save slice schemas
 
 #### Scenario: Missing slice policy controls imports from older files
 

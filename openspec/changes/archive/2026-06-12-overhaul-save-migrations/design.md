@@ -173,6 +173,21 @@ current schema:
 
 This prevents old files from failing before the owning feature has a chance to migrate them.
 
+Feature entity schemas SHALL use the same versioned structure. The current public schema remains available through the existing feature `schema.ts` entrypoint, but that file aliases the latest versioned schema instead of owning the shape directly.
+
+```txt
+src/features/tasks/schema/v1.ts
+  TaskV1Schema
+
+src/features/tasks/schema.ts
+  TaskSchema = TaskV1Schema
+
+src/features/tasks/save/versions/v1.ts
+  TasksSaveSliceV1Schema uses TaskV1Schema
+```
+
+When a future `TaskV2Schema` is introduced, `TaskSchema` can point at v2 while save v1 continues importing `TaskV1Schema`.
+
 ### 8. Cross-slice validation stays central
 
 Features validate their own shape. Data-portability validates relationships between slices.
@@ -185,6 +200,8 @@ default group must exist or be restored
 ```
 
 Future rules can be added centrally if a slice references another slice.
+
+The central function SHOULD be named for this boundary, e.g. `normalizeCrossSliceInvariants`, rather than a generic `normalizeSnapshot`, so it is clear that feature-owned slice preparation handles local shape/migration and data-portability handles relationships between prepared slices.
 
 ### 9. Commit remains all-or-nothing
 

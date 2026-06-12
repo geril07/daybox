@@ -1,6 +1,6 @@
 import { parseSaveEnvelope, type SaveEnvelope } from './envelope'
 import { adaptLegacySnapshot } from './legacy'
-import { normalizeSnapshot } from './normalize'
+import { normalizeCrossSliceInvariants } from './normalize'
 import { parseJson } from './parse'
 import { saveSlices } from './registry'
 import type { CurrentSnapshot, PreparedSnapshot } from './schema'
@@ -23,7 +23,7 @@ export function prepareSnapshotImport(
   const current = prepareSlices(envelope.envelope)
   if (!current.ok) return current
 
-  const normalized = normalizeSnapshot(current.snapshot)
+  const normalized = normalizeCrossSliceInvariants(current.snapshot)
   if (!normalized.ok) return normalized
 
   const warnings = [...(current.warnings ?? []), ...(normalized.warnings ?? [])]

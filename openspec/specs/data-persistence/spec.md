@@ -1,6 +1,6 @@
 ## Purpose
 
-Persist all user data (tasks, groups, timer configuration, planner preferences, and theme) to localStorage across five independent keys, and provide export/import as JSON files for manual backup. Timer runtime state is ephemeral and not persisted.
+Persist all user data (tasks, groups, timer runtime/configuration, planner preferences, and theme) to localStorage across five independent keys, and provide export/import as JSON files for manual backup. Timer runtime state is persisted locally for reload recovery but is excluded from save snapshots.
 
 ## Requirements
 
@@ -41,33 +41,42 @@ The system SHALL save tasks, groups, timer state, planner preferences, and theme
 
 ### Requirement: User can export data as JSON
 
-The system SHALL allow users to download all restorable DayBox snapshot data as a JSON file with the current snapshot version. The snapshot SHALL include tasks, groups, timer settings, and planner preferences. View state, timer runtime state, Google Drive auth state, and theme SHALL NOT be included in the export.
+The system SHALL allow users to download all restorable DayBox save snapshot data as a JSON file using the current save envelope. The snapshot SHALL include feature-owned slices for tasks, groups, timer settings, and planner preferences. View state, timer runtime state, Google Drive auth state, and theme SHALL NOT be included in the export.
 
 #### Scenario: Export data
 
 - **WHEN** user clicks "Export" in settings
-- **THEN** a JSON file (`daybox-export.json`) is downloaded with `version: CURRENT_SNAPSHOT_VERSION`
-- **AND** the file includes the sections `tasks`, `groups`, `timer`, and `planner`
+- **THEN** a JSON file (`daybox-export.json`) is downloaded with `envelopeVersion: 1`
+- **AND** the file includes `exportedAt` and a nested `slices` object
+- **AND** the `slices` object includes `tasks`, `groups`, `timerSettings`, and `planner`
+- **AND** the file does not include top-level `timer`
+- **AND** the file does not include timer runtime fields such as `phase`, `startedAt`, `elapsed`, `isRunning`, `focusedTaskId`, or `sessionPomoCount`
 - **AND** the file does not include `theme`
 
 ### Requirement: User can import data from JSON
 
-The system SHALL allow users to upload a previously exported JSON file to restore snapshot data into the owning stores. The import MUST accept supported legacy files with `version: 2` and current files with `CURRENT_SNAPSHOT_VERSION`. Import preparation SHALL parse, migrate, validate, and normalize the snapshot without mutating stores. Import commit SHALL replace the restorable stores only after preparation succeeds and the user confirms replacement.
+The system SHALL allow users to upload a previously exported JSON file to restore save snapshot data into the owning stores. The import MUST accept the current nested envelope and supported legacy flat files with `version: 2` and `version: 3`. Import preparation SHALL parse or adapt the envelope, prepare every registered feature slice, normalize cross-slice invariants without mutating stores, and commit only after preparation succeeds and the user confirms replacement.
 
 #### Scenario: Import current data
 
-- **WHEN** user selects a current-version JSON file via the "Import" button in settings
+- **WHEN** user selects a current-envelope JSON file via the "Import" button in settings
 - **THEN** the file is prepared through data-portability without mutating stores
 - **AND** after the user confirms replacement, tasks, groups, timer settings, and planner preferences are replaced with the prepared snapshot data
 - **AND** theme is left unchanged
 
+#### Scenario: Import v3 data
+
+- **WHEN** user selects a flat `version: 3` JSON file via the "Import" button in settings
+- **THEN** the file is adapted to the current nested envelope shape during preparation
+- **AND** the top-level `timer` field is restored through the current `timerSettings` slice after commit
+
 #### Scenario: Import v2 data
 
-- **WHEN** user selects a `version: 2` JSON file via the "Import" button in settings
-- **THEN** the file is migrated to the current snapshot shape during preparation
-- **AND** `tasks` and `groups` are restored from the migrated snapshot after commit
-- **AND** `settings.timer` is written to the timer settings after commit
-- **AND** `settings.weekStartDay` and `browseDate: null` are combined into the top-level `planner` field after commit
+- **WHEN** user selects a flat `version: 2` JSON file via the "Import" button in settings
+- **THEN** the file is adapted to the current nested envelope shape during preparation
+- **AND** `tasks` and `groups` are restored through their current slices after commit
+- **AND** `settings.timer` is restored through the current `timerSettings` slice after commit
+- **AND** `settings.weekStartDay` and `browseDate: null` are combined into the current `planner` slice after commit
 - **AND** `settings.theme` is dropped and the local theme is left unchanged
 
 #### Scenario: Import confirms before committing
@@ -113,7 +122,7 @@ The system SHALL migrate existing localStorage data from the intermediate `daybo
 
 ### Requirement: Import applies a per-layer validation policy
 
-The system SHALL prepare imported snapshot JSON through the data-portability pipeline. Envelope failures and current snapshot payload failures SHALL reject the whole import. Repairable cross-reference failures SHALL be normalized before commit and returned as warnings. Prepared imports SHALL be committed all-or-nothing; the app SHALL NOT partially apply valid snapshot sections when another current snapshot section is invalid.
+The system SHALL prepare imported snapshot JSON through the data-portability pipeline. Envelope failures and current slice payload failures SHALL reject the whole import. Repairable cross-reference failures SHALL be normalized before commit and returned as warnings. Prepared imports SHALL be committed all-or-nothing; the app SHALL NOT partially apply valid snapshot sections when another current snapshot section is invalid.
 
 #### Scenario: Current import with a malformed task is rejected
 
@@ -144,7 +153,7 @@ The system SHALL prepare imported snapshot JSON through the data-portability pip
 
 #### Scenario: Envelope failure rejects the import
 
-- **WHEN** a user imports a JSON file missing the `version` field
+- **WHEN** a user imports a JSON file missing both supported legacy `version` and current `envelopeVersion` fields
 - **THEN** the result is `{ ok: false, reason: 'Not a DayBox export file.' }`
 - **AND** no store state is modified
 
