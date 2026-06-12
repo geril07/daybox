@@ -1,7 +1,17 @@
 export { buildSnapshot } from './build'
-export { validateSnapshot } from './validate'
-export type { ParseResult } from './validate'
-export { applySnapshot } from './apply'
-export type { ApplyResult } from './apply'
-export { slices } from './registry'
-export { downloadAsFile } from '@/shared/utils/download'
+export { commitSnapshotImport, prepareSnapshotImport } from './import'
+export type {
+  CommitSnapshotImportResult,
+  PreparedSnapshotImportResult,
+} from './import'
+export {
+  CurrentSnapshotSchema,
+  type CurrentSnapshot,
+  type PreparedSnapshot,
+} from './schema'
+export {
+  CURRENT_SNAPSHOT_VERSION,
+  CURRENT_VERSION,
+  SUPPORTED_SNAPSHOT_VERSIONS,
+  readSnapshotVersion,
+} from './version'

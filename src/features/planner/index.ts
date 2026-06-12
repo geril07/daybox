@@ -1,7 +1,6 @@
 export * from './store'
 export * from './schema'
 export * from './queries'
-export * from './slice'
 export * from './components/DayView'
 export * from './components/DateBrowser'
 export * from './components/WeekView'

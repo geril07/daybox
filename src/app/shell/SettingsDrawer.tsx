@@ -2,10 +2,10 @@ import { useRef, useState } from 'react'
 
 import { useTheme } from '@/app/theme'
 import {
-  applySnapshot,
   buildSnapshot,
-  downloadAsFile,
-  validateSnapshot,
+  commitSnapshotImport,
+  prepareSnapshotImport,
+  type PreparedSnapshot,
 } from '@/features/data-portability'
 import { GoogleDrivePanel } from '@/features/google-drive'
 import { GroupSettingsPanel } from '@/features/groups'
@@ -25,12 +25,12 @@ import {
   SelectItem,
   AlertDialog,
   AlertDialogAction,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogCancel,
 } from '@/shared/ui'
+import { downloadAsFile } from '@/shared/utils/download'
 
 const weekDays = [
   { value: 0, label: 'Sun' },
@@ -56,14 +56,19 @@ export function SettingsDrawer({
 
   const [importConfirmOpen, setImportConfirmOpen] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  const [preparedImport, setPreparedImport] = useState<PreparedSnapshot | null>(
+    null,
+  )
+  const [importWarnings, setImportWarnings] = useState<string[]>([])
 
   const handleExport = () => {
     downloadAsFile(JSON.stringify(buildSnapshot()), 'daybox-export.json')
   }
 
-  const doImport = () => {
-    setImportConfirmOpen(false)
+  const chooseImportFile = () => {
     setImportError(null)
+    setPreparedImport(null)
+    setImportWarnings([])
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.json'
@@ -72,17 +77,27 @@ export function SettingsDrawer({
         const file = (e.target as HTMLInputElement).files?.[0]
         if (!file) return
         const text = await file.text()
-        const parsed = validateSnapshot(text)
-        if (!parsed.ok) {
-          setImportError(parsed.reason)
+        const prepared = prepareSnapshotImport(text)
+        if (!prepared.ok) {
+          setImportError(prepared.reason)
           return
         }
-        applySnapshot(parsed.data)
+        setPreparedImport(prepared.snapshot)
+        setImportWarnings(prepared.warnings ?? [])
+        setImportConfirmOpen(true)
       } catch {
         setImportError('Failed to read file.')
       }
     }
     input.click()
+  }
+
+  const commitImport = () => {
+    if (!preparedImport) return
+    commitSnapshotImport(preparedImport)
+    setImportConfirmOpen(false)
+    setPreparedImport(null)
+    setImportWarnings([])
   }
 
   return (
@@ -147,21 +162,35 @@ export function SettingsDrawer({
               Export
             </Button>
 
+            <Button variant="outline" onClick={chooseImportFile}>
+              Import
+            </Button>
+
             <AlertDialog
               open={importConfirmOpen}
-              onOpenChange={setImportConfirmOpen}
+              onOpenChange={(open) => {
+                setImportConfirmOpen(open)
+                if (!open) {
+                  setPreparedImport(null)
+                  setImportWarnings([])
+                }
+              }}
             >
-              <AlertDialogTrigger render={<Button variant="outline" />}>
-                Import
-              </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogTitle>Import data</AlertDialogTitle>
                 <AlertDialogDescription>
                   This will replace all current data (tasks, groups, settings).
                   This cannot be undone.
                 </AlertDialogDescription>
+                {importWarnings.length > 0 && (
+                  <div className="text-muted-foreground rounded-md border p-3 text-xs">
+                    {importWarnings.map((warning) => (
+                      <div key={warning}>{warning}</div>
+                    ))}
+                  </div>
+                )}
                 <div className="flex flex-col gap-2">
-                  <AlertDialogAction onClick={doImport}>
+                  <AlertDialogAction onClick={commitImport}>
                     Continue
                   </AlertDialogAction>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>

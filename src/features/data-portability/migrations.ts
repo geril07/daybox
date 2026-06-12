@@ -4,7 +4,8 @@ import { PlannerStateSchema } from '@/features/planner'
 import { TimerSettingsSchema } from '@/features/timer'
 import { DEFAULT_TIMER_SETTINGS } from '@/features/timer'
 
-import { envelopeV3Schema } from './envelope'
+import { readSnapshotVersion } from './version'
+import { CURRENT_SNAPSHOT_VERSION } from './version'
 
 const V2EnvelopeSchema = z.object({
   version: z.literal(2),
@@ -22,6 +23,29 @@ const V2EnvelopeSchema = z.object({
 
 const WeekStartDaySchema = PlannerStateSchema.shape.weekStartDay
 
+export type MigrationResult =
+  | { ok: true; value: unknown }
+  | { ok: false; reason: string }
+
+export function migrateToCurrentSnapshot(value: unknown): MigrationResult {
+  const version = readSnapshotVersion(value)
+  if (!version.ok) return version
+
+  switch (version.version) {
+    case CURRENT_SNAPSHOT_VERSION:
+      return { ok: true, value }
+    case 2:
+      return { ok: true, value: migrateV2ToV3(value) }
+    default: {
+      const exhaustive: never = version.version
+      return {
+        ok: false,
+        reason: `Unsupported snapshot version: ${exhaustive}`,
+      }
+    }
+  }
+}
+
 export function migrateV2ToV3(v2: unknown): unknown {
   const parsed = V2EnvelopeSchema.safeParse(v2)
   if (!parsed.success) {
@@ -37,13 +61,12 @@ export function migrateV2ToV3(v2: unknown): unknown {
     ? settings.weekStartDay
     : 1
   const migrated = {
-    version: 3,
+    version: CURRENT_SNAPSHOT_VERSION,
     exportedAt: data.exportedAt ?? new Date().toISOString(),
     tasks: data.tasks,
     groups: data.groups,
     timer,
     planner: { weekStartDay, browseDate: null },
   }
-  const result = envelopeV3Schema.safeParse(migrated)
-  return result.success ? result.data : migrated
+  return migrated
 }

@@ -2,9 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import {
-  applySnapshot,
   buildSnapshot,
-  validateSnapshot,
+  commitSnapshotImport,
+  prepareSnapshotImport,
 } from '@/features/data-portability'
 import {
   createTokenClient,
@@ -218,24 +218,18 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
             return { ok: false, error }
           }
           const json = await downloadAppDataFile({ token, id: fileId })
-          const parsed = validateSnapshot(json)
-          if (!parsed.ok) {
+          const prepared = prepareSnapshotImport(json)
+          if (!prepared.ok) {
             const error: BackupError = {
               kind: 'envelope',
-              message: parsed.reason,
+              message: prepared.reason,
             }
             set({ status: 'idle', error })
             return { ok: false, error }
           }
-          const applied = applySnapshot(parsed.data)
+          commitSnapshotImport(prepared.snapshot)
           set({ status: 'idle' })
-          if (applied.ok) {
-            return { ok: true, warnings: applied.warnings }
-          }
-          return {
-            ok: false,
-            error: { kind: 'envelope', message: applied.reason },
-          }
+          return { ok: true, warnings: prepared.warnings }
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err)
           if (message === 'denied') {
