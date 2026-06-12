@@ -167,5 +167,3 @@ The system SHALL normalize repairable domain invariants after current snapshot p
 - **WHEN** normalization repairs a current snapshot
 - **THEN** it returns a prepared snapshot value
 - **AND** it does not call any feature store setter or action
-
-

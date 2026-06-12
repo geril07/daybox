@@ -10,6 +10,17 @@ export {
   type PreparedSnapshot,
 } from './schema'
 export {
+  CURRENT_SAVE_ENVELOPE_VERSION,
+  SaveEnvelopeSchema,
+  parseSaveEnvelope,
+  type SaveEnvelope,
+} from './envelope'
+export type {
+  MissingSliceStrategy,
+  SaveSlice,
+  SaveSlicePrepareResult,
+} from './types'
+export {
   CURRENT_SNAPSHOT_VERSION,
   CURRENT_VERSION,
   SUPPORTED_SNAPSHOT_VERSIONS,

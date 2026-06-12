@@ -1,63 +1,21 @@
-import { z } from 'zod'
+import type { GroupsSaveSliceCurrent } from '@/features/groups/save/versions/v1'
+import type { PlannerSaveSliceCurrent } from '@/features/planner/save/versions/v1'
+import type { TasksSaveSliceCurrent } from '@/features/tasks/save/versions/v1'
+import type { TimerSettingsSaveSliceCurrent } from '@/features/timer/save/versions/v1'
 
-import { DEFAULT_GROUP_ID, GroupSchema } from '@/features/groups'
-import { PlannerStateSchema } from '@/features/planner'
-import { TaskSchema } from '@/features/tasks'
-import { TimerSettingsSchema } from '@/features/timer'
+import { SaveEnvelopeSchema, type SaveEnvelope } from './envelope'
 
-import { CURRENT_SNAPSHOT_VERSION } from './version'
+export const CurrentSnapshotSchema = SaveEnvelopeSchema
 
-export const CurrentSnapshotSchema = z
-  .object({
-    version: z.literal(CURRENT_SNAPSHOT_VERSION),
-    exportedAt: z.string(),
-    tasks: z.array(TaskSchema),
-    groups: z.array(GroupSchema),
-    timer: TimerSettingsSchema,
-    planner: PlannerStateSchema,
-  })
-  .superRefine((snapshot, ctx) => {
-    const taskIds = new Map<string, number>()
-    snapshot.tasks.forEach((task, index) => {
-      const firstIndex = taskIds.get(task.id)
-      if (firstIndex !== undefined) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['tasks', index, 'id'],
-          message: `Duplicate task id "${task.id}" also appears at tasks.${firstIndex}.id`,
-        })
-        return
-      }
-      taskIds.set(task.id, index)
-    })
-
-    const groupIds = new Map<string, number>()
-    let defaultGroupCount = 0
-    snapshot.groups.forEach((group, index) => {
-      if (group.id === DEFAULT_GROUP_ID) defaultGroupCount += 1
-
-      const firstIndex = groupIds.get(group.id)
-      if (firstIndex !== undefined) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['groups', index, 'id'],
-          message: `Duplicate group id "${group.id}" also appears at groups.${firstIndex}.id`,
-        })
-        return
-      }
-      groupIds.set(group.id, index)
-    })
-
-    if (defaultGroupCount > 1) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['groups'],
-        message: 'Duplicate default group.',
-      })
-    }
-  })
-
-export type CurrentSnapshot = z.infer<typeof CurrentSnapshotSchema>
+export type CurrentSnapshot = SaveEnvelope & {
+  envelopeVersion: 1
+  slices: {
+    groups: GroupsSaveSliceCurrent
+    tasks: TasksSaveSliceCurrent
+    timerSettings: TimerSettingsSaveSliceCurrent
+    planner: PlannerSaveSliceCurrent
+  }
+}
 
 declare const preparedSnapshotBrand: unique symbol
 

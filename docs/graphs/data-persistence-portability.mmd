@@ -1,0 +1,146 @@
+%% DayBox — Data Persistence & Portability Graph
+%% Generated from openspec/specs/data-persistence & data-portability
+%% View: https://mermaid.live/ or `npx @mermaid-js/mermaid-cli render`
+
+graph TB
+  subgraph Browser["🌐 Browser"]
+    LS[("localStorage")]
+    FS[("File System")]
+    GD[("Google Drive<br/>appDataFolder")]
+  end
+
+  subgraph Stores["🧠 Zustand Stores"]
+    direction TB
+    TS[("useTaskStore<br/><code>daybox-tasks</code>")]
+    GS[("useGroupStore<br/><code>daybox-groups</code>")]
+    TiS[("useTimerStore<br/><code>daybox-timer</code><br/>debounced 1000ms")]
+    PS[("usePlannerStore<br/><code>daybox-planner</code>")]
+    GDS[("useGoogleDriveStore<br/><code>daybox-google-drive</code>")]
+    ThS[("useTheme<br/><code>daybox-theme</code><br/>raw localStorage")]
+  end
+
+  subgraph Schemas["📐 Zod Schemas (Rehydration Validation)"]
+    direction TB
+    SchTask["TaskSchema<br/>TaskStateSchema"]
+    SchGroup["GroupSchema<br/>GroupStateSchema"]
+    SchTimer["TimerStateSchema<br/>TimerSettingsSchema"]
+    SchPlanner["PlannerStateSchema"]
+    SchGDrive["GoogleDriveAuthSchema"]
+  end
+
+  subgraph Rehydrate["🔁 Rehydration"]
+    RV[("createValidatedRehydrate<br/>validate → fallback<br/>or console.warn x1")]
+  end
+
+  subgraph Legacy["📦 Legacy Bootstrap<br/>(one-shot, runs once)"]
+    direction TB
+    L1["daybox-app-store<br/>(old monolithic)"]
+    L2["daybox-settings<br/>(intermediate)"]
+    L3["migrateLegacyAppStore<br/>envelope + per-record<br/>validation (warn+skip)"]
+    L4["migrateLegacySettings<br/>→ timer / planner / theme"]
+  end
+
+  subgraph Portability["🔀 Data-Portability<br/><code>src/features/data-portability/</code>"]
+    direction TB
+    subgraph Export["📤 Export"]
+      B["buildSnapshot()<br/>reads all feature stores<br/>(excludes theme +<br/>timer runtime)"]
+      D["downloadAsFile()<br/>daybox-export.json"]
+      GD_up["uploadAppDataFile()<br/>daybox.json"]
+    end
+    subgraph Import["📥 Import Pipeline"]
+      P1["parseJson()<br/>JSON.parse"]
+      P2["readSnapshotVersion()<br/>supported: v2, v3"]
+      P3["migrateToCurrentSnapshot()<br/>v2→v3 only"]
+      P4["parseCurrentSnapshot()<br/>CurrentSnapshotSchema<br/>(composes feature schemas<br/>+ aggregate id uniqueness)"]
+      P5["normalizeSnapshot()<br/>repair dangling groupId<br/>restore default group"]
+      P6["commitSnapshotImport()<br/>writes to all stores<br/>resets runtime refs"]
+    end
+  end
+
+  subgraph Warnings["⚠️ Normalization Warnings"]
+    W1["'Task group X not found.<br/>Tasks reassigned to default group.'"]
+    W2["'Default group was missing.<br/>It has been restored.'"]
+  end
+
+  subgraph ValidationLayers["📋 Validation Policy"]
+    direction LR
+    VL1["Envelope<br/>hard fail"]
+    VL2["Current Snapshot<br/>hard fail"]
+    VL3["Normalization<br/>repair + warn"]
+    VL4["Legacy Record<br/>warn + skip"]
+    VL5["Rehydrate<br/>reset + console.warn"]
+  end
+
+  subgraph SnapshotShape["📄 Snapshot Envelope v3"]
+    S1["version: 3"]
+    S2["exportedAt: ISO string"]
+    S3["tasks: Task[]"]
+    S4["groups: Group[]"]
+    S5["timer: TimerSettings"]
+    S6["planner: { weekStartDay, browseDate }"]
+    S7["*theme excluded*"]
+    S8["*timer runtime excluded*"]
+  end
+
+  %% Persistence edges
+  LS -->|"rehydrate<br/>on app load"| Stores
+  Stores -->|"zustand persist<br/>on state change"| LS
+  TiS -.->|"debounced 1000ms<br/>flush on beforeunload"| LS
+
+  %% Rehydration validation edges
+  LS --> RV
+  RV -->|"valid → keep"| Stores
+  RV -->|"invalid → fallback + warn"| Stores
+
+  %% Schema ownership
+  TS -.-> SchTask
+  GS -.-> SchGroup
+  TiS -.-> SchTimer
+  PS -.-> SchPlanner
+  GDS -.-> SchGDrive
+
+  %% Legacy migration
+  LS -->|"has daybox-app-store"| L1
+  L1 --> L3
+  L3 --> L4
+  L3 -->|"per-record valid"| Stores
+  L3 -.->|"envelope fail → skip<br/>key deleted either way"| L1
+  L4 -->|"settings.timer"| TiS
+  L4 -->|"settings.weekStartDay"| PS
+  L4 -->|"settings.theme"| ThS
+
+  %% Export flow
+  TS --> B
+  GS --> B
+  TiS --> B
+  PS --> B
+  B --> D
+  B --> GD_up
+  D --> FS
+  GD_up --> GD
+
+  %% Import pipeline
+  FS -->|"select .json"| P1
+  GD -->|"downloadAppDataFile()"| P1
+  P1 --> P2
+  P2 --> P3
+  P3 --> P4
+  P4 --> P5
+  P5 --> P6
+  P6 -->|"user confirms<br/>replacement"| Stores
+  P5 -.->|"warnings"| P6
+
+  %% Validation layers reference
+  P1 -.-> VL1
+  P4 -.-> VL2
+  P5 -.-> VL3
+  L3 -.-> VL4
+  RV -.-> VL5
+
+  %% Snapshot shape reference
+  B -.-> SnapshotShape
+  P4 -.-> SnapshotShape
+
+  %% Type safety
+  P5 -->|"markPrepared() →"| P6
+  P5 -.->|"branded type<br/>PreparedSnapshot<br/>≠ CurrentSnapshot"| P6

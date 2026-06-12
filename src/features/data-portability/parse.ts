@@ -1,11 +1,11 @@
-import { CurrentSnapshotSchema, type CurrentSnapshot } from './schema'
+import { SaveEnvelopeSchema, type SaveEnvelope } from './envelope'
 
 export type ParseJsonResult =
   | { ok: true; value: unknown }
   | { ok: false; reason: string }
 
 export type ParseCurrentSnapshotResult =
-  | { ok: true; snapshot: CurrentSnapshot }
+  | { ok: true; snapshot: SaveEnvelope }
   | { ok: false; reason: string }
 
 export function parseJson(json: string): ParseJsonResult {
@@ -19,7 +19,7 @@ export function parseJson(json: string): ParseJsonResult {
 export function parseCurrentSnapshot(
   value: unknown,
 ): ParseCurrentSnapshotResult {
-  const result = CurrentSnapshotSchema.safeParse(value)
+  const result = SaveEnvelopeSchema.safeParse(value)
   if (!result.success) {
     const issue = result.error.issues[0]
     const path = issue?.path.join('.') || 'root'

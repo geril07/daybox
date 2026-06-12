@@ -6,17 +6,14 @@ import { useTaskStore, type Task } from '@/features/tasks'
 import { DEFAULT_TIMER_SETTINGS, useTimerStore } from '@/features/timer'
 
 import { buildSnapshot } from './build'
+import { CURRENT_SAVE_ENVELOPE_VERSION } from './envelope'
 import { commitSnapshotImport, prepareSnapshotImport } from './import'
 import {
   CurrentSnapshotSchema,
   type CurrentSnapshot,
   type PreparedSnapshot,
 } from './schema'
-import {
-  CURRENT_SNAPSHOT_VERSION,
-  SUPPORTED_SNAPSHOT_VERSIONS,
-  readSnapshotVersion,
-} from './version'
+import { SUPPORTED_SNAPSHOT_VERSIONS, readSnapshotVersion } from './version'
 
 function createTask(overrides: Partial<Task> & { id: string }): Task {
   return {
@@ -43,16 +40,35 @@ function createGroup(overrides: Partial<Group> & { id: string }): Group {
 }
 
 function currentSnapshot(
-  overrides: Partial<CurrentSnapshot> = {},
+  overrides: {
+    groups?: Group[]
+    tasks?: Task[]
+    timerSettings?: typeof DEFAULT_TIMER_SETTINGS
+    planner?: {
+      weekStartDay: 0 | 1 | 2 | 3 | 4 | 5 | 6
+      browseDate: string | null
+    }
+  } = {},
 ): CurrentSnapshot {
+  const planner = overrides.planner ?? { weekStartDay: 1, browseDate: null }
   return {
-    version: CURRENT_SNAPSHOT_VERSION,
+    envelopeVersion: CURRENT_SAVE_ENVELOPE_VERSION,
     exportedAt: '2026-06-07T00:00:00.000Z',
-    tasks: [createTask({ id: 'task-1' })],
-    groups: [createGroup({ id: DEFAULT_GROUP_ID })],
-    timer: DEFAULT_TIMER_SETTINGS,
-    planner: { weekStartDay: 1, browseDate: null },
-    ...overrides,
+    slices: {
+      groups: {
+        version: 1,
+        groups: overrides.groups ?? [createGroup({ id: DEFAULT_GROUP_ID })],
+      },
+      tasks: {
+        version: 1,
+        tasks: overrides.tasks ?? [createTask({ id: 'task-1' })],
+      },
+      timerSettings: {
+        version: 1,
+        settings: overrides.timerSettings ?? DEFAULT_TIMER_SETTINGS,
+      },
+      planner: { version: 1, ...planner },
+    },
   }
 }
 
@@ -76,46 +92,62 @@ beforeEach(() => {
 })
 
 describe('readSnapshotVersion', () => {
-  it('accepts only explicitly supported snapshot versions', () => {
-    expect(SUPPORTED_SNAPSHOT_VERSIONS).toEqual([2, CURRENT_SNAPSHOT_VERSION])
+  it('accepts only explicitly supported legacy flat snapshot versions', () => {
+    expect(SUPPORTED_SNAPSHOT_VERSIONS).toEqual([2, 3])
     expect(readSnapshotVersion({ version: 2 })).toEqual({
       ok: true,
       version: 2,
     })
-    expect(readSnapshotVersion({ version: CURRENT_SNAPSHOT_VERSION })).toEqual({
+    expect(readSnapshotVersion({ version: 3 })).toEqual({
       ok: true,
-      version: CURRENT_SNAPSHOT_VERSION,
+      version: 3,
     })
-    expect(readSnapshotVersion({ version: 1 }).ok).toBe(false)
+    expect(
+      readSnapshotVersion({ envelopeVersion: CURRENT_SAVE_ENVELOPE_VERSION })
+        .ok,
+    ).toBe(false)
     expect(readSnapshotVersion({ version: 999 }).ok).toBe(false)
   })
 })
 
 describe('buildSnapshot', () => {
-  it('builds a typed current snapshot and excludes theme', () => {
+  it('builds a typed current envelope with nested slices and excludes local-only state', () => {
     const task = createTask({ id: 'task-1', title: 'Hello' })
     useTaskStore.setState({ tasks: [task] })
     useGroupStore.setState({
       groups: [createGroup({ id: DEFAULT_GROUP_ID, name: 'General' })],
     })
-    useTimerStore.getState().setTimerSettings({ focusDuration: 45 })
+    useTimerStore.setState({
+      phase: 'shortBreak',
+      startedAt: 123,
+      elapsed: 456,
+      sessionPomoCount: 2,
+      isRunning: true,
+      focusedTaskId: 'task-1',
+      settings: { ...DEFAULT_TIMER_SETTINGS, focusDuration: 45 },
+    })
     usePlannerStore.getState().setWeekStartDay(0)
 
     const snapshot = buildSnapshot()
 
-    expect(snapshot.version).toBe(CURRENT_SNAPSHOT_VERSION)
+    expect(snapshot.envelopeVersion).toBe(CURRENT_SAVE_ENVELOPE_VERSION)
     expect(Date.parse(snapshot.exportedAt)).not.toBeNaN()
-    expect(snapshot.tasks).toEqual([task])
-    expect(snapshot.groups.map((g) => g.id)).toEqual([DEFAULT_GROUP_ID])
-    expect(snapshot.timer.focusDuration).toBe(45)
-    expect(snapshot.planner.weekStartDay).toBe(0)
+    expect(snapshot.slices.tasks.tasks).toEqual([task])
+    expect(snapshot.slices.groups.groups.map((g) => g.id)).toEqual([
+      DEFAULT_GROUP_ID,
+    ])
+    expect(snapshot.slices.timerSettings.settings.focusDuration).toBe(45)
+    expect(snapshot.slices.planner.weekStartDay).toBe(0)
     expect('theme' in snapshot).toBe(false)
+    expect('timer' in snapshot).toBe(false)
+    expect('phase' in snapshot.slices.timerSettings).toBe(false)
+    expect('focusedTaskId' in snapshot.slices.timerSettings).toBe(false)
     expect(CurrentSnapshotSchema.safeParse(snapshot).success).toBe(true)
   })
 })
 
 describe('prepareSnapshotImport', () => {
-  it('migrates v2 JSON into a current prepared snapshot and drops theme', () => {
+  it('adapts v2 JSON into a current prepared envelope and drops theme', () => {
     const result = prepareSnapshotImport(
       JSON.stringify({
         version: 2,
@@ -132,13 +164,48 @@ describe('prepareSnapshotImport', () => {
 
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.snapshot.version).toBe(CURRENT_SNAPSHOT_VERSION)
-    expect(result.snapshot.timer.focusDuration).toBe(35)
-    expect(result.snapshot.planner).toEqual({
+    expect(result.snapshot.envelopeVersion).toBe(CURRENT_SAVE_ENVELOPE_VERSION)
+    expect(result.snapshot.slices.timerSettings.settings.focusDuration).toBe(35)
+    expect(result.snapshot.slices.planner).toEqual({
+      version: 1,
       weekStartDay: 0,
       browseDate: null,
     })
     expect('theme' in result.snapshot).toBe(false)
+  })
+
+  it('adapts v3 JSON into a current prepared envelope and maps timer to timerSettings', () => {
+    const result = prepareSnapshotImport(
+      JSON.stringify({
+        version: 3,
+        exportedAt: '2026-06-07T00:00:00.000Z',
+        tasks: [createTask({ id: 'task-1' })],
+        groups: [createGroup({ id: DEFAULT_GROUP_ID })],
+        timer: { ...DEFAULT_TIMER_SETTINGS, focusDuration: 40 },
+        planner: { weekStartDay: 0, browseDate: '2026-06-12' },
+      }),
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.snapshot.slices.timerSettings.settings.focusDuration).toBe(40)
+    expect(result.snapshot.slices.planner.browseDate).toBe('2026-06-12')
+  })
+
+  it('uses missing-slice defaults for slices that declare defaults', () => {
+    const snapshot = currentSnapshot()
+    const slices: Record<string, unknown> = { ...snapshot.slices }
+    delete slices.timerSettings
+
+    const result = prepareSnapshotImport(
+      JSON.stringify({ ...snapshot, slices }),
+    )
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.snapshot.slices.timerSettings.settings).toEqual(
+      DEFAULT_TIMER_SETTINGS,
+    )
   })
 
   it('rejects malformed JSON without mutating stores', () => {
@@ -152,32 +219,25 @@ describe('prepareSnapshotImport', () => {
     expect(useTaskStore.getState().tasks.map((t) => t.id)).toEqual(['existing'])
   })
 
-  it('rejects unsupported versions and missing current fields without mutating stores', () => {
+  it('rejects unsupported versions and missing required slices without mutating stores', () => {
     useTaskStore.setState({ tasks: [createTask({ id: 'existing' })] })
+    const snapshot = currentSnapshot()
+    const slices: Record<string, unknown> = { ...snapshot.slices }
+    delete slices.groups
 
     expect(
       prepareSnapshotImport(JSON.stringify({ version: 1, tasks: [] })).ok,
     ).toBe(false)
     expect(
-      prepareSnapshotImport(
-        JSON.stringify({
-          version: CURRENT_SNAPSHOT_VERSION,
-          exportedAt: '2026-06-07T00:00:00.000Z',
-          tasks: [],
-          groups: [],
-          timer: DEFAULT_TIMER_SETTINGS,
-        }),
-      ).ok,
+      prepareSnapshotImport(JSON.stringify({ ...snapshot, slices })).ok,
     ).toBe(false)
     expect(useTaskStore.getState().tasks.map((t) => t.id)).toEqual(['existing'])
   })
 
   it('rejects invalid current feature payloads without partial mutation', () => {
     useTaskStore.setState({ tasks: [createTask({ id: 'existing' })] })
-    const invalid = {
-      ...currentSnapshot(),
-      tasks: [{ id: 'broken' }],
-    }
+    const invalid = currentSnapshot()
+    invalid.slices.tasks = { version: 1, tasks: [{ id: 'broken' } as Task] }
 
     const result = prepareSnapshotImport(JSON.stringify(invalid))
 
@@ -252,7 +312,9 @@ describe('prepareSnapshotImport', () => {
 
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.snapshot.tasks[0]?.groupId).toBe(DEFAULT_GROUP_ID)
+    expect(result.snapshot.slices.tasks.tasks[0]?.groupId).toBe(
+      DEFAULT_GROUP_ID,
+    )
     expect(result.warnings?.some((w) => w.includes('missing-group'))).toBe(true)
     expect(useTaskStore.getState().tasks).toHaveLength(0)
   })
@@ -269,9 +331,11 @@ describe('prepareSnapshotImport', () => {
 
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.snapshot.groups.some((g) => g.id === DEFAULT_GROUP_ID)).toBe(
-      true,
-    )
+    expect(
+      result.snapshot.slices.groups.groups.some(
+        (g) => g.id === DEFAULT_GROUP_ID,
+      ),
+    ).toBe(true)
     expect(result.warnings?.some((w) => w.includes('Default group'))).toBe(true)
   })
 })
@@ -285,7 +349,7 @@ describe('commitSnapshotImport', () => {
           groups: [
             createGroup({ id: DEFAULT_GROUP_ID, name: 'Imported group' }),
           ],
-          timer: { ...DEFAULT_TIMER_SETTINGS, focusDuration: 40 },
+          timerSettings: { ...DEFAULT_TIMER_SETTINGS, focusDuration: 40 },
           planner: { weekStartDay: 0, browseDate: '2026-06-12' },
         }),
       ),
