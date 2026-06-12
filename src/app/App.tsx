@@ -75,18 +75,47 @@ export function App() {
       <header className="border-border bg-card sticky top-0 z-30 border-b">
         <div className="header-top mx-auto flex max-w-[680px] items-center justify-between px-4 py-3.5 sm:px-7">
           <div className="flex items-center gap-2.5">
-            <div className="bg-accent flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-xl">
+            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-[9px] bg-white">
               <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="white"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                width="26"
+                height="26"
+                viewBox="0 0 256 256"
+                role="img"
+                aria-label="DayBox"
               >
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                <rect width="256" height="256" rx="58" fill="#fff" />
+                <rect
+                  x="38"
+                  y="44"
+                  width="152"
+                  height="168"
+                  rx="28"
+                  fill="none"
+                  stroke="#d65332"
+                  strokeWidth="18"
+                />
+                <path
+                  d="M76 93h70M76 132h48"
+                  stroke="#d65332"
+                  strokeWidth="16"
+                  strokeLinecap="round"
+                />
+                <circle
+                  cx="177"
+                  cy="177"
+                  r="48"
+                  fill="#fff"
+                  stroke="#d65332"
+                  strokeWidth="18"
+                />
+                <path
+                  d="M177 153v27l18 12"
+                  fill="none"
+                  stroke="#d65332"
+                  strokeWidth="14"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
             <span className="text-foreground text-base font-semibold tracking-tight">
