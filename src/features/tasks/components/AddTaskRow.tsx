@@ -1,5 +1,5 @@
 import { Plus, ChevronDown } from 'lucide-react'
-import { useState, useRef, useCallback, type SubmitEvent } from 'react'
+import { useState, useRef, type SubmitEvent } from 'react'
 
 import { useGroupStore, type Group } from '@/features/groups'
 import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
@@ -26,39 +26,36 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
   const currentGroup =
     groups.find((g) => g.id === (stickyGroupId || groups[0].id)) || groups[0]
 
-  const handleSubmit = useCallback(
-    (e?: SubmitEvent) => {
-      e?.preventDefault()
+  const handleSubmit = (e?: SubmitEvent) => {
+    e?.preventDefault()
 
-      const trimmed = title.trim()
-      if (!trimmed) return
+    const trimmed = title.trim()
+    if (!trimmed) return
 
-      let taskTitle = trimmed
-      let groupId = stickyGroupId || groups[0].id
+    let taskTitle = trimmed
+    let groupId = stickyGroupId || groups[0].id
 
-      const hashMatch = trimmed.match(/^(.*?)\s+#(\S+)$/)
-      if (hashMatch) {
-        taskTitle = hashMatch[1] || trimmed
-        const groupName = hashMatch[2]
-        const existingGroup = groups.find(
-          (g) => g.name.toLowerCase() === groupName.toLowerCase(),
-        )
-        if (existingGroup) {
-          groupId = existingGroup.id
-        } else {
-          const newGroup = addGroup(groupName)
-          groupId = newGroup.id
-        }
+    const hashMatch = trimmed.match(/^(.*?)\s+#(\S+)$/)
+    if (hashMatch) {
+      taskTitle = hashMatch[1] || trimmed
+      const groupName = hashMatch[2]
+      const existingGroup = groups.find(
+        (g) => g.name.toLowerCase() === groupName.toLowerCase(),
+      )
+      if (existingGroup) {
+        groupId = existingGroup.id
+      } else {
+        const newGroup = addGroup(groupName)
+        groupId = newGroup.id
       }
+    }
 
-      addTask(taskTitle, groupId, defaultDate)
-      setTitle('')
-      setShowTypeahead(false)
-      setHighlightIndex(null)
-      inputRef.current?.focus()
-    },
-    [title, groups, stickyGroupId, defaultDate, addTask, addGroup],
-  )
+    addTask(taskTitle, groupId, defaultDate)
+    setTitle('')
+    setShowTypeahead(false)
+    setHighlightIndex(null)
+    inputRef.current?.focus()
+  }
 
   const typeaheadQuery = title.match(/#(\S*)$/)?.[1] || ''
   const typeaheadMatches = typeaheadQuery
@@ -69,15 +66,12 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
         .slice(0, 5)
     : groups.slice(0, 5)
 
-  const handleAccept = useCallback(
-    (group: Group) => {
-      setTitle(title.replace(/#\S*$/, `#${group.name} `))
-      setShowTypeahead(false)
-      setHighlightIndex(null)
-      inputRef.current?.focus()
-    },
-    [title],
-  )
+  const handleAccept = (group: Group) => {
+    setTitle(title.replace(/#\S*$/, `#${group.name} `))
+    setShowTypeahead(false)
+    setHighlightIndex(null)
+    inputRef.current?.focus()
+  }
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value)
