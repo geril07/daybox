@@ -6,7 +6,7 @@ Define the cross-cutting save/restore mechanics that DayBox uses for file export
 
 ### Requirement: The data-portability feature owns the snapshot envelope, registry, and migrations
 
-The system SHALL organise the cross-cutting save/restore orchestration in a dedicated `data-portability` feature at `src/features/data-portability/`. The data-portability feature SHALL own:
+The system SHALL organise the cross-cutting save/restore orchestration in a dedicated `data-portability` feature at `src/modules/data-portability/`. The data-portability feature SHALL own:
 
 - The current save envelope schema, currently `envelopeVersion: 1`.
 - JSON parsing and current envelope parsing helpers.
@@ -40,7 +40,7 @@ The data-portability feature has no UI of its own. Its public surface is the fun
 #### Scenario: The registry imports each participating feature's save slice
 
 - **WHEN** the data-portability feature is initialised
-- **THEN** its registry imports save slices from `@/features/groups`, `@/features/tasks`, `@/features/timer`, and `@/features/planner`
+- **THEN** its registry imports save slices from `@/modules/groups`, `@/modules/tasks`, `@/modules/timer`, and `@/modules/planner`
 - **AND** exports a `saveSlices` array whose order is canonical and dependency-aware: groups, tasks, timerSettings, planner
 - **AND** a feature that wants to participate in save/restore is added by exporting a save slice from the feature barrel and adding it to the registry
 

@@ -1,6 +1,6 @@
 ## 1. Routines Data Model
 
-- [ ] 1.1 Create `src/features/routines/` with barrel exports following the feature folder conventions.
+- [ ] 1.1 Create `src/modules/routines/` with barrel exports following the feature folder conventions.
 - [ ] 1.2 Add zod schemas and inferred types for `Routine`, `RoutineStep`, `stepCompletionsByDate`, and the routines store state.
 - [ ] 1.3 Implement `useRoutineStore` persisted under `daybox-routines` with validated rehydration and empty initial state.
 - [ ] 1.4 Implement routine actions for create, update, activate/deactivate, delete, and reorder.

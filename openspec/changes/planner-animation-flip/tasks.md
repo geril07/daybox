@@ -14,10 +14,10 @@
 
 ## 3. Wrap views in `<LayoutGroup>` for cross-section FLIP
 
-- [x] 3.1 In `src/features/planner/components/DayView.tsx`: import `LayoutGroup` from `motion/react`. Wrap the return value (after the early-return `EmptyState` branch) in `<LayoutGroup id="planner-day">`. No `transition` prop on the LayoutGroup — cross-section FLIP is enabled by the `id` (which scopes layout measurement to this view).
-- [x] 3.2 In `src/features/planner/components/WeekView.tsx`: same as 3.1, with `id="planner-week"`.
-- [x] 3.3 In `src/features/planner/components/DateBrowser.tsx`: same as 3.1, with `id="planner-date"`.
-- [x] 3.4 Verify no `TaskList` call site in `src/features/planner/**` or `src/features/tasks/**` is missing a required prop. (The `TaskList` API did not change; no new props are required at the call sites.)
+- [x] 3.1 In `src/modules/planner/components/DayView.tsx`: import `LayoutGroup` from `motion/react`. Wrap the return value (after the early-return `EmptyState` branch) in `<LayoutGroup id="planner-day">`. No `transition` prop on the LayoutGroup — cross-section FLIP is enabled by the `id` (which scopes layout measurement to this view).
+- [x] 3.2 In `src/modules/planner/components/WeekView.tsx`: same as 3.1, with `id="planner-week"`.
+- [x] 3.3 In `src/modules/planner/components/DateBrowser.tsx`: same as 3.1, with `id="planner-date"`.
+- [x] 3.4 Verify no `TaskList` call site in `src/modules/planner/**` or `src/modules/tasks/**` is missing a required prop. (The `TaskList` API did not change; no new props are required at the call sites.)
 
 ## 4. Verification
 

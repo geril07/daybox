@@ -8,7 +8,7 @@ Defines the boundary rules for `src/shared/` — what may live in the shared lay
 
 ### Requirement: Shared layer contains no domain types
 
-The system SHALL NOT export domain types (data shapes owned by a single feature, such as `Task`, `Group`, `TimerPhase`, or feature-scoped constants like `GROUP_COLORS`) from `src/shared/types.ts` or from any other file under `src/shared/`. Domain types SHALL live in the feature folder that owns them (`src/features/<feature>/types.ts` for shapes, `src/features/<feature>/constants.ts` for runtime values). Primitive UI components and pure utilities (e.g., `cn`, `formatDate`) MAY live in `src/shared/`.
+The system SHALL NOT export domain types (data shapes owned by a single feature, such as `Task`, `Group`, `TimerPhase`, or feature-scoped constants like `GROUP_COLORS`) from `src/shared/types.ts` or from any other file under `src/shared/`. Domain types SHALL live in the feature folder that owns them (`src/modules/<feature>/types.ts` for shapes, `src/modules/<feature>/constants.ts` for runtime values). Primitive UI components and pure utilities (e.g., `cn`, `formatDate`) MAY live in `src/shared/`.
 
 #### Scenario: No domain types in shared/types.ts
 
@@ -19,7 +19,7 @@ The system SHALL NOT export domain types (data shapes owned by a single feature,
 #### Scenario: Domain constants live with their feature
 
 - **WHEN** a feature needs a runtime constant (e.g., a list of color choices)
-- **THEN** the constant is placed in `src/features/<feature>/constants.ts`
+- **THEN** the constant is placed in `src/modules/<feature>/constants.ts`
 - **AND** NOT in `src/shared/` or any `shared/` subfolder
 
 ### Requirement: Shared UI primitives live in shared/ui/

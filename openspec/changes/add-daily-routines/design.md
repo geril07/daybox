@@ -25,7 +25,7 @@ The existing Today view renders overdue tasks and today's tasks through planner 
 
 ### Add a dedicated `routines` feature
 
-Routines SHALL live under `src/features/routines/` with their own schema, store, slice, queries, components, and barrel exports. This follows the existing feature ownership pattern and avoids leaking routine concerns into `tasks` or `planner`.
+Routines SHALL live under `src/modules/routines/` with their own schema, store, slice, queries, components, and barrel exports. This follows the existing feature ownership pattern and avoids leaking routine concerns into `tasks` or `planner`.
 
 Alternative considered: add routine fields to `Task`. This was rejected because routine steps are not dated tasks and should not inherit groups, Pomodoro estimates, focus actions, overdue state, or task reordering.
 

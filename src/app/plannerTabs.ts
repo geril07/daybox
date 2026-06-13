@@ -1,4 +1,4 @@
-import type { View } from '@/features/planner'
+import type { View } from '@/modules/planner'
 
 export const tabs: { label: string; shortLabel?: string; value: View }[] = [
   { label: 'Today', value: 'today' },

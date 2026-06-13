@@ -26,7 +26,7 @@ DayBox currently supports dated tasks and Pomodoro focus, but it does not suppor
 
 ## Impact
 
-- New `src/features/routines/` feature with schema, store, slice, queries, and components.
+- New `src/modules/routines/` feature with schema, store, slice, queries, and components.
 - Today view renders a routine section alongside existing overdue and task sections.
 - Settings drawer gains routine management UI.
 - Data portability registry is updated to include routines without changing the envelope version.

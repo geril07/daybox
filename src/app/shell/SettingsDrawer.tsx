@@ -6,11 +6,11 @@ import {
   commitSnapshotImport,
   prepareSnapshotImport,
   type PreparedSnapshot,
-} from '@/features/data-portability'
-import { GoogleDrivePanel } from '@/features/google-drive'
-import { GroupSettingsPanel } from '@/features/groups'
-import { usePlannerStore } from '@/features/planner'
-import { TimerSettingsPanel } from '@/features/timer'
+} from '@/modules/data-portability'
+import { GoogleDrivePanel } from '@/modules/google-drive'
+import { GroupSettingsPanel } from '@/modules/groups'
+import { usePlannerStore } from '@/modules/planner'
+import { TimerSettingsPanel } from '@/modules/timer'
 import {
   Sheet,
   SheetContent,

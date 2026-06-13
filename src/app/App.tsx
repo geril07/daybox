@@ -12,9 +12,9 @@ import {
   usePlannerStore,
   defaultDateForView,
   type View,
-} from '@/features/planner'
-import { AddTaskRow } from '@/features/tasks'
-import { TimerBar, togglePlayPauseWithClick } from '@/features/timer'
+} from '@/modules/planner'
+import { AddTaskRow } from '@/modules/tasks'
+import { TimerBar, togglePlayPauseWithClick } from '@/modules/timer'
 import { registerShortcuts } from '@/shared/keyboard'
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui'
 

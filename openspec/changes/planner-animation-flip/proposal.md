@@ -35,11 +35,11 @@ _(none)_
 ## Impact
 
 - **Code**
-  - `src/features/planner/components/DayView.tsx` — wrap the return value in `<LayoutGroup id="planner-day">`. No local snap state; the view is unaware of the snap pattern.
-  - `src/features/planner/components/WeekView.tsx` — same, with `id="planner-week"`.
-  - `src/features/planner/components/DateBrowser.tsx` — same, with `id="planner-date"`.
-  - `src/features/tasks/components/TaskList.tsx` — use `useLayoutSnap()` internally, drop the local `flushSync` + `setSnapLayout(true)` + rAF triple in `handleDragEnd`, and pass `snapLayout` to each `SortableTaskRow` / `StaticTaskRow` for the row's `transition.layout`. The `TaskList` public API (`tasks`, `emptyMessage`, `date`) is unchanged.
-  - `src/features/tasks/components/TaskRow.tsx` — unchanged.
+  - `src/modules/planner/components/DayView.tsx` — wrap the return value in `<LayoutGroup id="planner-day">`. No local snap state; the view is unaware of the snap pattern.
+  - `src/modules/planner/components/WeekView.tsx` — same, with `id="planner-week"`.
+  - `src/modules/planner/components/DateBrowser.tsx` — same, with `id="planner-date"`.
+  - `src/modules/tasks/components/TaskList.tsx` — use `useLayoutSnap()` internally, drop the local `flushSync` + `setSnapLayout(true)` + rAF triple in `handleDragEnd`, and pass `snapLayout` to each `SortableTaskRow` / `StaticTaskRow` for the row's `transition.layout`. The `TaskList` public API (`tasks`, `emptyMessage`, `date`) is unchanged.
+  - `src/modules/tasks/components/TaskRow.tsx` — unchanged.
   - `src/app/App.tsx` — unchanged. `MotionConfig` continues to wrap the whole task-list-area.
 - **Shared module**
   - `src/shared/utils/motion.ts` — add the `useLayoutSnap` hook. The existing `TRANSITION_*` tokens are unchanged.

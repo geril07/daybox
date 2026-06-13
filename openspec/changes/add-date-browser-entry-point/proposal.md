@@ -24,8 +24,8 @@ This is the "jump to any specific day" capability (e.g. "what's on June 20th", "
 ## Impact
 
 - `src/app/App.tsx` — a header control that sets `browseDate` and `view='date'`; `View` type already includes `'date'`.
-- `src/features/planner/components/DateBrowser.tsx` — formatted date label; adopt `SectionHeader`.
-- `src/features/planner/store.ts` — no new fields expected (`browseDate`/`stepBrowseDate`/`setBrowseDate` already exist).
+- `src/modules/planner/components/DateBrowser.tsx` — formatted date label; adopt `SectionHeader`.
+- `src/modules/planner/store.ts` — no new fields expected (`browseDate`/`stepBrowseDate`/`setBrowseDate` already exist).
 - No data/schema/persistence changes.
 
 ## Out of scope

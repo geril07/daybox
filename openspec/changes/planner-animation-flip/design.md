@@ -1,6 +1,6 @@
 ## Context
 
-The planner's animation system is concentrated in `src/features/tasks/components/TaskList.tsx`. It uses `motion@12.40.0`'s `AnimatePresence`, `motion.div`, and `layoutId` to animate task rows on enter, exit, and reorder. The spec at `openspec/specs/task-management/spec.md:183-240` codifies the contract in nine scenarios (adding, deleting, reordering, rescheduling across sections, toggling complete, view-switch, reduced-motion, rehydrated first render, empty → first task).
+The planner's animation system is concentrated in `src/modules/tasks/components/TaskList.tsx`. It uses `motion@12.40.0`'s `AnimatePresence`, `motion.div`, and `layoutId` to animate task rows on enter, exit, and reorder. The spec at `openspec/specs/task-management/spec.md:183-240` codifies the contract in nine scenarios (adding, deleting, reordering, rescheduling across sections, toggling complete, view-switch, reduced-motion, rehydrated first render, empty → first task).
 
 Two defects exist against this contract:
 

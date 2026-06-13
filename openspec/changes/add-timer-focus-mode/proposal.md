@@ -22,7 +22,7 @@ This change adds an **expand-to-focus-mode** affordance: the same timer state re
 
 ## Impact
 
-- `src/features/timer/components/` — new focus-mode component; the compact `TimerBar` gains an expand trigger.
+- `src/modules/timer/components/` — new focus-mode component; the compact `TimerBar` gains an expand trigger.
 - No data, schema, or persistence changes expected (pending the "survive reload" decision).
 - Depends on the compact-bar redesign (phase tint, fixed `sessionPomoCount`, progressive reset) landing first, since focus mode renders that same corrected state.
 

@@ -6,26 +6,26 @@ Define the validation policy and shape conventions for the data layer: schema-fi
 
 ### Requirement: Schema-first type definitions
 
-The system SHALL define each persisted shape once as a zod schema co-located with the owning feature (`features/<feature>/schema.ts`). The corresponding `types.ts` SHALL re-export the shape as `export type <Name> = z.infer<typeof <Name>Schema>`. Interfaces SHALL NOT be used for shapes that also have a runtime representation.
+The system SHALL define each persisted shape once as a zod schema co-located with the owning feature (`modules/<feature>/schema.ts`). The corresponding `types.ts` SHALL re-export the shape as `export type <Name> = z.infer<typeof <Name>Schema>`. Interfaces SHALL NOT be used for shapes that also have a runtime representation.
 
 #### Scenario: Task type is derived from TaskSchema
 
-- **WHEN** a developer reads `features/tasks/types.ts`
+- **WHEN** a developer reads `modules/tasks/types.ts`
 - **THEN** it exports `Task` as `z.infer<typeof TaskSchema>` and not as a hand-written `interface`
 
 #### Scenario: Group type is derived from GroupSchema
 
-- **WHEN** a developer reads `features/groups/types.ts`
+- **WHEN** a developer reads `modules/groups/types.ts`
 - **THEN** it exports `Group` as `z.infer<typeof GroupSchema>` and not as a hand-written `interface`
 
 #### Scenario: TimerSettings type is derived from TimerSettingsSchema
 
-- **WHEN** a developer reads `features/timer/store.ts`
+- **WHEN** a developer reads `modules/timer/store.ts`
 - **THEN** `TimerSettings` is `z.infer<typeof TimerSettingsSchema>`
 
 #### Scenario: PlannerState type is derived from PlannerStateSchema
 
-- **WHEN** a developer reads `features/planner/store.ts`
+- **WHEN** a developer reads `modules/planner/store.ts`
 - **THEN** the persisted state type is `z.infer<typeof PlannerStateSchema>`
 
 ### Requirement: Per-layer validation policy

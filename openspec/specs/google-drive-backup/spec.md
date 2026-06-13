@@ -42,13 +42,13 @@ The system SHALL allow the user to disconnect at any time from the connected sta
 
 ### Requirement: User can back up manually to Google Drive
 
-The system SHALL allow a connected user to back up all canonical save snapshot data to Google Drive on demand. The backup SHALL call `buildSnapshot` from `@/features/data-portability` and SHALL write the resulting JSON as a single visible file named `daybox.json` in the user's My Drive root, SHALL store the resulting Drive file id in the persisted `dayboxFileId` field, and SHALL update the `lastBackupAt` timestamp. Subsequent backups SHALL update the existing visible file when possible, not create a duplicate. Google Drive backup SHALL use the same snapshot contract as file Export, including timer settings and excluding timer runtime state and theme.
+The system SHALL allow a connected user to back up all canonical save snapshot data to Google Drive on demand. The backup SHALL call `buildSnapshot` from `@/modules/data-portability` and SHALL write the resulting JSON as a single visible file named `daybox.json` in the user's My Drive root, SHALL store the resulting Drive file id in the persisted `dayboxFileId` field, and SHALL update the `lastBackupAt` timestamp. Subsequent backups SHALL update the existing visible file when possible, not create a duplicate. Google Drive backup SHALL use the same snapshot contract as file Export, including timer settings and excluding timer runtime state and theme.
 
 #### Scenario: First backup creates the file
 
 - **WHEN** a connected user clicks "Back up" and no prior visible root backup file exists
 - **THEN** a new visible file named `daybox.json` is created in the user's My Drive root
-- **AND** the file content is the current envelope produced by `buildSnapshot` from `@/features/data-portability`
+- **AND** the file content is the current envelope produced by `buildSnapshot` from `@/modules/data-portability`
 - **AND** the content includes `envelopeVersion`, `exportedAt`, and `slices`
 - **AND** the `slices` object includes `tasks`, `groups`, `timerSettings`, and `planner`
 - **AND** the content does not include top-level `timer`, timer runtime fields, or `theme`
@@ -80,7 +80,7 @@ The system SHALL allow a connected user to back up all canonical save snapshot d
 
 ### Requirement: User can restore manually from Google Drive
 
-The system SHALL allow a connected user to restore canonical save snapshot data from Google Drive on demand, including on a browser or device that has not performed a backup locally. The restore SHALL require explicit user confirmation before downloading the file, preserving the current cancellation behavior. After confirmation, restore SHALL download the visible Drive file identified by `dayboxFileId` when available. If `dayboxFileId` is missing, restore SHALL list the user's My Drive root and find an accessible non-trashed `daybox.json` by name, then store the discovered file id as the current visible root backup id. The downloaded content SHALL be passed through `prepareSnapshotImport` from `@/features/data-portability`, and the prepared snapshot SHALL be committed through `commitSnapshotImport` only when preparation succeeds.
+The system SHALL allow a connected user to restore canonical save snapshot data from Google Drive on demand, including on a browser or device that has not performed a backup locally. The restore SHALL require explicit user confirmation before downloading the file, preserving the current cancellation behavior. After confirmation, restore SHALL download the visible Drive file identified by `dayboxFileId` when available. If `dayboxFileId` is missing, restore SHALL list the user's My Drive root and find an accessible non-trashed `daybox.json` by name, then store the discovered file id as the current visible root backup id. The downloaded content SHALL be passed through `prepareSnapshotImport` from `@/modules/data-portability`, and the prepared snapshot SHALL be committed through `commitSnapshotImport` only when preparation succeeds.
 
 #### Scenario: Restore proceeds with stored file id
 
@@ -149,12 +149,12 @@ The system SHALL show in the Google Drive section of the settings drawer: the co
 
 ### Requirement: The feature uses the data-portability feature for its data round-trip
 
-The feature SHALL NOT re-implement current save envelope parsing, legacy adapters, slice preparation orchestration, normalization, or commit behavior. It SHALL call `buildSnapshot`, `prepareSnapshotImport`, and `commitSnapshotImport` from `@/features/data-portability` for the snapshot round-trip. If the feature ever needs to surface a file-based Export flow, it SHALL import the generic browser download helper from `@/shared/utils/download`, not from data-portability. The feature SHALL NOT import from `src/app/*` and SHALL NOT import individual feature stores for the purpose of building or restoring the app snapshot.
+The feature SHALL NOT re-implement current save envelope parsing, legacy adapters, slice preparation orchestration, normalization, or commit behavior. It SHALL call `buildSnapshot`, `prepareSnapshotImport`, and `commitSnapshotImport` from `@/modules/data-portability` for the snapshot round-trip. If the feature ever needs to surface a file-based Export flow, it SHALL import the generic browser download helper from `@/shared/utils/download`, not from data-portability. The feature SHALL NOT import from `src/app/*` and SHALL NOT import individual feature stores for the purpose of building or restoring the app snapshot.
 
 #### Scenario: The feature builds a backup via data-portability
 
 - **WHEN** the feature's `store.ts` runs a backup action
-- **THEN** it calls `buildSnapshot()` from `@/features/data-portability`
+- **THEN** it calls `buildSnapshot()` from `@/modules/data-portability`
 - **AND** it serialises the returned object with `JSON.stringify`
 - **AND** it uploads the resulting string to Drive
 - **AND** the feature does not import `useTaskStore`, `useGroupStore`, `useTimerStore`, or `usePlannerStore` for the purpose of building the snapshot because that wiring is owned by data-portability
@@ -162,7 +162,7 @@ The feature SHALL NOT re-implement current save envelope parsing, legacy adapter
 #### Scenario: The feature restores via data-portability
 
 - **WHEN** the feature's `store.ts` runs a restore action after user confirmation
-- **THEN** the downloaded JSON string is passed to `prepareSnapshotImport` from `@/features/data-portability`
+- **THEN** the downloaded JSON string is passed to `prepareSnapshotImport` from `@/modules/data-portability`
 - **AND** a successful preparation result is passed to `commitSnapshotImport` from the same feature
 - **AND** preparation warnings are surfaced to the user (e.g. dangling group references or restored default group)
 - **AND** the file-based Import button in the settings drawer and the Google Drive Restore button share the same prepare/commit code path through data-portability

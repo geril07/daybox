@@ -52,7 +52,7 @@ Main specs at `openspec/specs/`, delta specs at `openspec/changes/<name>/specs/`
 ```
 src/
   app/        — shell, view state, theme, export/import/migration (only files allowed to reach across features)
-  features/   — one folder per domain; owns store, schema, types, queries, components, barrel
+  modules/    — one folder per domain; owns store, schema, types, queries, components, barrel
   shared/     — cross-feature primitives: ui wrappers, lib utils, dates, id, keyboard, motion, notifications
 ```
 
