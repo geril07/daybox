@@ -7,6 +7,7 @@ export const GoogleDriveAuthSchema = z.object({
   expiresAt: z.number().int().positive(),
   email: z.string().email().optional(),
   dayboxFileId: z.string().optional(),
+  backupFileSpace: z.literal('drive-root').optional(),
   lastBackupAt: z.string().optional(),
 })
 

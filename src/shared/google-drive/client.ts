@@ -1,5 +1,5 @@
 const GIS_SRC = 'https://accounts.google.com/gsi/client'
-const GIS_SCOPE = 'https://www.googleapis.com/auth/drive.appdata'
+const GIS_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 
 export type TokenResponse = {
   access_token: string

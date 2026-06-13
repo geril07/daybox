@@ -12,10 +12,10 @@ import {
   type TokenResponse,
 } from '@/shared/google-drive/client'
 import {
-  downloadAppDataFile,
-  findAppDataFile,
+  downloadDriveFile,
+  findDriveRootFile,
   getUserEmail,
-  uploadAppDataFile,
+  uploadDriveRootFile,
 } from '@/shared/google-drive/drive-api'
 import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
@@ -23,6 +23,7 @@ import { GoogleDriveAuthSchema, classifyDriveError } from './schema'
 import type { BackupError, GoogleDriveAuth } from './types'
 
 const BACKUP_FILENAME = 'daybox.json'
+const BACKUP_FILE_SPACE = 'drive-root'
 const TOKEN_SAFETY_MARGIN_MS = 60_000
 
 type PersistedSlice = Partial<GoogleDriveAuth>
@@ -141,6 +142,7 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
           expiresAt: undefined,
           email: undefined,
           dayboxFileId: undefined,
+          backupFileSpace: undefined,
           lastBackupAt: undefined,
           status: 'idle',
           error: null,
@@ -166,13 +168,16 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
           }
           const snapshot = buildSnapshot()
           const content = JSON.stringify(snapshot)
-          let existingId = get().dayboxFileId
+          let existingId =
+            get().backupFileSpace === BACKUP_FILE_SPACE
+              ? get().dayboxFileId
+              : undefined
           if (!existingId) {
             existingId =
-              (await findAppDataFile({ token, name: BACKUP_FILENAME })) ??
+              (await findDriveRootFile({ token, name: BACKUP_FILENAME })) ??
               undefined
           }
-          const { id } = await uploadAppDataFile({
+          const { id } = await uploadDriveRootFile({
             token,
             name: BACKUP_FILENAME,
             content,
@@ -180,6 +185,7 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
           })
           set({
             dayboxFileId: id,
+            backupFileSpace: BACKUP_FILE_SPACE,
             lastBackupAt: new Date().toISOString(),
             status: 'idle',
           })
@@ -206,18 +212,23 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
         set({ status: 'restoring', error: null })
         try {
           const token = await ensureFreshToken(get(), (p) => set(p))
-          let fileId = get().dayboxFileId
+          let fileId =
+            get().backupFileSpace === BACKUP_FILE_SPACE
+              ? get().dayboxFileId
+              : undefined
+          let discoveredFileId: string | undefined
           if (!fileId) {
             fileId =
-              (await findAppDataFile({ token, name: BACKUP_FILENAME })) ??
+              (await findDriveRootFile({ token, name: BACKUP_FILENAME })) ??
               undefined
+            discoveredFileId = fileId
           }
           if (!fileId) {
             const error: BackupError = { kind: 'not-found' }
             set({ status: 'idle', error })
             return { ok: false, error }
           }
-          const json = await downloadAppDataFile({ token, id: fileId })
+          const json = await downloadDriveFile({ token, id: fileId })
           const prepared = prepareSnapshotImport(json)
           if (!prepared.ok) {
             const error: BackupError = {
@@ -228,7 +239,15 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
             return { ok: false, error }
           }
           commitSnapshotImport(prepared.snapshot)
-          set({ status: 'idle' })
+          set({
+            status: 'idle',
+            ...(discoveredFileId
+              ? {
+                  dayboxFileId: discoveredFileId,
+                  backupFileSpace: BACKUP_FILE_SPACE,
+                }
+              : {}),
+          })
           return { ok: true, warnings: prepared.warnings }
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err)
@@ -250,8 +269,22 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
         expiresAt: state.expiresAt,
         email: state.email,
         dayboxFileId: state.dayboxFileId,
+        backupFileSpace: state.backupFileSpace,
         lastBackupAt: state.lastBackupAt,
       }),
+      version: 1,
+      migrate: (persisted) => {
+        if (!persisted || typeof persisted !== 'object') return persisted
+        const state = persisted as PersistedSlice
+        return {
+          ...state,
+          accessToken: undefined,
+          expiresAt: undefined,
+          dayboxFileId: undefined,
+          backupFileSpace: undefined,
+          lastBackupAt: undefined,
+        }
+      },
       onRehydrateStorage: createValidatedRehydrate<GoogleDriveStore>({
         name: 'daybox-google-drive',
         schema: PersistedSliceSchema,

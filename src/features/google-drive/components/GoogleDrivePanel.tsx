@@ -24,7 +24,6 @@ export function GoogleDrivePanel() {
   const lastBackupAt = useLastBackupAge()
   const status = useGoogleDriveStore((s) => s.status)
   const error = useGoogleDriveStore((s) => s.error)
-  const dayboxFileId = useGoogleDriveStore((s) => s.dayboxFileId)
   const connect = useGoogleDriveStore((s) => s.connect)
   const disconnect = useGoogleDriveStore((s) => s.disconnect)
   const backup = useGoogleDriveStore((s) => s.backup)
@@ -58,6 +57,10 @@ export function GoogleDrivePanel() {
           <LogIn className="size-3.5" />
           {status === 'connecting' ? 'Connecting...' : 'Connect with Google'}
         </Button>
+        <div className="text-muted-foreground text-xs">
+          Backups are saved as a visible daybox.json file in your Google Drive
+          root.
+        </div>
         {error && error.kind === 'denied' && (
           <div className="text-muted-foreground text-xs">
             Sign-in cancelled.
@@ -86,6 +89,11 @@ export function GoogleDrivePanel() {
         {email ? <span>{email}</span> : <span>Connected</span>}
       </div>
 
+      <div className="text-muted-foreground text-xs">
+        Backup file: visible daybox.json in Google Drive root. Restore searches
+        Google Drive root for daybox.json.
+      </div>
+
       {lastBackupAt !== null && (
         <div className="text-muted-foreground text-xs">
           Last backup: {lastBackupAt}
@@ -112,11 +120,7 @@ export function GoogleDrivePanel() {
             render={
               <Button
                 variant="outline"
-                disabled={
-                  status === 'backing-up' ||
-                  status === 'restoring' ||
-                  !dayboxFileId
-                }
+                disabled={status === 'backing-up' || status === 'restoring'}
               />
             }
           >

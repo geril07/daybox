@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   DriveApiError,
-  downloadAppDataFile,
-  findAppDataFile,
+  downloadDriveFile,
+  findDriveRootFile,
   getUserEmail,
-  uploadAppDataFile,
+  uploadDriveRootFile,
 } from './drive-api'
 
 const fetchMock = vi.fn()
@@ -19,7 +19,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('uploadAppDataFile', () => {
+describe('uploadDriveRootFile', () => {
   it('POSTs a multipart request when no existingId is given', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -27,7 +27,7 @@ describe('uploadAppDataFile', () => {
       json: async () => ({ id: 'new-id' }),
     })
 
-    const result = await uploadAppDataFile({
+    const result = await uploadDriveRootFile({
       token: 'tok',
       name: 'daybox.json',
       content: '{"hello":"world"}',
@@ -43,7 +43,7 @@ describe('uploadAppDataFile', () => {
     expect(headers['Authorization']).toBe('Bearer tok')
     const body = (init as RequestInit).body as string
     expect(body).toContain('"name":"daybox.json"')
-    expect(body).toContain('appDataFolder')
+    expect(body).toContain('"parents":["root"]')
     expect(body).toContain('{"hello":"world"}')
   })
 
@@ -54,7 +54,7 @@ describe('uploadAppDataFile', () => {
       json: async () => ({}),
     })
 
-    const result = await uploadAppDataFile({
+    const result = await uploadDriveRootFile({
       token: 'tok',
       name: 'daybox.json',
       content: '{"hello":"world"}',
@@ -70,7 +70,7 @@ describe('uploadAppDataFile', () => {
   })
 })
 
-describe('downloadAppDataFile', () => {
+describe('downloadDriveFile', () => {
   it('returns the file content on success', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -78,7 +78,7 @@ describe('downloadAppDataFile', () => {
       text: async () => '{"hello":"world"}',
     })
 
-    const content = await downloadAppDataFile({
+    const content = await downloadDriveFile({
       token: 'tok',
       id: 'file-id',
     })
@@ -95,12 +95,12 @@ describe('downloadAppDataFile', () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 404 })
 
     await expect(
-      downloadAppDataFile({ token: 'tok', id: 'missing' }),
+      downloadDriveFile({ token: 'tok', id: 'missing' }),
     ).rejects.toBeInstanceOf(DriveApiError)
   })
 })
 
-describe('findAppDataFile', () => {
+describe('findDriveRootFile', () => {
   it('returns the first file id when present', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -108,10 +108,11 @@ describe('findAppDataFile', () => {
       json: async () => ({ files: [{ id: 'found-id' }] }),
     })
 
-    const id = await findAppDataFile({ token: 'tok', name: 'daybox.json' })
+    const id = await findDriveRootFile({ token: 'tok', name: 'daybox.json' })
     expect(id).toBe('found-id')
     const [url] = fetchMock.mock.calls[0]
-    expect(url).toContain('spaces=appDataFolder')
+    expect(url).toContain('spaces=drive')
+    expect(decodeURIComponent(url as string)).toContain("'root' in parents")
     expect(url).toMatch(/name(%3D|=)/)
   })
 
@@ -122,7 +123,7 @@ describe('findAppDataFile', () => {
       json: async () => ({ files: [] }),
     })
 
-    const id = await findAppDataFile({ token: 'tok', name: 'daybox.json' })
+    const id = await findDriveRootFile({ token: 'tok', name: 'daybox.json' })
     expect(id).toBeNull()
   })
 })

@@ -15,23 +15,23 @@ function authHeaders(token: string): HeadersInit {
   return { Authorization: `Bearer ${token}` }
 }
 
-export interface UploadAppDataFileParams {
+export interface UploadDriveRootFileParams {
   token: string
   name: string
   content: string
   existingId?: string
 }
 
-export interface UploadAppDataFileResult {
+export interface UploadDriveRootFileResult {
   id: string
 }
 
-export async function uploadAppDataFile({
+export async function uploadDriveRootFile({
   token,
   name,
   content,
   existingId,
-}: UploadAppDataFileParams): Promise<UploadAppDataFileResult> {
+}: UploadDriveRootFileParams): Promise<UploadDriveRootFileResult> {
   if (existingId) {
     const url = `${DRIVE_UPLOAD_URL}/${existingId}?uploadType=media`
     const res = await fetch(url, {
@@ -50,7 +50,7 @@ export async function uploadAppDataFile({
   const boundary = `-------daybox${Date.now()}`
   const delimiter = `\r\n--${boundary}\r\n`
   const closeDelim = `\r\n--${boundary}--`
-  const metadata = { name, parents: ['appDataFolder'] }
+  const metadata = { name, parents: ['root'] }
   const body =
     delimiter +
     'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
@@ -80,15 +80,15 @@ export async function uploadAppDataFile({
   return { id: data.id }
 }
 
-export interface DownloadAppDataFileParams {
+export interface DownloadDriveFileParams {
   token: string
   id: string
 }
 
-export async function downloadAppDataFile({
+export async function downloadDriveFile({
   token,
   id,
-}: DownloadAppDataFileParams): Promise<string> {
+}: DownloadDriveFileParams): Promise<string> {
   const res = await fetch(`${DRIVE_FILES_URL}/${id}?alt=media`, {
     headers: authHeaders(token),
   })
@@ -101,25 +101,25 @@ export async function downloadAppDataFile({
   return res.text()
 }
 
-export interface FindAppDataFileParams {
+export interface FindDriveRootFileParams {
   token: string
   name: string
 }
 
-export async function findAppDataFile({
+export async function findDriveRootFile({
   token,
   name,
-}: FindAppDataFileParams): Promise<string | null> {
+}: FindDriveRootFileParams): Promise<string | null> {
   const q = encodeURIComponent(
-    `name='${name.replace(/'/g, "\\'")}' and 'appDataFolder' in parents and trashed=false`,
+    `name='${name.replace(/'/g, "\\'")}' and 'root' in parents and trashed=false`,
   )
   const res = await fetch(
-    `${DRIVE_FILES_URL}?spaces=appDataFolder&q=${q}&fields=files(id)`,
+    `${DRIVE_FILES_URL}?spaces=drive&q=${q}&fields=files(id)`,
     { headers: authHeaders(token) },
   )
   if (!res.ok) {
     throw new DriveApiError(
-      `Failed to list Drive appDataFolder (${res.status})`,
+      `Failed to list Drive root (${res.status})`,
       res.status,
     )
   }

@@ -16,6 +16,7 @@ function setStoreState(partial: {
   expiresAt?: number
   email?: string
   dayboxFileId?: string
+  backupFileSpace?: 'drive-root'
   lastBackupAt?: string
   error?: ReturnType<typeof useGoogleDriveStore.getState>['error']
 }) {
@@ -24,6 +25,7 @@ function setStoreState(partial: {
     expiresAt: partial.expiresAt,
     email: partial.email,
     dayboxFileId: partial.dayboxFileId,
+    backupFileSpace: partial.backupFileSpace,
     lastBackupAt: partial.lastBackupAt,
     error: partial.error ?? null,
     status: 'idle',
@@ -37,6 +39,7 @@ beforeEach(() => {
     expiresAt: undefined,
     email: undefined,
     dayboxFileId: undefined,
+    backupFileSpace: undefined,
     lastBackupAt: undefined,
     status: 'idle',
     error: null,
@@ -67,6 +70,12 @@ describe('GoogleDrivePanel — disconnected', () => {
       screen.getByRole('button', { name: /connect with google/i }),
     ).toBeTruthy()
   })
+
+  it('explains that backups are visible in Drive root', () => {
+    render(<GoogleDrivePanel />)
+    expect(screen.getByText(/visible daybox\.json/i)).toBeTruthy()
+    expect(screen.getByText(/google drive root/i)).toBeTruthy()
+  })
 })
 
 describe('GoogleDrivePanel — connected, no backup', () => {
@@ -78,15 +87,21 @@ describe('GoogleDrivePanel — connected, no backup', () => {
     })
   })
 
-  it('disables Restore when there is no prior backup file id', () => {
+  it('enables Restore so it can discover a backup from another device', async () => {
+    const user = userEvent.setup()
     render(<GoogleDrivePanel />)
     const restoreBtn = screen.getByRole('button', { name: /^Restore$/i })
-    expect((restoreBtn as HTMLButtonElement).disabled).toBe(true)
+    expect((restoreBtn as HTMLButtonElement).disabled).toBe(false)
+    await user.click(restoreBtn)
+    expect(await screen.findByText(/replace all current data/i)).toBeTruthy()
+    expect(restore).not.toHaveBeenCalled()
   })
 
   it('shows the account email', () => {
     render(<GoogleDrivePanel />)
     expect(screen.getByText('me@example.com')).toBeTruthy()
+    expect(screen.getByText(/visible daybox\.json/i)).toBeTruthy()
+    expect(screen.getByText(/restore searches google drive root/i)).toBeTruthy()
   })
 })
 
@@ -97,6 +112,7 @@ describe('GoogleDrivePanel — connected, with backup', () => {
       expiresAt: Date.now() + 60 * 60_000,
       email: 'me@example.com',
       dayboxFileId: 'file-id',
+      backupFileSpace: 'drive-root',
       lastBackupAt: new Date(Date.now() - 60_000).toISOString(),
     })
   })
@@ -127,5 +143,22 @@ describe('GoogleDrivePanel — connected, with backup', () => {
     })
     await user.click(disconnectBtn)
     expect(disconnect).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('GoogleDrivePanel — connected, old hidden backup id', () => {
+  beforeEach(() => {
+    setStoreState({
+      accessToken: 'tok',
+      expiresAt: Date.now() + 60 * 60_000,
+      email: 'me@example.com',
+      dayboxFileId: 'old-hidden-file-id',
+    })
+  })
+
+  it('enables Restore and treats an old unmarked appDataFolder id as a discovery case', () => {
+    render(<GoogleDrivePanel />)
+    const restoreBtn = screen.getByRole('button', { name: /^Restore$/i })
+    expect((restoreBtn as HTMLButtonElement).disabled).toBe(false)
   })
 })
