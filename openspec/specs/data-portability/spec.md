@@ -18,6 +18,8 @@ The system SHALL organise the cross-cutting save/restore orchestration in a dedi
 
 Feature-owned slice schemas, entity schemas, and slice migrations SHALL live in the owning feature. The data-portability feature SHALL NOT own task, group, timer-settings, or planner entity migrations.
 
+The shared, domain-agnostic save-slice contracts (`SaveSlice`, `SaveSlicePrepareResult`, and `MissingSliceStrategy<TCurrent>`) SHALL live outside data-portability in `src/shared/save-slice/`. Feature-owned slice schemas, entity schemas, slice-local defaults, slice-local validation, and slice migrations SHALL live in the owning feature. The data-portability feature SHALL NOT own task, group, timer-settings, or planner entity migrations or slice-local fallback construction.
+
 The data-portability feature SHALL NOT import from `src/app/*`. It MAY import from the barrels of other features and from `src/shared/*` because it is the explicit cross-cutting app snapshot boundary.
 
 The data-portability feature has no UI of its own. Its public surface is the functions and types in its barrel.
@@ -27,7 +29,7 @@ The data-portability feature has no UI of its own. Its public surface is the fun
 - **WHEN** data-portability prepares an import
 - **THEN** JSON parsing, current envelope parsing, per-slice import preparation, cross-slice normalization, and commit are implemented as separate stages with narrow responsibilities
 - **AND** store mutation happens only in the commit stage
-- **AND** each feature-owned slice handles its own version detection, historical schema parsing, and slice migrations inside `prepareImport`
+- **AND** each feature-owned slice handles its own version detection, historical schema parsing, slice-local defaulting, slice-local validation, and slice migrations inside `prepareImport`
 
 #### Scenario: The envelope schema defines the current nested shape
 
@@ -43,6 +45,12 @@ The data-portability feature has no UI of its own. Its public surface is the fun
 - **THEN** its registry imports save slices from `@/modules/groups`, `@/modules/tasks`, `@/modules/timer`, and `@/modules/planner`
 - **AND** exports a `saveSlices` array whose order is canonical and dependency-aware: groups, tasks, timerSettings, planner
 - **AND** a feature that wants to participate in save/restore is added by exporting a save slice from the feature barrel and adding it to the registry
+
+#### Scenario: Feature save adapters depend on the shared contract
+
+- **WHEN** a feature-owned save adapter declares its save slice
+- **THEN** it imports `SaveSlice` and related generic save-slice types from `@/shared/save-slice`
+- **AND** it does NOT import those generic contracts from `@/modules/data-portability` or `@/modules/data-portability/types`
 
 ### Requirement: `buildSnapshot` assembles the current envelope
 
@@ -141,25 +149,27 @@ The system SHALL split snapshot import into a preparation phase and a commit pha
 
 The system SHALL normalize repairable cross-slice domain invariants after all slices prepare successfully and before commit. Normalization SHALL accept prepared current slice values and return a `PreparedSnapshot`; it MAY return warnings describing repairs. The current repairable invariants are group fallback safety and task-to-group references: the prepared groups slice SHALL include the canonical default group, and every prepared task's `groupId` SHALL reference a group in the prepared groups slice. Dangling task group ids are replaced with the canonical default group id.
 
+Feature-owned `prepareImport` functions SHALL own slice-local parsing, migrations, defaults, and validation before data-portability performs cross-slice normalization. In particular, the groups save slice SHALL ensure the prepared groups payload includes the canonical default group when that repair is possible, and the tasks and groups save slices SHALL reject duplicate ids in their own payloads.
+
 The normalizer SHOULD be named to reflect this ownership boundary, for example `normalizeCrossSliceInvariants`, because feature-owned `prepareImport` functions own slice-local shape validation and migrations while data-portability owns relationships between prepared slices.
 
 #### Scenario: Duplicate task ids reject import preparation
 
 - **WHEN** `prepareSnapshotImport` receives a current save envelope with two tasks that share the same `id`
-- **THEN** preparation returns `{ ok: false, reason: <message> }`
+- **THEN** the tasks save slice rejects preparation with `{ ok: false, reason: <message> }`
 - **AND** no store state is modified
 
 #### Scenario: Duplicate group ids reject import preparation
 
 - **WHEN** `prepareSnapshotImport` receives a current save envelope with two groups that share the same `id`
-- **THEN** preparation returns `{ ok: false, reason: <message> }`
+- **THEN** the groups save slice rejects preparation with `{ ok: false, reason: <message> }`
 - **AND** no store state is modified
 
 #### Scenario: Duplicate default groups reject import preparation
 
 - **WHEN** `prepareSnapshotImport` receives a current save envelope with more than one group whose `id` is the canonical default-group id
-- **THEN** preparation returns `{ ok: false, reason: <message> }`
-- **AND** normalization does not attempt to choose between the duplicate defaults
+- **THEN** the groups save slice rejects preparation with `{ ok: false, reason: <message> }`
+- **AND** cross-slice normalization does not attempt to choose between the duplicate defaults
 
 #### Scenario: Dangling task group is repaired during preparation
 
@@ -168,12 +178,12 @@ The normalizer SHOULD be named to reflect this ownership boundary, for example `
 - **AND** the result includes a warning naming the dangling group id
 - **AND** no store is modified until the prepared snapshot is committed
 
-#### Scenario: Missing default group is repaired during preparation
+#### Scenario: Missing default group is repaired by the groups slice during preparation
 
 - **WHEN** `prepareSnapshotImport` receives a save snapshot whose groups do not include the canonical default group id
-- **THEN** preparation returns an ok result whose snapshot includes a valid default group
-- **AND** tasks that need fallback reassignment can point at an existing default group
-- **AND** the result includes a warning that the default group was restored
+- **THEN** the groups save slice returns an ok prepared groups value that includes a valid default group
+- **AND** data-portability cross-slice normalization can safely reassign dangling task group references to that default group
+- **AND** the preparation result includes a warning that the default group was restored
 
 #### Scenario: Normalization is not a store mutation step
 
@@ -183,14 +193,14 @@ The normalizer SHOULD be named to reflect this ownership boundary, for example `
 
 ### Requirement: Feature save slices own their versions and migrations
 
-The system SHALL represent each save-participating feature as a save slice. A save slice SHALL declare its name, current version, missing-slice strategy, export function, import preparation function, and import apply function. Feature-owned slice schemas and migrations SHALL live in the owning feature.
+The system SHALL represent each save-participating feature as a save slice. A save slice SHALL declare its name, current version, missing-slice strategy, export function, import preparation function, and import apply function using the generic save-slice contract from `@/shared/save-slice`. Feature-owned slice schemas, slice-local defaults, slice-local validation, and migrations SHALL live in the owning feature.
 
 #### Scenario: A feature exports a save slice
 
 - **WHEN** a feature participates in save/restore
 - **THEN** its barrel exports a save slice with `name`, `currentVersion`, `missing`, `exportSlice`, `prepareImport`, and `applyImport`
 - **AND** `exportSlice` returns the feature's current save slice payload including a slice-level `version`
-- **AND** `prepareImport` accepts `unknown`, parses the incoming slice version, runs feature-owned migrations as needed, and returns the current slice payload
+- **AND** `prepareImport` accepts `unknown`, parses the incoming slice version, runs feature-owned migrations and slice-local repairs as needed, and returns the current slice payload
 - **AND** `applyImport` writes a current slice payload to the feature's store
 
 #### Scenario: Historical slice schemas are frozen compatibility contracts
@@ -213,6 +223,12 @@ The system SHALL represent each save-participating feature as a save slice. A sa
 - **AND** `{ kind: 'required' }` fails the import
 - **AND** `{ kind: 'useDefault', getDefault }` calls `getDefault()` and prepares/applies that value
 - **AND** there is no skip strategy; a registered slice either requires input or provides a default
+
+#### Scenario: Save-slice contracts are not exported by data-portability
+
+- **WHEN** code needs the generic save-slice contract types
+- **THEN** it imports them from `@/shared/save-slice`
+- **AND** it does not import or re-export those contracts through `@/modules/data-portability`
 
 ### Requirement: Save transports share the same snapshot contract
 
