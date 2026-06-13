@@ -10,7 +10,7 @@ DayBox currently supports dated tasks and Pomodoro focus, but it does not suppor
 - Track completion per routine step per date using sparse completion state; missing completion means incomplete.
 - Reset visible routine progress naturally each day without generating task copies.
 - Exclude routines from task-specific behavior: no task date picker, Pomodoro estimate, focus action, group tag, task reorder, or overdue section.
-- Include routines in DayBox export/import and backup snapshots with migration support from the current snapshot version.
+- Include routines in DayBox export/import and backup snapshots through the current nested save-slice pipeline.
 
 ## Capabilities
 
@@ -20,7 +20,7 @@ DayBox currently supports dated tasks and Pomodoro focus, but it does not suppor
 
 ### Modified Capabilities
 
-- `data-portability`: Snapshot envelopes include the routines slice and migrate older exports to include empty routine state.
+- `data-portability`: Snapshot envelopes include the routines slice, and older current-envelope exports that lack the routines slice import with empty routine state.
 - `time-views`: Today view includes routine content and does not show the empty state when routines are present.
 - `settings`: Settings expose routine and step management controls.
 
@@ -29,5 +29,5 @@ DayBox currently supports dated tasks and Pomodoro focus, but it does not suppor
 - New `src/features/routines/` feature with schema, store, slice, queries, and components.
 - Today view renders a routine section alongside existing overdue and task sections.
 - Settings drawer gains routine management UI.
-- Data portability registry and envelope versioning are updated to include routines.
-- Tests are added for routine store actions, selectors, Today rendering, settings management, and snapshot migration/apply behavior.
+- Data portability registry is updated to include routines without changing the envelope version.
+- Tests are added for routine store actions, selectors, Today rendering, settings management, and snapshot prepare/commit behavior.

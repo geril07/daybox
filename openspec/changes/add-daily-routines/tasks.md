@@ -28,12 +28,11 @@
 
 ## 4. Data Portability
 
-- [ ] 4.1 Add `routinesSlice` that exports and applies the routines store state.
+- [ ] 4.1 Add `routinesSaveSlice` that exports and applies the routines store state.
 - [ ] 4.2 Add the routines slice to the data-portability registry.
-- [ ] 4.3 Bump the snapshot envelope to v4 and require the `routines` field.
-- [ ] 4.4 Add v3-to-v4 migration that injects empty routine state.
-- [ ] 4.5 Ensure v2 imports migrate forward into the v4 envelope with empty routine state.
-- [ ] 4.6 Add data-portability tests for v4 build, v3 migration, v2 migration, valid routines apply, and invalid routines warning behavior.
+- [ ] 4.3 Keep the snapshot envelope at `envelopeVersion: 1` and include routines under `slices.routines`.
+- [ ] 4.4 Configure the routines slice missing-slice strategy to use empty routine state for older current-envelope imports.
+- [ ] 4.5 Add data-portability tests for current build including routines, missing routines slice defaulting to empty state, valid routines commit, and invalid routines payload rejection.
 
 ## 5. Verification
 

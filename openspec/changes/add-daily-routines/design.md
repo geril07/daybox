@@ -2,7 +2,7 @@
 
 DayBox is a local-first planner where persisted state is owned by feature stores and included in data portability through per-feature slices. The current task model is intentionally task-specific: tasks have dates, groups, Pomodoro counts, focus behavior, reorder behavior, and overdue behavior. Daily routines need a lighter model for repeated habit/checklist completion that resets by date without creating normal task instances.
 
-The existing Today view renders overdue tasks and today's tasks through planner queries and task components. Settings already hosts feature-owned panels, and the data-portability feature owns snapshot versioning, migrations, validation, and apply behavior.
+The existing Today view renders overdue tasks and today's tasks through planner queries and task components. Settings already hosts feature-owned panels, and the data-portability feature owns the nested save envelope, slice registry, prepare pipeline, and commit behavior.
 
 ## Goals / Non-Goals
 
@@ -87,9 +87,9 @@ The Today view SHALL render routines for execution only: check/uncheck routine s
 
 This keeps daily use lightweight while preserving settings as the place where feature-owned configuration is managed.
 
-### Snapshot version advances to v4
+### Routines join the current save-slice envelope
 
-The data-portability envelope SHALL advance from v3 to v4 to include the `routines` slice. A v3-to-v4 migration SHALL add empty routine state. Existing v2 imports SHALL still migrate forward through the current migration path into the v4 shape.
+The data-portability envelope SHALL remain the current nested `envelopeVersion: 1` shape. Routines participate by exporting a `routinesSaveSlice` and adding it to the registry after the existing slices. Older current-envelope exports that do not contain `slices.routines` SHALL import using the routines slice's empty-state missing-slice default.
 
 ## Risks / Trade-offs
 
