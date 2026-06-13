@@ -6,7 +6,7 @@ Persist all user data (tasks, groups, timer runtime/configuration, planner prefe
 
 ### Requirement: All state persisted to localStorage
 
-The system SHALL save tasks, groups, timer state, planner preferences, and theme to localStorage in five independent keys: `daybox-tasks`, `daybox-groups`, `daybox-timer`, `daybox-planner`, and `daybox-theme`. The timer store SHALL persist its full state (runtime: `phase`, `startedAt`, `elapsed`, `isRunning`, `focusedTaskId`; configuration: `settings`) under `daybox-timer`. To prevent the timer's 1Hz `tick` from producing 1Hz localStorage writes, the timer store's persistence layer SHALL be debounced (the debounce policy and the rehydrate wall-clock-correction behaviour are defined in the `pomodoro-timer` capability). The planner's preferences (`weekStartDay`, `browseDate`) SHALL be persisted under `daybox-planner`. The theme (`light` or `dark`) SHALL be persisted under `daybox-theme`. The legacy `daybox-settings` key SHALL NOT be used by the running app.
+The system SHALL save tasks, groups, timer state, planner preferences, and theme to localStorage in five independent keys: `daybox-tasks`, `daybox-groups`, `daybox-timer`, `daybox-planner`, and `daybox-theme`. The timer store SHALL persist its full state (runtime: `phase`, `startedAt`, `elapsed`, `isRunning`, `focusedTaskId`; configuration: `settings`) under `daybox-timer`. To prevent the timer's 1Hz `tick` from producing 1Hz localStorage writes, the timer store's persistence layer SHALL be debounced (the debounce policy and the rehydrate wall-clock-correction behaviour are defined in the `pomodoro-timer` capability). The planner's preferences (`weekStartDay`, `browseDate`) SHALL be persisted under `daybox-planner`. The theme (`light` or `dark`) SHALL be persisted under `daybox-theme`. The running app SHALL NOT read from or write to obsolete localStorage keys `daybox-app-store` or `daybox-settings`.
 
 #### Scenario: Tasks persist on reload
 
@@ -39,6 +39,12 @@ The system SHALL save tasks, groups, timer state, planner preferences, and theme
 - **THEN** the timer continues from approximately where it was — the wall-clock delta since the last persisted `startedAt` is added to `elapsed`, and `startedAt` is updated to the current time, so the user sees the same remaining time
 - **AND** the rehydrated `isRunning` is `true` and the rehydrated `phase` is unchanged
 
+#### Scenario: Obsolete localStorage keys are ignored
+
+- **WHEN** the app loads and localStorage contains `daybox-app-store` or `daybox-settings`
+- **THEN** app startup does not read, migrate, rewrite, or delete those keys
+- **AND** the feature stores hydrate from their current feature-owned persistence keys
+
 ### Requirement: User can export data as JSON
 
 The system SHALL allow users to download all restorable DayBox save snapshot data as a JSON file using the current save envelope. The snapshot SHALL include feature-owned slices for tasks, groups, timer settings, and planner preferences. View state, timer runtime state, Google Drive auth state, and theme SHALL NOT be included in the export.
@@ -55,7 +61,7 @@ The system SHALL allow users to download all restorable DayBox save snapshot dat
 
 ### Requirement: User can import data from JSON
 
-The system SHALL allow users to upload a previously exported JSON file to restore save snapshot data into the owning stores. The import MUST accept the current nested envelope and supported legacy flat files with `version: 2` and `version: 3`. Import preparation SHALL parse or adapt the envelope, prepare every registered feature slice, normalize cross-slice invariants without mutating stores, and commit only after preparation succeeds and the user confirms replacement.
+The system SHALL allow users to upload a previously exported current-envelope JSON file to restore save snapshot data into the owning stores. The import MUST accept the current nested envelope with `envelopeVersion: 1`, `exportedAt`, and `slices`. Import preparation SHALL parse the envelope, prepare every registered feature slice, normalize cross-slice invariants without mutating stores, and commit only after preparation succeeds and the user confirms replacement. Flat legacy JSON files with top-level `version: 2` or `version: 3` SHALL be rejected.
 
 #### Scenario: Import current data
 
@@ -64,20 +70,12 @@ The system SHALL allow users to upload a previously exported JSON file to restor
 - **AND** after the user confirms replacement, tasks, groups, timer settings, and planner preferences are replaced with the prepared snapshot data
 - **AND** theme is left unchanged
 
-#### Scenario: Import v3 data
+#### Scenario: Import flat legacy data is rejected
 
-- **WHEN** user selects a flat `version: 3` JSON file via the "Import" button in settings
-- **THEN** the file is adapted to the current nested envelope shape during preparation
-- **AND** the top-level `timer` field is restored through the current `timerSettings` slice after commit
-
-#### Scenario: Import v2 data
-
-- **WHEN** user selects a flat `version: 2` JSON file via the "Import" button in settings
-- **THEN** the file is adapted to the current nested envelope shape during preparation
-- **AND** `tasks` and `groups` are restored through their current slices after commit
-- **AND** `settings.timer` is restored through the current `timerSettings` slice after commit
-- **AND** `settings.weekStartDay` and `browseDate: null` are combined into the current `planner` slice after commit
-- **AND** `settings.theme` is dropped and the local theme is left unchanged
+- **WHEN** user selects a flat `version: 2` or `version: 3` JSON file via the "Import" button in settings
+- **THEN** preparation fails with `{ ok: false, reason: 'Not a DayBox export file.' }`
+- **AND** no confirmation dialog is shown for committing that file
+- **AND** no store state is modified
 
 #### Scenario: Import confirms before committing
 
@@ -88,37 +86,6 @@ The system SHALL allow users to upload a previously exported JSON file to restor
 
 - **WHEN** user selects a JSON file that prepares successfully and then cancels the confirmation dialog
 - **THEN** no store state is modified
-
-### Requirement: One-shot migration from single store
-
-The system SHALL migrate existing localStorage data from the old `daybox-app-store` key to the five new keys on first load after deploy, and delete the old key.
-
-#### Scenario: Migration runs on first load
-
-- **WHEN** a user loads the app and `daybox-app-store` exists in localStorage
-- **THEN** the old state is written to `daybox-tasks`, `daybox-groups`, and `daybox-settings` (intermediate) and `daybox-app-store` is deleted
-
-#### Scenario: Migration does not run on subsequent loads
-
-- **WHEN** a user loads the app and `daybox-app-store` does not exist
-- **THEN** migration is skipped
-
-### Requirement: One-shot migration from god-settings key
-
-The system SHALL migrate existing localStorage data from the intermediate `daybox-settings` key (introduced in the v1 split) to the per-feature keys on first load after this deploy, and delete `daybox-settings`.
-
-#### Scenario: Migration runs on first load with daybox-settings
-
-- **WHEN** a user loads the app, `daybox-app-store` does not exist, and `daybox-settings` exists
-- **THEN** `settings.timer` is written to the timer's settings slice
-- **AND** `settings.weekStartDay` is written to the planner store
-- **AND** `settings.theme` is written to the theme store
-- **AND** `daybox-settings` is deleted
-
-#### Scenario: Migration is idempotent
-
-- **WHEN** a user loads the app and `daybox-settings` does not exist
-- **THEN** the migration is skipped and the five feature-owned keys are read directly
 
 ### Requirement: Import applies a per-layer validation policy
 
@@ -153,7 +120,7 @@ The system SHALL prepare imported snapshot JSON through the data-portability pip
 
 #### Scenario: Envelope failure rejects the import
 
-- **WHEN** a user imports a JSON file missing both supported legacy `version` and current `envelopeVersion` fields
+- **WHEN** a user imports a JSON file missing current `envelopeVersion: 1`
 - **THEN** the result is `{ ok: false, reason: 'Not a DayBox export file.' }`
 - **AND** no store state is modified
 
@@ -172,80 +139,6 @@ The system SHALL validate the persisted blob for each of the four feature stores
 - **WHEN** `localStorage.getItem('daybox-tasks')` returns a valid blob
 - **THEN** the task store starts with the persisted tasks
 - **AND** no warn is emitted
-
-### Requirement: Legacy migrations validate before writing
-
-The system SHALL validate the parsed `daybox-app-store` and `daybox-settings` legacy blobs against their expected shape (using zod) before writing to the new feature stores. On validation failure, the affected migration SHALL be skipped and a `console.warn` SHALL be emitted. The legacy key SHALL be removed regardless of whether the migration succeeded (so a bad blob doesn't keep re-firing).
-
-#### Scenario: Legacy daybox-app-store migration with valid shape
-
-- **WHEN** the app loads and `daybox-app-store` exists with a valid v1 shape
-- **THEN** `tasks`, `groups`, and `settings` are migrated to the new feature stores
-- **AND** the legacy key is removed
-
-#### Scenario: Legacy daybox-app-store migration with invalid shape
-
-- **WHEN** the app loads and `daybox-app-store` exists with a shape that fails the migration schema
-- **THEN** the migration is skipped (new feature stores keep their current state)
-- **AND** `console.warn` is emitted
-- **AND** the legacy key is removed
-
-#### Scenario: Legacy daybox-settings migration with valid shape
-
-- **WHEN** the app loads and `daybox-settings` exists with a valid v1 shape
-- **THEN** `settings.timer`, `settings.weekStartDay`, and `settings.theme` are written to the relevant feature stores
-- **AND** the legacy key is removed
-
-#### Scenario: Legacy daybox-settings migration with invalid shape
-
-- **WHEN** the app loads and `daybox-settings` exists with a shape that fails the migration schema
-- **THEN** the migration is skipped
-- **AND** `console.warn` is emitted
-- **AND** the legacy key is removed
-
-### Requirement: Legacy migrations validate per-record
-
-The `migrateLegacyAppStore` function (in `src/app/bootstrap.ts`) SHALL validate every record inside the `daybox-app-store` legacy blob against its per-record schema before writing to the live store. The validation layer used for records SHALL be the `record` layer of `safeParseAndRoute` (warn + skip), matching the policy used by `parseImport`. Tasks are validated against `TaskSchema`; groups are validated against `GroupSchema`. Records that fail validation SHALL be dropped (not written), and a `console.warn` SHALL be emitted identifying the dropped record. Records that pass validation SHALL be written to the corresponding feature store in a single `setState` call.
-
-The legacy `daybox-app-store` key SHALL be removed after the migration runs, regardless of whether any records passed validation (so a malformed legacy blob does not keep re-firing on every load).
-
-Envelope-level validation (the outer `LegacyAppStoreSchema`) is unchanged: an envelope that fails validation aborts the migration with a `console.warn` and removes the legacy key.
-
-#### Scenario: Legacy blob with all valid records migrates fully
-
-- **WHEN** `daybox-app-store` exists with a valid envelope and 5 tasks + 2 groups, all of which pass `TaskSchema` / `GroupSchema`
-- **THEN** all 5 tasks and both groups are written to their feature stores
-- **AND** the legacy key is removed
-
-#### Scenario: Legacy blob with one malformed task drops only that task
-
-- **WHEN** `daybox-app-store` exists with 5 tasks, where task 3 is missing its `id` field
-- **THEN** the 4 valid tasks are written to `useTaskStore`
-- **AND** task 3 is not written
-- **AND** a `console.warn` is emitted naming the dropped record
-- **AND** the legacy key is removed
-
-#### Scenario: Legacy blob with a malformed group drops only that group
-
-- **WHEN** `daybox-app-store` exists with 3 groups, where group 2 has an empty `name`
-- **THEN** the 2 valid groups are written to `useGroupStore`
-- **AND** group 2 is not written
-- **AND** a `console.warn` is emitted
-
-#### Scenario: Legacy blob envelope failure aborts the migration
-
-- **WHEN** `daybox-app-store` exists with a shape that fails `LegacyAppStoreSchema` (e.g. `state` is a string, not an object)
-- **THEN** the migration is skipped
-- **AND** no store state is modified
-- **AND** a `console.warn` is emitted
-- **AND** the legacy key is removed
-
-#### Scenario: All legacy records malformed produces no writes
-
-- **WHEN** `daybox-app-store` exists with a valid envelope but every task and group fails its per-record schema
-- **THEN** no store state is modified (no empty-array writes that would clobber existing data)
-- **AND** a `console.warn` is emitted for each dropped record
-- **AND** the legacy key is removed
 
 ### Requirement: Persist configuration is statically type-checked
 

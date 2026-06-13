@@ -74,9 +74,9 @@ Internal helpers (placeholder constructors, internal `*Meta` types, etc.) SHALL 
 
 #### Scenario: A consumer reads a schema via the barrel
 
-- **WHEN** `src/app/bootstrap.ts` needs `TaskSchema` and `GroupSchema`
-- **THEN** the import is `from '@/features/tasks'` and `from '@/features/groups'` (or a combined import)
-- **AND** the import is NOT `from '@/features/tasks/schema'` or `from '@/features/groups/schema'`
+- **WHEN** a consumer outside `src/features/tasks/` needs `TaskSchema`
+- **THEN** the import is `from '@/features/tasks'`
+- **AND** the import is NOT `from '@/features/tasks/schema'`
 
 ### Requirement: Cross-feature imports go through barrels
 
@@ -130,7 +130,7 @@ The codebase has three layers — `src/shared/`, `src/features/<domain>/`, `src/
 
 - **`src/shared/` is the leaf layer.** It MAY import from its own siblings (other files in `src/shared/`). It SHALL NOT import from `src/app/` or `src/features/`. External package imports (e.g. `react`, `zod`, `zustand/middleware`) are allowed and do not count as upward dependencies.
 - **`src/features/<domain>/` is the middle layer.** It MAY import from `src/shared/` and from another feature's barrel. It SHALL NOT import from `src/app/`. It SHALL NOT import a foreign feature's internals.
-- **`src/app/` is the top layer.** It MAY import from `src/shared/`, from any feature's barrel, and from siblings under `src/app/`. It exists for cross-cutting orchestration: legacy migrations, app composition, view-state plumbing.
+- **`src/app/` is the top layer.** It MAY import from `src/shared/`, from any feature's barrel, and from siblings under `src/app/`. It exists for cross-cutting orchestration: app composition and view-state plumbing.
 
 The cross-feature rule is stated in the "Cross-feature imports go through barrels" requirement; this requirement is the general layered principle that the cross-feature rule is a special case of.
 
@@ -145,7 +145,7 @@ The cross-feature rule is stated in the "Cross-feature imports go through barrel
 - **WHEN** `src/features/google-drive/store.ts` needs the snapshot helpers and the task store's current state
 - **THEN** it imports the snapshot helpers from `@/features/data-portability` (the barrel)
 - **AND** it imports `useTaskStore` from `@/features/tasks` (the barrel)
-- **AND** it does NOT import from `@/app/bootstrap` or any other `src/app/*` file
+- **AND** it does NOT import from `@/app/*`
 - **AND** it does NOT import from `@/features/data-portability/build` or any other internal file
 
 #### Scenario: An app file composes many features

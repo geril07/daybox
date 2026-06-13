@@ -1,5 +1,4 @@
 import { parseSaveEnvelope, type SaveEnvelope } from './envelope'
-import { adaptLegacySnapshot } from './legacy'
 import { normalizeCrossSliceInvariants } from './normalize'
 import { parseJson } from './parse'
 import { saveSlices } from './registry'
@@ -47,10 +46,7 @@ type ReadSaveEnvelopeResult =
   | { ok: false; reason: string }
 
 function readSaveEnvelope(value: unknown): ReadSaveEnvelopeResult {
-  const current = parseSaveEnvelope(value)
-  if (current.ok) return current
-
-  return adaptLegacySnapshot(value)
+  return parseSaveEnvelope(value)
 }
 
 type PrepareSlicesResult =

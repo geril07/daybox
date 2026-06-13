@@ -9,12 +9,11 @@ Define the cross-cutting save/restore mechanics that DayBox uses for file export
 The system SHALL organise the cross-cutting save/restore orchestration in a dedicated `data-portability` feature at `src/features/data-portability/`. The data-portability feature SHALL own:
 
 - The current save envelope schema, currently `envelopeVersion: 1`.
-- JSON parsing and envelope detection helpers.
-- Legacy adapters that transform existing flat app-level `version: 2` and `version: 3` snapshots into the current nested envelope shape.
+- JSON parsing and current envelope parsing helpers.
 - The slice registry that imports each participating feature's save slice and exports the canonical ordered list.
 - The shared `SaveSlice`, `SaveSlicePrepareResult`, and `MissingSliceStrategy<TCurrent>` types.
 - The `buildSnapshot` function that assembles the current envelope by calling each registered slice's `exportSlice`.
-- The preparation function that parses/adapts an import, prepares every slice through its `prepareImport` function, and normalizes cross-slice invariants without mutating stores.
+- The preparation function that parses a current envelope, prepares every slice through its `prepareImport` function, and normalizes cross-slice invariants without mutating stores.
 - The commit function that writes a prepared snapshot by calling each slice's `applyImport` in registry order.
 
 Feature-owned slice schemas, entity schemas, and slice migrations SHALL live in the owning feature. The data-portability feature SHALL NOT own task, group, timer-settings, or planner entity migrations.
@@ -26,7 +25,7 @@ The data-portability feature has no UI of its own. Its public surface is the fun
 #### Scenario: The pipeline has separated slice-owned stages
 
 - **WHEN** data-portability prepares an import
-- **THEN** JSON parsing, envelope parsing or legacy adaptation, per-slice import preparation, cross-slice normalization, and commit are implemented as separate stages with narrow responsibilities
+- **THEN** JSON parsing, current envelope parsing, per-slice import preparation, cross-slice normalization, and commit are implemented as separate stages with narrow responsibilities
 - **AND** store mutation happens only in the commit stage
 - **AND** each feature-owned slice handles its own version detection, historical schema parsing, and slice migrations inside `prepareImport`
 
@@ -36,7 +35,7 @@ The data-portability feature has no UI of its own. Its public surface is the fun
 - **THEN** the schema requires `envelopeVersion: literal(1)`, `exportedAt: string`, and `slices: object`
 - **AND** the schema does not validate feature entity payloads directly because feature-owned slices validate their own fields during `prepareImport`
 - **AND** the schema does NOT require a `theme` field because theme is intentionally excluded from the save snapshot
-- **AND** the schema does NOT require top-level `tasks`, `groups`, `timer`, `timerSettings`, or `planner` fields
+- **AND** the schema does NOT require top-level `version`, `tasks`, `groups`, `timer`, `timerSettings`, or `planner` fields
 
 #### Scenario: The registry imports each participating feature's save slice
 
@@ -89,24 +88,29 @@ The system SHALL define the current save envelope in data-portability while indi
 
 ### Requirement: Supported snapshot versions are explicit
 
-The system SHALL distinguish current nested save envelopes from supported legacy flat snapshots. Current nested envelopes use `envelopeVersion`. Existing legacy files with app-level `version: 2` or `version: 3` SHALL remain supported through explicit legacy adapters. Unsupported legacy versions or unrecognized files SHALL be rejected before store mutation.
+The system SHALL support the current nested save envelope only. Current nested envelopes use `envelopeVersion`. Flat app-level snapshots with top-level `version: 2` or `version: 3` SHALL be rejected before store mutation, the same as unsupported envelope versions or unrecognized files.
 
-#### Scenario: Supported legacy versions are adapted
+#### Scenario: Current envelope is accepted
 
-- **WHEN** `prepareSnapshotImport` receives a flat legacy snapshot with `version: 2` or `version: 3`
-- **THEN** data-portability parses the legacy envelope shape
-- **AND** adapts it into the current nested envelope shape
-- **AND** passes the adapted slice payloads through the same slice `prepareImport` path as a native current envelope
+- **WHEN** `prepareSnapshotImport` receives a valid nested save envelope with `envelopeVersion: 1`
+- **THEN** data-portability parses the current envelope shape
+- **AND** passes the envelope's slice payloads through the registered slice `prepareImport` path
+
+#### Scenario: Legacy flat versions are rejected
+
+- **WHEN** `prepareSnapshotImport` receives a flat legacy snapshot with top-level `version: 2` or `version: 3`
+- **THEN** preparation returns `{ ok: false, reason: 'Not a DayBox export file.' }`
+- **AND** no slice preparation or store mutation occurs
 
 #### Scenario: Unsupported version is rejected before parsing current payload
 
-- **WHEN** `prepareSnapshotImport` receives a snapshot with an unsupported legacy `version` or unsupported `envelopeVersion`
+- **WHEN** `prepareSnapshotImport` receives a snapshot with an unsupported `envelopeVersion` or an unrecognized version shape
 - **THEN** preparation returns `{ ok: false, reason: 'Not a DayBox export file.' }`
 - **AND** no slice preparation or store mutation occurs
 
 ### Requirement: Snapshot import is prepared before commit
 
-The system SHALL split snapshot import into a preparation phase and a commit phase. Preparation SHALL parse JSON, parse the current envelope or adapt a supported legacy flat snapshot, prepare every registered slice, normalize repairable cross-slice domain invariants, and return a `PreparedSnapshot` plus warnings. Preparation SHALL NOT mutate feature stores. Commit SHALL accept a `PreparedSnapshot` and apply every slice in registry order. `PreparedSnapshot` SHALL be a distinct TypeScript type from the parsed envelope so callers cannot accidentally commit data that has not passed through slice preparation and cross-slice normalization.
+The system SHALL split snapshot import into a preparation phase and a commit phase. Preparation SHALL parse JSON, parse the current envelope, prepare every registered slice, normalize repairable cross-slice domain invariants, and return a `PreparedSnapshot` plus warnings. Preparation SHALL NOT mutate feature stores. Commit SHALL accept a `PreparedSnapshot` and apply every slice in registry order. `PreparedSnapshot` SHALL be a distinct TypeScript type from the parsed envelope so callers cannot accidentally commit data that has not passed through slice preparation and cross-slice normalization.
 
 #### Scenario: Preparing a valid import does not mutate stores
 
@@ -118,7 +122,7 @@ The system SHALL split snapshot import into a preparation phase and a commit pha
 
 - **WHEN** `commitSnapshotImport` receives a `PreparedSnapshot`
 - **THEN** it calls each registered slice's `applyImport` in canonical registry order
-- **AND** it does not parse JSON, run legacy adapters, run slice migrations, or perform normalization
+- **AND** it does not parse JSON, run slice migrations, or perform normalization
 
 #### Scenario: Unprepared snapshots cannot be committed directly
 

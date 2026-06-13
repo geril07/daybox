@@ -91,7 +91,8 @@ The system SHALL split snapshot import into a preparation phase and a commit pha
 - **AND** `commitSnapshotImport` is not called
 - **AND** no feature store is modified
 
-*** Add File: /home/geril/code/my/daybox/openspec/changes/trim-legacy-data-portability/specs/data-persistence/spec.md
+\*\*\* Add File: /home/geril/code/my/daybox/openspec/changes/trim-legacy-data-portability/specs/data-persistence/spec.md
+
 ## MODIFIED Requirements
 
 ### Requirement: User can import data from JSON

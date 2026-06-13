@@ -1,9 +1,8 @@
 import { Settings } from 'lucide-react'
 import { MotionConfig } from 'motion/react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 import { TabLabel } from '@/app/TabLabel'
-import { migrateLegacyAppStore, migrateLegacySettings } from '@/app/bootstrap'
 import { tabs } from '@/app/plannerTabs'
 import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
 import {
@@ -24,9 +23,6 @@ export function App() {
   const browseDate = usePlannerStore((s) => s.browseDate)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
 
-  const migrationDone = useRef(false)
-  const settingsMigrationDone = useRef(false)
-
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const defaultDate = defaultDateForView(view, weekStartDay, browseDate)
@@ -41,18 +37,6 @@ export function App() {
       },
     })
     return cleanup
-  }, [])
-
-  useEffect(() => {
-    if (migrationDone.current) return
-    migrateLegacyAppStore()
-    migrationDone.current = true
-  }, [])
-
-  useEffect(() => {
-    if (settingsMigrationDone.current) return
-    migrateLegacySettings()
-    settingsMigrationDone.current = true
   }, [])
 
   const renderView = () => {

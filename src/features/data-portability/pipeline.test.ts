@@ -13,7 +13,6 @@ import {
   type CurrentSnapshot,
   type PreparedSnapshot,
 } from './schema'
-import { SUPPORTED_SNAPSHOT_VERSIONS, readSnapshotVersion } from './version'
 
 function createTask(overrides: Partial<Task> & { id: string }): Task {
   return {
@@ -91,25 +90,6 @@ beforeEach(() => {
   usePlannerStore.setState({ weekStartDay: 1, browseDate: null })
 })
 
-describe('readSnapshotVersion', () => {
-  it('accepts only explicitly supported legacy flat snapshot versions', () => {
-    expect(SUPPORTED_SNAPSHOT_VERSIONS).toEqual([2, 3])
-    expect(readSnapshotVersion({ version: 2 })).toEqual({
-      ok: true,
-      version: 2,
-    })
-    expect(readSnapshotVersion({ version: 3 })).toEqual({
-      ok: true,
-      version: 3,
-    })
-    expect(
-      readSnapshotVersion({ envelopeVersion: CURRENT_SAVE_ENVELOPE_VERSION })
-        .ok,
-    ).toBe(false)
-    expect(readSnapshotVersion({ version: 999 }).ok).toBe(false)
-  })
-})
-
 describe('buildSnapshot', () => {
   it('builds a typed current envelope with nested slices and excludes local-only state', () => {
     const task = createTask({ id: 'task-1', title: 'Hello' })
@@ -147,34 +127,27 @@ describe('buildSnapshot', () => {
 })
 
 describe('prepareSnapshotImport', () => {
-  it('adapts v2 JSON into a current prepared envelope and drops theme', () => {
+  it('rejects flat v2 snapshots as Not a DayBox export file', () => {
+    useTaskStore.setState({ tasks: [createTask({ id: 'existing' })] })
+
     const result = prepareSnapshotImport(
       JSON.stringify({
         version: 2,
         exportedAt: '2025-12-01T00:00:00.000Z',
         tasks: [createTask({ id: 'task-1' })],
         groups: [createGroup({ id: DEFAULT_GROUP_ID })],
-        settings: {
-          timer: { ...DEFAULT_TIMER_SETTINGS, focusDuration: 35 },
-          theme: 'dark',
-          weekStartDay: 0,
-        },
       }),
     )
 
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    expect(result.snapshot.envelopeVersion).toBe(CURRENT_SAVE_ENVELOPE_VERSION)
-    expect(result.snapshot.slices.timerSettings.settings.focusDuration).toBe(35)
-    expect(result.snapshot.slices.planner).toEqual({
-      version: 1,
-      weekStartDay: 0,
-      browseDate: null,
-    })
-    expect('theme' in result.snapshot).toBe(false)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reason).toBe('Not a DayBox export file.')
+    expect(useTaskStore.getState().tasks.map((t) => t.id)).toEqual(['existing'])
   })
 
-  it('adapts v3 JSON into a current prepared envelope and maps timer to timerSettings', () => {
+  it('rejects flat v3 snapshots as Not a DayBox export file', () => {
+    useTaskStore.setState({ tasks: [createTask({ id: 'existing' })] })
+
     const result = prepareSnapshotImport(
       JSON.stringify({
         version: 3,
@@ -186,10 +159,10 @@ describe('prepareSnapshotImport', () => {
       }),
     )
 
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    expect(result.snapshot.slices.timerSettings.settings.focusDuration).toBe(40)
-    expect(result.snapshot.slices.planner.browseDate).toBe('2026-06-12')
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reason).toBe('Not a DayBox export file.')
+    expect(useTaskStore.getState().tasks.map((t) => t.id)).toEqual(['existing'])
   })
 
   it('uses missing-slice defaults for slices that declare defaults', () => {
