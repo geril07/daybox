@@ -1,4 +1,4 @@
-import type { SaveSlice } from '@/modules/data-portability/types'
+import type { SaveSlice } from '@/shared/save-slice'
 
 import { DEFAULT_TIMER_SETTINGS, useTimerStore } from '../store'
 import type { TimerSettings } from '../types'

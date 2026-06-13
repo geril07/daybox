@@ -1,4 +1,4 @@
-import type { SaveSlice } from '@/modules/data-portability/types'
+import type { SaveSlice } from '@/shared/save-slice'
 
 import { useTaskStore } from '../store'
 import type { Task } from '../types'
@@ -21,6 +21,18 @@ function parseTasksSlice(input: unknown): TasksPrepareResult {
       ok: false,
       reason: `Invalid snapshot at tasks.${path}: ${message}`,
     }
+  }
+
+  const taskIds = new Map<string, number>()
+  for (const [index, task] of result.data.tasks.entries()) {
+    const firstIndex = taskIds.get(task.id)
+    if (firstIndex !== undefined) {
+      return {
+        ok: false,
+        reason: `Invalid snapshot at tasks.${index}.id: Duplicate task id "${task.id}" also appears at tasks.${firstIndex}.id`,
+      }
+    }
+    taskIds.set(task.id, index)
   }
 
   return { ok: true, value: result.data }

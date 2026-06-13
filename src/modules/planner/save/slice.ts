@@ -1,4 +1,4 @@
-import type { SaveSlice } from '@/modules/data-portability/types'
+import type { SaveSlice } from '@/shared/save-slice'
 
 import { usePlannerStore, type WeekStartDay } from '../store'
 import {

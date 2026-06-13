@@ -1,20 +1,11 @@
-import type { GroupsSaveSliceCurrent } from '@/modules/groups/save/versions/v1'
-import type { PlannerSaveSliceCurrent } from '@/modules/planner/save/versions/v1'
-import type { TasksSaveSliceCurrent } from '@/modules/tasks/save/versions/v1'
-import type { TimerSettingsSaveSliceCurrent } from '@/modules/timer/save/versions/v1'
-
 import { SaveEnvelopeSchema, type SaveEnvelope } from './envelope'
+import type { SaveSliceExportSlice } from './registry'
 
 export const CurrentSnapshotSchema = SaveEnvelopeSchema
 
-export type CurrentSnapshot = SaveEnvelope & {
+export type CurrentSnapshot = Omit<SaveEnvelope, 'slices'> & {
   envelopeVersion: 1
-  slices: {
-    groups: GroupsSaveSliceCurrent
-    tasks: TasksSaveSliceCurrent
-    timerSettings: TimerSettingsSaveSliceCurrent
-    planner: PlannerSaveSliceCurrent
-  }
+  slices: SaveSliceExportSlice
 }
 
 declare const preparedSnapshotBrand: unique symbol

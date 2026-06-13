@@ -1,8 +1,19 @@
 import { parseSaveEnvelope, type SaveEnvelope } from './envelope'
 import { normalizeCrossSliceInvariants } from './normalize'
-import { parseJson } from './parse'
 import { saveSlices } from './registry'
 import type { CurrentSnapshot, PreparedSnapshot } from './schema'
+
+type ParseJsonResult =
+  | { ok: true; value: unknown }
+  | { ok: false; reason: string }
+
+function parseJson(json: string): ParseJsonResult {
+  try {
+    return { ok: true, value: JSON.parse(json) as unknown }
+  } catch {
+    return { ok: false, reason: 'Corrupted file. Could not parse JSON.' }
+  }
+}
 
 export type PreparedSnapshotImportResult =
   | { ok: true; snapshot: PreparedSnapshot; warnings?: string[] }
@@ -16,7 +27,7 @@ export function prepareSnapshotImport(
   const parsed = parseJson(json)
   if (!parsed.ok) return parsed
 
-  const envelope = readSaveEnvelope(parsed.value)
+  const envelope = parseSaveEnvelope(parsed.value)
   if (!envelope.ok) return envelope
 
   const current = prepareSlices(envelope.envelope)
@@ -35,18 +46,10 @@ export function commitSnapshotImport(
   snapshot: PreparedSnapshot,
 ): CommitSnapshotImportResult {
   for (const slice of saveSlices) {
-    slice.applyImport(snapshot.slices[slice.name])
+    slice.applyImport(snapshot.slices[slice.name] as never)
   }
 
   return { ok: true }
-}
-
-type ReadSaveEnvelopeResult =
-  | { ok: true; envelope: SaveEnvelope }
-  | { ok: false; reason: string }
-
-function readSaveEnvelope(value: unknown): ReadSaveEnvelopeResult {
-  return parseSaveEnvelope(value)
 }
 
 type PrepareSlicesResult =

@@ -14,3 +14,6 @@ export type SaveSlice<Name extends string, TCurrent> = {
   prepareImport: (input: unknown) => SaveSlicePrepareResult<TCurrent>
   applyImport: (value: TCurrent) => void
 }
+
+export type InferSaveSliceCurrent<T> =
+  T extends SaveSlice<string, infer TCurrent> ? TCurrent : never

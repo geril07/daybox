@@ -15,8 +15,3 @@ export {
   parseSaveEnvelope,
   type SaveEnvelope,
 } from './envelope'
-export type {
-  MissingSliceStrategy,
-  SaveSlice,
-  SaveSlicePrepareResult,
-} from './types'
