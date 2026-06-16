@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useTaskStore } from '@/modules/tasks'
 import type { Task } from '@/modules/tasks'
 
-import { useWeekSections, defaultDateForView } from './queries'
+import {
+  useWeekSections,
+  defaultDateForView,
+  filterByGroup,
+  useLaterSections,
+} from './queries'
 import { usePlannerStore } from './store'
 
 let idCounter = 0
@@ -164,5 +169,134 @@ describe('defaultDateForView', () => {
 
   it('returns undefined for the date view when browseDate is null', () => {
     expect(defaultDateForView('date', 1, null)).toBeUndefined()
+  })
+
+  it('returns first day after configured week for later view (weekStartDay=1, Mon)', () => {
+    // Today: 2026-06-10 Wed. Week: Mon Jun 8 – Sun Jun 14. First after: Mon Jun 15.
+    expect(defaultDateForView('later', 1)).toBe('2026-06-15')
+  })
+
+  it('returns first day after configured week for later view (weekStartDay=0, Sun)', () => {
+    // Today: 2026-06-10 Wed. Week: Sun Jun 7 – Sat Jun 13. First after: Sun Jun 14.
+    expect(defaultDateForView('later', 0)).toBe('2026-06-14')
+  })
+})
+
+describe('filterByGroup', () => {
+  const tasks = [
+    makeTask({ id: 'a', groupId: 'g1', date: '2026-06-10' }),
+    makeTask({ id: 'b', groupId: 'g2', date: '2026-06-10' }),
+    makeTask({ id: 'c', groupId: 'g1', date: null }),
+  ]
+
+  it('returns all tasks when groupId is null', () => {
+    expect(filterByGroup(tasks, null)).toHaveLength(3)
+  })
+
+  it('filters to matching group when groupId is provided', () => {
+    const result = filterByGroup(tasks, 'g1')
+    expect(result).toHaveLength(2)
+    expect(result.every((t) => t.groupId === 'g1')).toBe(true)
+  })
+
+  it('returns empty array when no tasks match the group', () => {
+    expect(filterByGroup(tasks, 'nonexistent')).toHaveLength(0)
+  })
+})
+
+describe('useLaterSections', () => {
+  it('includes tasks with date after the configured week end', () => {
+    useTaskStore.setState({
+      tasks: [
+        makeTask({ date: '2026-06-15' }), // Monday after week (first day after Sun Jun 14)
+        makeTask({ date: '2026-06-20' }),
+      ],
+    })
+
+    const { result } = renderHook(() => useLaterSections())
+
+    const dates = result.current.map((s) => s.date)
+    expect(dates).toEqual(['2026-06-15', '2026-06-20'])
+  })
+
+  it('excludes tasks on or before the configured week end', () => {
+    useTaskStore.setState({
+      tasks: [
+        makeTask({ date: '2026-06-14' }), // Sun — last day of week
+        makeTask({ date: '2026-06-15' }), // Mon after week
+      ],
+    })
+
+    const { result } = renderHook(() => useLaterSections())
+
+    const dates = result.current.map((s) => s.date)
+    expect(dates).not.toContain('2026-06-14')
+    expect(dates).toContain('2026-06-15')
+  })
+
+  it('excludes undated tasks', () => {
+    useTaskStore.setState({
+      tasks: [makeTask({ date: null }), makeTask({ date: '2026-06-20' })],
+    })
+
+    const { result } = renderHook(() => useLaterSections())
+
+    const dates = result.current.map((s) => s.date)
+    expect(dates).toEqual(['2026-06-20'])
+  })
+
+  it('sorts sections by date ascending', () => {
+    useTaskStore.setState({
+      tasks: [
+        makeTask({ date: '2026-06-25' }),
+        makeTask({ date: '2026-06-17' }),
+        makeTask({ date: '2026-06-22' }),
+      ],
+    })
+
+    const { result } = renderHook(() => useLaterSections())
+
+    const dates = result.current.map((s) => s.date)
+    expect(dates).toEqual(['2026-06-17', '2026-06-22', '2026-06-25'])
+  })
+
+  it('respects weekStartDay boundary', () => {
+    usePlannerStore.setState({ weekStartDay: 0 }) // Sunday
+    // Week: Sun Jun 7 – Sat Jun 13. First after: Sun Jun 14.
+    useTaskStore.setState({
+      tasks: [
+        makeTask({ date: '2026-06-13' }), // Sat — last day of week
+        makeTask({ date: '2026-06-14' }), // Sun — first day after
+      ],
+    })
+
+    const { result } = renderHook(() => useLaterSections())
+
+    const dates = result.current.map((s) => s.date)
+    expect(dates).toEqual(['2026-06-14'])
+    expect(dates).not.toContain('2026-06-13')
+  })
+
+  it('returns empty array when there are no tasks after the week', () => {
+    useTaskStore.setState({ tasks: [makeTask({ date: '2026-06-10' })] })
+
+    const { result } = renderHook(() => useLaterSections())
+
+    expect(result.current).toHaveLength(0)
+  })
+
+  it('sorts tasks within each date section by sortOrder', () => {
+    useTaskStore.setState({
+      tasks: [
+        makeTask({ date: '2026-06-15', sortOrder: 3, title: 'c' }),
+        makeTask({ date: '2026-06-15', sortOrder: 1, title: 'a' }),
+        makeTask({ date: '2026-06-15', sortOrder: 2, title: 'b' }),
+      ],
+    })
+
+    const { result } = renderHook(() => useLaterSections())
+
+    const section = result.current[0]
+    expect(section.tasks.map((t) => t.title)).toEqual(['a', 'b', 'c'])
   })
 })

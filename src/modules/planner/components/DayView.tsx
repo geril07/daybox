@@ -3,20 +3,24 @@ import { LayoutGroup } from 'motion/react'
 import { TaskList } from '@/modules/tasks'
 import { EmptyState } from '@/shared/ui'
 
-import { viewMetaMap, useFilteredTasks } from '../queries'
+import { viewMetaMap, useFilteredTasks, filterByGroup } from '../queries'
 import { SectionHeader } from './SectionHeader'
 
 type SingleDayView = 'today' | 'tomorrow' | 'unscheduled'
 
 interface DayViewProps {
   view: SingleDayView
+  selectedGroupId?: string | null
 }
 
-export function DayView({ view }: DayViewProps) {
+export function DayView({ view, selectedGroupId = null }: DayViewProps) {
   const { tasks, overdue, bucketDate } = useFilteredTasks(view)
   const meta = viewMetaMap[view]
 
-  const hasContent = tasks.length > 0 || overdue.length > 0
+  const filteredTasks = filterByGroup(tasks, selectedGroupId)
+  const filteredOverdue = filterByGroup(overdue, selectedGroupId)
+
+  const hasContent = filteredTasks.length > 0 || filteredOverdue.length > 0
 
   if (!hasContent) {
     return (
@@ -24,16 +28,18 @@ export function DayView({ view }: DayViewProps) {
     )
   }
 
+  const isSortable = selectedGroupId === null
+
   return (
     <LayoutGroup id="planner-day">
-      {overdue.length > 0 && (
+      {filteredOverdue.length > 0 && (
         <div>
           <SectionHeader label="Overdue" tone="destructive" />
-          <TaskList tasks={overdue} />
+          <TaskList tasks={filteredOverdue} />
         </div>
       )}
       <SectionHeader label={meta.title} />
-      <TaskList tasks={tasks} date={bucketDate} />
+      <TaskList tasks={filteredTasks} date={bucketDate} sortable={isSortable} />
     </LayoutGroup>
   )
 }

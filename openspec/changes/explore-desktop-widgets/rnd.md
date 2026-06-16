@@ -31,8 +31,8 @@ live, and how does a non-browser surface read or write a slice of it"**.
 ## 2. The data-flow problem
 
 Today the only writer/reader of the four stores is the same React tab.
-A "desktop widget" introduces a *second reader* (and probably a *second
-writer*) outside that tab. That is the entire problem.
+A "desktop widget" introduces a _second reader_ (and probably a _second
+writer_) outside that tab. That is the entire problem.
 
 ```
         ┌────────────── one tab ──────────────┐
@@ -52,11 +52,11 @@ writer*) outside that tab. That is the entire problem.
 Cross-tab and cross-surface sync is the missing piece. There are three
 mechanisms the browser gives us:
 
-| Mechanism            | Granularity | Cross-tab | Cross-process | Use it for                                    |
-| -------------------- | ----------- | --------- | ------------- | --------------------------------------------- |
-| `localStorage` + `storage` event | per write | yes | no | backstop for state, slow but durable |
-| `BroadcastChannel`   | per message | yes       | no            | real-time sync of mutations inside the browser |
-| Tauri/Electron IPC / shared file | per command | n/a | yes | bridging JS and native code outside the browser |
+| Mechanism                        | Granularity | Cross-tab | Cross-process | Use it for                                      |
+| -------------------------------- | ----------- | --------- | ------------- | ----------------------------------------------- |
+| `localStorage` + `storage` event | per write   | yes       | no            | backstop for state, slow but durable            |
+| `BroadcastChannel`               | per message | yes       | no            | real-time sync of mutations inside the browser  |
+| Tauri/Electron IPC / shared file | per command | n/a       | yes           | bridging JS and native code outside the browser |
 
 Every direction below picks a row from this table and lives with its limits.
 
@@ -111,8 +111,8 @@ indistinguishable from real-time for a timer.
 **Cons:** still a webview. Closes with the browser. Not "the desktop"
 in the OS sense. Chrome-only for DPIP and Side Panel.
 
-**Verdict:** the cheapest way to validate the *widget UI* and the
-*data flow* before committing to platform work. Good for power users,
+**Verdict:** the cheapest way to validate the _widget UI_ and the
+_data flow_ before committing to platform work. Good for power users,
 not a marketing story.
 
 ### B. Tauri wrapper
@@ -141,7 +141,7 @@ binaries, a real desktop process. Three things this unlocks:
    existing `persist` config, debounced timer, and storage-event
    backstop all just work.
 2. **Migrate to `tauri-plugin-sql` (SQLite) or a JSON file via
-   `tauri-plugin-fs`.** Necessary if you ever want *background* state
+   `tauri-plugin-fs`.** Necessary if you ever want _background_ state
    (timer ticking when all webviews are closed). Also unlocks a
    "headless" widget process that has no webview, just native.
 
@@ -176,7 +176,7 @@ surface, so bundle size matters.
 
 ### D. Native widget companion (Swift / WinAppSDK / GTK)
 
-Build a small native widget *per OS*. DayBox stays a pure browser app
+Build a small native widget _per OS_. DayBox stays a pure browser app
 and writes a tiny `widget.json` file. The native widget reads it.
 
 ```
@@ -190,7 +190,7 @@ React ──useTimerStore──persist──localStorage
 ```
 
 **DayBox side:** new module `src/modules/widget-payload/` with one
-job — write a *small, derived* slice (timer state + focused task +
+job — write a _small, derived_ slice (timer state + focused task +
 next task) to a known path, debounced, and on relevant mutations.
 Reuses the existing export envelope, but writes to disk instead of
 to a download.
@@ -252,16 +252,16 @@ store, same `BroadcastChannel`. Skip the Web Store at first, self-host.
 
 ## 5. Comparison matrix
 
-| Direction | Real desktop? | Effort (rel.) | Cross-platform | Bidirectional? | Bundle size | Best widget size |
-| --------- | ------------- | ------------- | -------------- | -------------- | ----------- | ---------------- |
-| A. In-browser surfaces | no | very low | mostly Chromium | yes (same store) | 0 | chip + next task |
-| B. Tauri | yes (tray, menubar, AoT) | medium | all three | yes (same store or Tauri commands) | ~5–10 MB | chip + task + tray |
-| C. Electron | yes | medium | all three | yes | ~50–150 MB | chip + task + tray |
-| D. Native widget companion | yes (widget board) | high | per-OS codebases | one-way (read) until you add IPC | per-OS binary | tiny chip only |
-| E. OS web widget host | partial | n/a | mostly no | n/a | n/a | n/a |
-| F. Browser extension | no | low | Chromium + Firefox | yes (same store) | extension size | chip + next task |
+| Direction                  | Real desktop?            | Effort (rel.) | Cross-platform     | Bidirectional?                     | Bundle size    | Best widget size   |
+| -------------------------- | ------------------------ | ------------- | ------------------ | ---------------------------------- | -------------- | ------------------ |
+| A. In-browser surfaces     | no                       | very low      | mostly Chromium    | yes (same store)                   | 0              | chip + next task   |
+| B. Tauri                   | yes (tray, menubar, AoT) | medium        | all three          | yes (same store or Tauri commands) | ~5–10 MB       | chip + task + tray |
+| C. Electron                | yes                      | medium        | all three          | yes                                | ~50–150 MB     | chip + task + tray |
+| D. Native widget companion | yes (widget board)       | high          | per-OS codebases   | one-way (read) until you add IPC   | per-OS binary  | tiny chip only     |
+| E. OS web widget host      | partial                  | n/a           | mostly no          | n/a                                | n/a            | n/a                |
+| F. Browser extension       | no                       | low           | Chromium + Firefox | yes (same store)                   | extension size | chip + next task   |
 
-"Bidirectional?" means: can the widget *act* (start/pause/skip) and
+"Bidirectional?" means: can the widget _act_ (start/pause/skip) and
 have the change appear in the main app? For A/B/C/F the answer is
 yes for free. For D it is a separate IPC problem.
 
@@ -319,7 +319,7 @@ the proposal once you do.
    best widget board story; Windows 11 widgets are real but limited;
    Linux has no HTML widget story.)
 2. **Widget content.** Of the five surfaces in §3, which is the
-   *primary* one? (Affects minimum data flow, affects direction
+   _primary_ one? (Affects minimum data flow, affects direction
    choice — D is for tiny chips, A/B are for anything.)
 3. **"Desktop" — OS desktop or browser-new-tab?** The phrase has two
    common meanings. If "I want a Pomodoro chip on the OS desktop
@@ -335,7 +335,7 @@ the proposal once you do.
 
 ## 9. Narrow case: noctalia-shell on Wayland
 
-> This is the *current* focus, added after the broad exploration
+> This is the _current_ focus, added after the broad exploration
 > above. Everything in this section is a strict subset of the
 > directions in §4 — kept here so you do not have to wade through the
 > general case to find the answer for noctalia.
@@ -383,11 +383,11 @@ Once DayBox runs inside a Tauri shell, the React app continues to
 work exactly as today. Tauri just adds a Rust side that can reach the
 outside world. Three flavours of bridge, all otherwise identical:
 
-| Bridge | noctalia side reads | Tauri writes | Pros | Cons |
-| ------ | ------------------- | ------------ | ---- | ---- |
-| **JSON file** | `XMLHttpRequest` to `file:///home/.../timer.json`, or QFile | `std::fs::write` on debounce flush | Trivial to debug (`cat` it). Lowest QML ceremony. No port. | Polling-based, or needs `QFileSystemWatcher`. No push. |
-| **HTTP loopback** | `XMLHttpRequest` to `http://127.0.0.1:9927/timer` | `tauri::async_runtime::spawn` an `actix-web` (or `axum`) server with one route | Standard, real-time, debuggable with `curl`. Easy to extend. | Port to pick. Binds a port — minor firewall/firejail concern. |
-| **D-Bus signal** | QtDBus / Quickshell DBus bindings | `zbus` emits a signal on debounce flush | Most "Wayland-native". Push, not poll. No port. | Slightly more setup on QML side. Wire-protocol versioning. |
+| Bridge            | noctalia side reads                                         | Tauri writes                                                                   | Pros                                                         | Cons                                                          |
+| ----------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------- |
+| **JSON file**     | `XMLHttpRequest` to `file:///home/.../timer.json`, or QFile | `std::fs::write` on debounce flush                                             | Trivial to debug (`cat` it). Lowest QML ceremony. No port.   | Polling-based, or needs `QFileSystemWatcher`. No push.        |
+| **HTTP loopback** | `XMLHttpRequest` to `http://127.0.0.1:9927/timer`           | `tauri::async_runtime::spawn` an `actix-web` (or `axum`) server with one route | Standard, real-time, debuggable with `curl`. Easy to extend. | Port to pick. Binds a port — minor firewall/firejail concern. |
+| **D-Bus signal**  | QtDBus / Quickshell DBus bindings                           | `zbus` emits a signal on debounce flush                                        | Most "Wayland-native". Push, not poll. No port.              | Slightly more setup on QML side. Wire-protocol versioning.    |
 
 Pick one, not all three. The minimum useful payload is the same in
 all three cases — it is the transport that changes.
@@ -436,7 +436,9 @@ function buildWidgetPayload(): WidgetPayload {
     sessionPomoCount: t.sessionPomoCount,
     longBreakInterval: t.settings.longBreakInterval,
     sessionLabel: formatSessionLabel(
-      t.sessionPomoCount, t.settings.longBreakInterval, t.phase
+      t.sessionPomoCount,
+      t.settings.longBreakInterval,
+      t.phase,
     ),
     updatedAt: Date.now(),
   }
@@ -467,20 +469,20 @@ This means:
 ### "Tauri wrap" really means: pick a windowing model
 
 Tauri gives you a Rust process that owns one or more webview windows.
-For the noctalia case, you do not actually need to *show* a webview
+For the noctalia case, you do not actually need to _show_ a webview
 window — you can run the React app in a hidden webview whose only job
-is to keep the timer ticking, and the *visible* surface is noctalia.
+is to keep the timer ticking, and the _visible_ surface is noctalia.
 Concretely:
 
 - **Tray variant (recommended for "always on"):** Tauri runs with no
   visible main window. The React app boots inside a hidden webview
   on startup. The timer's 1 Hz tick keeps running. The widget is
-  always live. The user can click the tray icon to *show* the
+  always live. The user can click the tray icon to _show_ the
   DayBox UI in a window (so they can edit tasks, hit play/pause,
   etc.) — the window closes back to tray.
 - **On-demand variant:** Tauri only spawns the React app when the
   user opens the tray menu's "Open DayBox" item. The widget is
-  *stale* (or empty) when the window is closed. Cheaper, worse UX.
+  _stale_ (or empty) when the window is closed. Cheaper, worse UX.
 - **Always-visible variant:** Tauri opens the React app in a normal
   window. Same as the on-demand variant but the window stays open.
   No benefit over running DayBox in a regular browser tab — you
@@ -570,7 +572,7 @@ machine; QML's `StandardPaths` is the usual way.)
 
 ## 8. Out of scope here
 
-- The actual *design* of any widget surface. That is a separate
+- The actual _design_ of any widget surface. That is a separate
   design exercise once a direction is picked.
 - Code signing, notarisation, auto-update infrastructure. All real
   concerns, all separate changes.

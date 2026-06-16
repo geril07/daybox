@@ -6,6 +6,7 @@ import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
 import {
   DayView,
   DateBrowser,
+  LaterView,
   WeekView,
   usePlannerStore,
   defaultDateForView,
@@ -51,7 +52,7 @@ export function App() {
       case 'week':
         return <WeekView selectedGroupId={selectedGroupId} />
       case 'later':
-        return <LaterViewShell selectedGroupId={selectedGroupId} />
+        return <LaterView selectedGroupId={selectedGroupId} />
       case 'date':
         return <DateBrowser />
       default:
@@ -169,10 +170,7 @@ export function App() {
       </div>
 
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent
-          side="left"
-          className="w-[260px] max-w-[85vw] gap-0 p-0"
-        >
+        <SheetContent side="left" className="w-[260px] max-w-[85vw] gap-0 p-0">
           {sidebarNav}
         </SheetContent>
       </Sheet>
@@ -184,9 +182,4 @@ export function App() {
       />
     </div>
   )
-}
-
-function LaterViewShell({ selectedGroupId }: { selectedGroupId: string | null }) {
-  const { useLaterSections } = await import(
-    '@/modules/planner/queries'  )
 }

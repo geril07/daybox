@@ -17,25 +17,25 @@
 
 ## 3. View Behavior
 
-- [ ] 3.1 Pass the active group lens into Today, Tomorrow, This Week, Later, and Unscheduled rendering paths.
-- [ ] 3.2 Filter overdue, dated, week, later, and unscheduled task lists by the active group lens.
-- [ ] 3.3 Add the `Later` view component using sparse per-date sections.
-- [ ] 3.4 Preserve sortable date-bucket task lists when `selectedGroupId` is `null`.
-- [ ] 3.5 Render group-filtered date buckets as static task lists when `selectedGroupId` is a concrete group id.
-- [ ] 3.6 Wire quick-add so a concrete active group lens becomes the default group unless `#group` syntax is used.
+- [x] 3.1 Pass the active group lens into Today, Tomorrow, This Week, Later, and Unscheduled rendering paths.
+- [x] 3.2 Filter overdue, dated, week, later, and unscheduled task lists by the active group lens.
+- [x] 3.3 Add the `Later` view component using sparse per-date sections.
+- [x] 3.4 Preserve sortable date-bucket task lists when `selectedGroupId` is `null`.
+- [x] 3.5 Render group-filtered date buckets as static task lists when `selectedGroupId` is a concrete group id.
+- [x] 3.6 Wire quick-add so a concrete active group lens becomes the default group unless `#group` syntax is used.
 
 ## 4. Tests
 
-- [ ] 4.1 Replace tab-label tests with sidebar view item and responsive navigation tests.
-- [ ] 4.2 Add planner query tests for `later`, first-day-of-week boundaries, group filtering, and Later quick-add default date.
-- [ ] 4.3 Add view/component tests for group-filtered empty states and filtered overdue sections.
-- [ ] 4.4 Add tests that the group sidebar section is hidden with one group and shown with two or more groups.
-- [ ] 4.5 Add add-task tests for concrete sidebar group lens defaulting and `#group` override behavior.
-- [ ] 4.6 Add tests that specific group-lens views do not invoke date-bucket drag reorder wiring.
+- [x] 4.1 Replace tab-label tests with sidebar view item and responsive navigation tests.
+- [x] 4.2 Add planner query tests for `later`, first-day-of-week boundaries, group filtering, and Later quick-add default date.
+- [x] 4.3 Add view/component tests for group-filtered empty states and filtered overdue sections.
+- [x] 4.4 Add tests that the group sidebar section is hidden with one group and shown with two or more groups.
+- [x] 4.5 Add add-task tests for concrete sidebar group lens defaulting and `#group` override behavior.
+- [x] 4.6 Add tests that specific group-lens views do not invoke date-bucket drag reorder wiring.
 
 ## 5. Verification
 
-- [ ] 5.1 Run `npm run format`.
-- [ ] 5.2 Run `npm run typecheck`.
-- [ ] 5.3 Run `npm run lint`.
-- [ ] 5.4 Run `npm run test`.
+- [x] 5.1 Run `npm run format`.
+- [x] 5.2 Run `npm run typecheck`.
+- [x] 5.3 Run `npm run lint`.
+- [x] 5.4 Run `npm run test`.

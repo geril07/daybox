@@ -12,7 +12,13 @@ import { formatDate, getWeekDays, getWeekSectionLabel } from '@/shared/dates'
 
 import { usePlannerStore } from './store'
 
-export type View = 'today' | 'tomorrow' | 'week' | 'unscheduled' | 'later' | 'date'
+export type View =
+  | 'today'
+  | 'tomorrow'
+  | 'week'
+  | 'unscheduled'
+  | 'later'
+  | 'date'
 
 export type TaskRange =
   | { kind: 'date'; date: string }
@@ -59,8 +65,7 @@ export const viewMetaMap: Record<
   later: {
     title: 'Later',
     emptyTitle: 'Nothing planned for later.',
-    emptyDescription:
-      'Add a task with a date after this week to see it here.',
+    emptyDescription: 'Add a task with a date after this week to see it here.',
   },
 }
 
@@ -201,10 +206,7 @@ export function useWeekSections(): Section[] {
   }, [tasks, weekStartDay])
 }
 
-export function filterByGroup(
-  tasks: Task[],
-  groupId: string | null,
-): Task[] {
+export function filterByGroup(tasks: Task[], groupId: string | null): Task[] {
   if (groupId === null) return tasks
   return tasks.filter((t) => t.groupId === groupId)
 }

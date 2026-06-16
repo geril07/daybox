@@ -318,3 +318,43 @@ describe('AddTaskRow', () => {
     expect(task?.groupId).toBe(brandnew?.id)
   })
 })
+
+describe('AddTaskRow with defaultGroupId', () => {
+  it('assigns task to defaultGroupId when provided and no #group syntax', async () => {
+    const user = userEvent.setup()
+    render(<AddTaskRow defaultGroupId="work" />)
+    const input = getAddInput()
+    await user.click(input)
+    await user.type(input, 'Write report')
+    await user.keyboard('{Enter}')
+
+    const tasks = useTaskStore.getState().tasks
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0]?.groupId).toBe('work')
+  })
+
+  it('#group syntax overrides defaultGroupId', async () => {
+    const user = userEvent.setup()
+    render(<AddTaskRow defaultGroupId="work" />)
+    const input = getAddInput()
+    await user.click(input)
+    await user.type(input, 'Buy milk #General')
+    await user.keyboard('{Enter}')
+
+    const tasks = useTaskStore.getState().tasks
+    expect(tasks[0]?.groupId).toBe('default')
+  })
+
+  it('falls back to stickyGroupId when defaultGroupId is null', async () => {
+    useGroupStore.setState({ stickyGroupId: 'work' })
+    const user = userEvent.setup()
+    render(<AddTaskRow defaultGroupId={null} />)
+    const input = getAddInput()
+    await user.click(input)
+    await user.type(input, 'Write report')
+    await user.keyboard('{Enter}')
+
+    const tasks = useTaskStore.getState().tasks
+    expect(tasks[0]?.groupId).toBe('work')
+  })
+})

@@ -9,9 +9,10 @@ import { useTaskStore } from '../store'
 
 interface AddTaskRowProps {
   defaultDate?: string | null
+  defaultGroupId?: string | null
 }
 
-export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
+export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
   const [title, setTitle] = useState('')
   const [showTypeahead, setShowTypeahead] = useState(false)
   const [highlightIndex, setHighlightIndex] = useState<number | null>(null)
@@ -33,7 +34,7 @@ export function AddTaskRow({ defaultDate }: AddTaskRowProps) {
     if (!trimmed) return
 
     let taskTitle = trimmed
-    let groupId = stickyGroupId || groups[0].id
+    let groupId = defaultGroupId ?? stickyGroupId ?? groups[0].id
 
     const hashMatch = trimmed.match(/^(.*?)\s+#(\S+)$/)
     if (hashMatch) {

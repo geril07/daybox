@@ -20,13 +20,19 @@ interface TaskListProps {
   tasks: Task[]
   emptyMessage?: string
   date?: string | null
+  sortable?: boolean
 }
 
-export function TaskList({ tasks, emptyMessage, date }: TaskListProps) {
+export function TaskList({
+  tasks,
+  emptyMessage,
+  date,
+  sortable,
+}: TaskListProps) {
   const reorderTasks = useTaskStore((s) => s.reorderTasks)
   const { snapLayout, snap } = useLayoutSnap()
 
-  const isDraggable = date !== undefined
+  const isDraggable = sortable !== false && date !== undefined
   const groupKey = isDraggable ? `tasks:${date ?? 'undated'}` : null
 
   const handleDragEnd = (event: DragEndEvent) => {
