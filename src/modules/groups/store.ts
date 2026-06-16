@@ -25,6 +25,7 @@ interface GroupActions {
   addGroup: (name: string) => Group
   renameGroup: (id: string, name: string) => void
   deleteGroup: (id: string) => void
+  setGroupColor: (id: string, color: string) => void
   getDefaultGroup: () => Group | undefined
   getGroupColorIndex: () => number
   setStickyGroupId: (id: string | null) => void
@@ -91,6 +92,12 @@ export const useGroupStore = create<GroupStore>()(
         }))
       },
 
+      setGroupColor: (id, color) => {
+        set((state) => ({
+          groups: state.groups.map((g) => (g.id === id ? { ...g, color } : g)),
+        }))
+      },
+
       deleteGroup: (id) => {
         if (id === DEFAULT_GROUP_ID) return
         const state = get()
@@ -105,7 +112,7 @@ export const useGroupStore = create<GroupStore>()(
 
       getGroupColorIndex: () => {
         const state = get()
-        return state.groups.length % GROUP_COLORS.length
+        return ((state.groups.length - 1) % (GROUP_COLORS.length - 1)) + 1
       },
 
       setStickyGroupId: (id) => set({ stickyGroupId: id }),

@@ -2,7 +2,7 @@ import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
-import { DEFAULT_GROUP_ID, useGroupStore } from '@/modules/groups'
+import { DEFAULT_GROUP_ID, GROUP_COLORS, useGroupStore } from '@/modules/groups'
 import { useTaskStore } from '@/modules/tasks'
 import { useTimerStore } from '@/modules/timer'
 
@@ -15,7 +15,7 @@ beforeEach(() => {
       {
         id: DEFAULT_GROUP_ID,
         name: 'General',
-        color: 'oklch(0.545 0.185 28)',
+        color: GROUP_COLORS[0],
         createdAt: new Date().toISOString(),
       },
     ],
@@ -219,5 +219,55 @@ describe('GroupSettingsPanel — focused-task cascade', () => {
     await user.click(screen.getByRole('button', { name: 'Delete all tasks' }))
 
     expect(useTimerStore.getState().focusedTaskId).toBe(focused.id)
+  })
+})
+
+describe('GroupSettingsPanel — color picker', () => {
+  function colorDotFor(name: string): HTMLElement {
+    const row = screen.getByText(name).closest('div.flex.items-center')
+    if (!row) throw new Error(`row for "${name}" not found`)
+    return row.querySelector('[aria-label="Change group color"]')!
+  }
+
+  it('opens color popover when clicking the color dot', async () => {
+    const user = userEvent.setup()
+    const work = seedGroup('Work')
+    render(<GroupSettingsPanel />)
+
+    await user.click(colorDotFor(work.name))
+
+    expect(document.querySelector('[role="dialog"]')).toBeTruthy()
+  })
+
+  it('changes group color when clicking a swatch', async () => {
+    const user = userEvent.setup()
+    const work = seedGroup('Work')
+    render(<GroupSettingsPanel />)
+
+    await user.click(colorDotFor(work.name))
+
+    const newColor = GROUP_COLORS[3]
+    const swatch = document.querySelector(
+      `button[aria-label='Color ${newColor}']`,
+    ) as HTMLButtonElement
+    expect(swatch).toBeTruthy()
+    await user.click(swatch)
+
+    const updated = useGroupStore
+      .getState()
+      .groups.find((g) => g.id === work.id)
+    expect(updated?.color).toBe(newColor)
+  })
+
+  it('shows a native color input for custom colors', async () => {
+    const user = userEvent.setup()
+    const work = seedGroup('Work')
+    render(<GroupSettingsPanel />)
+
+    await user.click(colorDotFor(work.name))
+
+    const colorInput = screen.getByLabelText('Custom color') as HTMLInputElement
+    expect(colorInput).toBeTruthy()
+    expect(colorInput.type).toBe('color')
   })
 })

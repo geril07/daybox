@@ -1,7 +1,12 @@
 import { Check, Pencil, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 
-import { DEFAULT_GROUP_ID, useGroupStore, type Group } from '@/modules/groups'
+import {
+  DEFAULT_GROUP_ID,
+  GROUP_COLORS,
+  useGroupStore,
+  type Group,
+} from '@/modules/groups'
 import { useTaskStore } from '@/modules/tasks'
 import {
   Button,
@@ -11,11 +16,13 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from '@/shared/ui'
+import { cn } from '@/shared/utils/cn'
 
 export function GroupSettingsPanel() {
   const groups = useGroupStore((s) => s.groups)
   const addGroup = useGroupStore((s) => s.addGroup)
   const renameGroup = useGroupStore((s) => s.renameGroup)
+  const setGroupColor = useGroupStore((s) => s.setGroupColor)
   const deleteGroup = useGroupStore((s) => s.deleteGroup)
   const [newGroupName, setNewGroupName] = useState('')
 
@@ -46,6 +53,7 @@ export function GroupSettingsPanel() {
             key={g.id}
             group={g}
             onRename={renameGroup}
+            onSetColor={setGroupColor}
             onDelete={deleteGroup}
             onResolveAndDelete={handleResolveAndDelete}
             isLast={groups.length <= 1}
@@ -72,12 +80,14 @@ export function GroupSettingsPanel() {
 function GroupItem({
   group,
   onRename,
+  onSetColor,
   onDelete,
   onResolveAndDelete,
   isLast,
 }: {
   group: Group
   onRename: (id: string, name: string) => void
+  onSetColor: (id: string, color: string) => void
   onDelete: (id: string) => void
   onResolveAndDelete: (id: string, reassignToDefault: boolean) => void
   isLast: boolean
@@ -85,6 +95,7 @@ function GroupItem({
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(group.name)
   const [popoverOpen, setPopoverOpen] = useState(false)
+  const [colorPopoverOpen, setColorPopoverOpen] = useState(false)
 
   const taskCount = useTaskStore(
     (s) => s.tasks.filter((t) => t.groupId === group.id).length,
@@ -128,10 +139,53 @@ function GroupItem({
 
   return (
     <div className="border-border bg-background flex items-center gap-2 rounded-xl border px-2.5 py-2">
-      <span
-        className="size-2.5 shrink-0 rounded-full"
-        style={{ background: group.color }}
-      />
+      <Popover open={colorPopoverOpen} onOpenChange={setColorPopoverOpen}>
+        <PopoverTrigger
+          render={
+            <button
+              type="button"
+              aria-label="Change group color"
+              className="size-2.5 shrink-0 cursor-pointer rounded-full ring-offset-background transition-colors hover:ring-2 hover:ring-border"
+              style={{ background: group.color }}
+            />
+          }
+        />
+        <PopoverContent align="start" className="min-w-[180px] p-2.5">
+          <div className="grid grid-cols-4 gap-1.5">
+            {GROUP_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className={cn(
+                  'size-7 cursor-pointer rounded-full border-2 transition-colors',
+                  group.color === c
+                    ? 'border-foreground'
+                    : 'hover:border-border border-transparent',
+                )}
+                style={{ background: c }}
+                onClick={() => {
+                  onSetColor(group.id, c)
+                  setColorPopoverOpen(false)
+                }}
+                aria-label={`Color ${c}`}
+              />
+            ))}
+          </div>
+          <div className="border-border mt-2 flex items-center gap-1.5 border-t pt-2">
+            <input
+              type="color"
+              className="h-7 w-7 cursor-pointer rounded border-0 bg-transparent p-0"
+              value={group.color}
+              onChange={(e) => {
+                onSetColor(group.id, e.target.value)
+                setColorPopoverOpen(false)
+              }}
+              aria-label="Custom color"
+            />
+            <span className="text-muted-foreground text-xs">Custom</span>
+          </div>
+        </PopoverContent>
+      </Popover>
       {editing ? (
         <input
           type="text"

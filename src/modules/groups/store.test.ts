@@ -10,7 +10,7 @@ beforeEach(() => {
       {
         id: 'default',
         name: 'General',
-        color: 'oklch(0.545 0.185 28)',
+        color: 'oklch(0.550 0.150 0)',
         createdAt: new Date().toISOString(),
       },
     ],
@@ -63,5 +63,44 @@ describe('Group Store - CRUD', () => {
     expect(() =>
       useGroupStore.getState().deleteGroup(DEFAULT_GROUP_ID),
     ).not.toThrow()
+  })
+})
+
+describe('Group Store - setGroupColor', () => {
+  it('changes a group color via setGroupColor', () => {
+    const group = useGroupStore.getState().groups[0]
+    expect(group.color).toBe('oklch(0.550 0.150 0)')
+
+    useGroupStore.getState().setGroupColor(group.id, '#ff00ff')
+
+    const updated = useGroupStore.getState().groups[0]
+    expect(updated.color).toBe('#ff00ff')
+  })
+
+  it('does not mutate other groups when changing one color', () => {
+    const work = useGroupStore.getState().addGroup('Work')
+    const home = useGroupStore.getState().addGroup('Home')
+    const originalHomeColor = home.color
+
+    useGroupStore.getState().setGroupColor(work.id, '#abcdef')
+
+    const groups = useGroupStore.getState().groups
+    expect(groups.find((g) => g.id === home.id)?.color).toBe(originalHomeColor)
+  })
+})
+
+describe('Group Store - getGroupColorIndex', () => {
+  it('skips index 0 for first user-created group', () => {
+    expect(useGroupStore.getState().groups).toHaveLength(1)
+    const idx = useGroupStore.getState().getGroupColorIndex()
+    expect(idx).toBe(1)
+  })
+
+  it('never returns 0 for any user-created group', () => {
+    for (let i = 0; i < 15; i++) {
+      useGroupStore.getState().addGroup(`Group ${i}`)
+    }
+    const idx = useGroupStore.getState().getGroupColorIndex()
+    expect(idx).toBeGreaterThanOrEqual(1)
   })
 })

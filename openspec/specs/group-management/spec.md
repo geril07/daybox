@@ -1,17 +1,17 @@
 ## Purpose
 
-Organize tasks into named groups with auto-assigned colors. Group UI is progressively disclosed — hidden when only one group exists.
+Organize tasks into named groups with user-selectable colors from a 16-color palette (plus custom hex). Group UI is progressively disclosed — hidden when only one group exists.
 
 ## Requirements
 
 ### Requirement: Default group exists on fresh install
 
-The system SHALL create a single default group named "General" when no groups exist.
+The system SHALL create a single default group named "General" when no groups exist. The default group SHALL use a fixed red color (palette index 0).
 
 #### Scenario: Fresh install has default group
 
 - **WHEN** the app loads with no data in localStorage
-- **THEN** a default group "General" is created with a random color
+- **THEN** a default group "General" is created with the fixed red color `oklch(0.550 0.150 0)`
 
 ### Requirement: Group UI is hidden with one group
 
@@ -33,12 +33,53 @@ The system SHALL show a small colored dot + group name on each task row when two
 
 ### Requirement: User can create a group
 
-The system SHALL allow users to create new groups with a name and auto-assigned color.
+The system SHALL allow users to create new groups with a name and auto-assigned color from a 16-color palette. The auto-assigned color SHALL skip the palette index reserved for General (index 0).
 
 #### Scenario: Create group in settings
 
 - **WHEN** user types a name in the "Add group" input and clicks Add
-- **THEN** a new group is created with the given name and a random color
+- **THEN** a new group is created with the given name and an auto-assigned color from palette indices 1–15
+
+### Requirement: User-created groups never collide with General's color
+
+The system SHALL exclude General's palette color (index 0) from the auto-assignment pool when creating new groups.
+
+#### Scenario: First user-created group gets palette index 1
+
+- **WHEN** only the default "General" group exists
+- **AND** the user creates a new group
+- **THEN** the new group's color is palette index 1 (not index 0)
+
+#### Scenario: Sixteenth user-created group does not get red
+
+- **WHEN** the default "General" group exists (color index 0)
+- **AND** 15 user-created groups exist (occupying palette indices 1–15)
+- **AND** the user creates a 16th group
+- **THEN** the new group wraps to palette index 1 (not index 0)
+
+### Requirement: User can change a group's color
+
+The system SHALL allow users to change the color of any group (including General) via a color picker in the group settings panel.
+
+#### Scenario: Change group color via swatch
+
+- **WHEN** user clicks the color dot in a group's row
+- **THEN** a popover opens with a grid of 16 palette swatches and a native color input
+- **AND** the group's current color dot highlights the matching swatch with a ring (if it is a palette color)
+- **AND** clicking a swatch updates the group's color and closes the popover
+
+#### Scenario: Change group color via native color input
+
+- **WHEN** user clicks the native color input in the color popover
+- **AND** selects a custom color from the browser's dialog
+- **THEN** the group's color is updated to the chosen hex value
+- **AND** the color dot reflects the new custom color
+
+#### Scenario: Color change persists across sessions
+
+- **WHEN** user changes a group's color
+- **THEN** the new color is persisted in localStorage under the `daybox-groups` key
+- **AND** after a page reload, the group retains the chosen color
 
 ### Requirement: User can rename a group
 
