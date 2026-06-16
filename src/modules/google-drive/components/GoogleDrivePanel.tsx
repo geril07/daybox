@@ -209,7 +209,7 @@ function InlineError({
       <span>{text}</span>
       <button
         type="button"
-        className="self-start underline"
+        className="cursor-pointer self-start underline"
         onClick={onDismiss}
       >
         Dismiss
