@@ -12,8 +12,23 @@ export const saveSlices = [
 ] as const
 
 export type SaveSliceName = (typeof saveSlices)[number]['name']
-export type SaveSliceExportSlice = {
-  [K in (typeof saveSlices)[number] as K['name']]: InferSaveSliceCurrent<K>
+
+export const knownSliceNames = new Set<string>(saveSlices.map((s) => s.name))
+
+type GroupsTCurrent = InferSaveSliceCurrent<typeof groupsSaveSlice>
+type TasksTCurrent = InferSaveSliceCurrent<typeof tasksSaveSlice>
+type TimerSettingsTCurrent = InferSaveSliceCurrent<
+  typeof timerSettingsSaveSlice
+>
+type PlannerTCurrent = InferSaveSliceCurrent<typeof plannerSaveSlice>
+
+declare module '@/shared/save-slice/map' {
+  interface SaveSliceMap {
+    groups: GroupsTCurrent
+    tasks: TasksTCurrent
+    timerSettings: TimerSettingsTCurrent
+    planner: PlannerTCurrent
+  }
 }
 
 export type AnySaveSlice = (typeof saveSlices)[number]

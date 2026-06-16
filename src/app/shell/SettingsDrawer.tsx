@@ -62,7 +62,13 @@ export function SettingsDrawer({
   const [importWarnings, setImportWarnings] = useState<string[]>([])
 
   const handleExport = () => {
-    downloadAsFile(JSON.stringify(buildSnapshot()), 'daybox-export.json')
+    setImportError(null)
+    const result = buildSnapshot()
+    if (!result.ok) {
+      setImportError(result.reason)
+      return
+    }
+    downloadAsFile(JSON.stringify(result.value), 'daybox-export.json')
   }
 
   const chooseImportFile = () => {

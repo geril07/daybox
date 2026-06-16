@@ -1,4 +1,6 @@
+import { DEFAULT_GROUP_ID } from '@/modules/groups'
 import type { SaveSlice } from '@/shared/save-slice'
+import { detectDuplicateId, parseSliceInput } from '@/shared/utils/save-helpers'
 
 import { useTaskStore } from '../store'
 import type { Task } from '../types'
@@ -7,35 +9,25 @@ import {
   type TasksSaveSliceCurrent,
 } from './versions/v1'
 
-type TasksPrepareResult = ReturnType<
-  SaveSlice<'tasks', TasksSaveSliceCurrent>['prepareImport']
->
+function parseTasksSlice(
+  input: unknown,
+): ReturnType<SaveSlice<'tasks', TasksSaveSliceCurrent>['prepareImport']> {
+  const result = parseSliceInput('tasks', TasksSaveSliceV1Schema, input)
+  if (!result.ok) return result
 
-function parseTasksSlice(input: unknown): TasksPrepareResult {
-  const result = TasksSaveSliceV1Schema.safeParse(input)
-  if (!result.success) {
-    const issue = result.error.issues[0]
-    const path = issue?.path.join('.') || 'root'
-    const message = issue?.message ?? 'Invalid value'
-    return {
-      ok: false,
-      reason: `Invalid snapshot at tasks.${path}: ${message}`,
-    }
+  const parsed = result.value
+
+  const duplicateError = detectDuplicateId(
+    parsed.tasks,
+    (t) => t.id,
+    'task',
+    'tasks',
+  )
+  if (duplicateError) {
+    return { ok: false, reason: duplicateError }
   }
 
-  const taskIds = new Map<string, number>()
-  for (const [index, task] of result.data.tasks.entries()) {
-    const firstIndex = taskIds.get(task.id)
-    if (firstIndex !== undefined) {
-      return {
-        ok: false,
-        reason: `Invalid snapshot at tasks.${index}.id: Duplicate task id "${task.id}" also appears at tasks.${firstIndex}.id`,
-      }
-    }
-    taskIds.set(task.id, index)
-  }
-
-  return { ok: true, value: result.data }
+  return { ok: true, value: parsed }
 }
 
 export const tasksSaveSlice: SaveSlice<'tasks', TasksSaveSliceCurrent> = {
@@ -48,7 +40,38 @@ export const tasksSaveSlice: SaveSlice<'tasks', TasksSaveSliceCurrent> = {
     tasks: useTaskStore.getState().tasks,
   }),
 
+  validateExport: (value) =>
+    parseSliceInput('tasks', TasksSaveSliceV1Schema, value),
+
   prepareImport: parseTasksSlice,
+
+  postPrepare: (current, allSlices) => {
+    const groupSlice = allSlices.groups
+    if (!groupSlice) {
+      return { ok: true, value: current }
+    }
+
+    const groupIds = new Set(groupSlice.groups.map((g) => g.id))
+    const warnings: string[] = []
+
+    const tasks = current.tasks.map((task, index) => {
+      if (groupIds.has(task.groupId)) return task
+      warnings.push(
+        `Task group "${task.groupId}" not found at tasks.${index}.groupId. Task reassigned to default group.`,
+      )
+      return { ...task, groupId: DEFAULT_GROUP_ID }
+    })
+
+    if (warnings.length === 0) {
+      return { ok: true, value: current }
+    }
+
+    return {
+      ok: true,
+      value: { ...current, tasks },
+      warnings,
+    }
+  },
 
   applyImport: (value) => {
     useTaskStore.setState({ tasks: value.tasks as Task[] })

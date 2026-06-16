@@ -60,13 +60,13 @@ This is zero-runtime-cost (the interface and augmentation are compile-time only)
 
 The contract gains four optional fields and one change:
 
-| Field | Kind | Purpose |
-|-------|------|---------|
-| `validateExport?` | new | Called by `buildSnapshot` after `exportSlice`. Zod-validates store output. Failure aborts the export with a message. |
-| `postPrepare?` | new | `(current: TCurrent, allSlices: SaveSliceMap) => PrepareResult<TCurrent>`. Called by the import pipeline after ALL slices have been prepared. Owns cross-slice invariant repair. |
-| `migrateFrom?` | new | `Record<number, SliceMigration>`. Key = fromVersion (e.g., `1`), value = `(input: unknown) => PrepareResult<unknown>`. The pipeline walks this chain before `prepareImport`. Only declared for versions older than `currentVersion`, so migrations[1] means the slice can migrate from v1 to v1+1 (v2). `currentVersion: 1` slices have no `migrateFrom` (and don't need one — `prepareImport` handles v1 directly). |
-| `missing.defaultValue` | changed | Replaces `missing.getDefault: () => TCurrent` (lazy) with `missing.defaultValue: TCurrent` (eager). All current defaults are compile-time constants (`DEFAULT_TIMER_SETTINGS`, `{ weekStartDay: 1, browseDate: null }`). The lazy wrapper is unnecessary. |
-| `TCurrent` constraint | added | `TCurrent extends { version: number }`. Every slice payload carries a `version` field. The migration chain reads it. |
+| Field                  | Kind    | Purpose                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `validateExport?`      | new     | Called by `buildSnapshot` after `exportSlice`. Zod-validates store output. Failure aborts the export with a message.                                                                                                                                                                                                                                                                                                 |
+| `postPrepare?`         | new     | `(current: TCurrent, allSlices: SaveSliceMap) => PrepareResult<TCurrent>`. Called by the import pipeline after ALL slices have been prepared. Owns cross-slice invariant repair.                                                                                                                                                                                                                                     |
+| `migrateFrom?`         | new     | `Record<number, SliceMigration>`. Key = fromVersion (e.g., `1`), value = `(input: unknown) => PrepareResult<unknown>`. The pipeline walks this chain before `prepareImport`. Only declared for versions older than `currentVersion`, so migrations[1] means the slice can migrate from v1 to v1+1 (v2). `currentVersion: 1` slices have no `migrateFrom` (and don't need one — `prepareImport` handles v1 directly). |
+| `missing.defaultValue` | changed | Replaces `missing.getDefault: () => TCurrent` (lazy) with `missing.defaultValue: TCurrent` (eager). All current defaults are compile-time constants (`DEFAULT_TIMER_SETTINGS`, `{ weekStartDay: 1, browseDate: null }`). The lazy wrapper is unnecessary.                                                                                                                                                            |
+| `TCurrent` constraint  | added   | `TCurrent extends { version: number }`. Every slice payload carries a `version` field. The migration chain reads it.                                                                                                                                                                                                                                                                                                 |
 
 ### D3: Shared validation helpers
 
@@ -84,7 +84,7 @@ export function detectDuplicateId<T>(
   getId: (item: T) => string,
   label: string,
   sliceName: string,
-): string | null  // null = no duplicates, string = error message
+): string | null // null = no duplicates, string = error message
 ```
 
 `parseSliceInput` wraps `schema.safeParse(input)` and formats the first zod error into the standard `{ ok: false, reason: "sliceName.path: message" }` shape. Replaces the 8-line block duplicated in every slice's `prepareImport`.

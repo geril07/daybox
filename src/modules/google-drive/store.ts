@@ -166,8 +166,16 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
               set({})
             }
           }
-          const snapshot = buildSnapshot()
-          const content = JSON.stringify(snapshot)
+          const snapshotResult = buildSnapshot()
+          if (!snapshotResult.ok) {
+            const error = {
+              kind: 'unknown' as const,
+              message: snapshotResult.reason,
+            }
+            set({ status: 'idle', error })
+            return { ok: false, error }
+          }
+          const content = JSON.stringify(snapshotResult.value)
           let existingId =
             get().backupFileSpace === BACKUP_FILE_SPACE
               ? get().dayboxFileId

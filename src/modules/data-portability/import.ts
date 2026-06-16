@@ -1,5 +1,4 @@
 import { parseSaveEnvelope, type SaveEnvelope } from './envelope'
-import { normalizeCrossSliceInvariants } from './normalize'
 import { saveSlices } from './registry'
 import type { CurrentSnapshot, PreparedSnapshot } from './schema'
 
@@ -19,7 +18,9 @@ export type PreparedSnapshotImportResult =
   | { ok: true; snapshot: PreparedSnapshot; warnings?: string[] }
   | { ok: false; reason: string }
 
-export type CommitSnapshotImportResult = { ok: true }
+export type CommitSnapshotImportResult =
+  | { ok: true }
+  | { ok: false; reason: string; committed: string[] }
 
 export function prepareSnapshotImport(
   json: string,
@@ -30,23 +31,37 @@ export function prepareSnapshotImport(
   const envelope = parseSaveEnvelope(parsed.value)
   if (!envelope.ok) return envelope
 
-  const current = prepareSlices(envelope.envelope)
-  if (!current.ok) return current
+  const prepared = prepareSlices(envelope.value)
+  if (!prepared.ok) return prepared
 
-  const normalized = normalizeCrossSliceInvariants(current.snapshot)
-  if (!normalized.ok) return normalized
+  const postResult = runPostPrepare(prepared.snapshot)
+  if (!postResult.ok) return postResult
 
-  const warnings = [...(current.warnings ?? []), ...(normalized.warnings ?? [])]
+  const warnings = [
+    ...(prepared.warnings ?? []),
+    ...(postResult.warnings ?? []),
+  ]
   return warnings.length > 0
-    ? { ok: true, snapshot: normalized.snapshot, warnings }
-    : { ok: true, snapshot: normalized.snapshot }
+    ? { ok: true, snapshot: postResult.snapshot, warnings }
+    : { ok: true, snapshot: postResult.snapshot }
 }
 
 export function commitSnapshotImport(
   snapshot: PreparedSnapshot,
 ): CommitSnapshotImportResult {
+  const committed: string[] = []
   for (const slice of saveSlices) {
-    slice.applyImport(snapshot.slices[slice.name] as never)
+    try {
+      slice.applyImport(snapshot.slices[slice.name] as never)
+      committed.push(slice.name)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      return {
+        ok: false,
+        reason: `Failed to commit slice "${slice.name}": ${message}`,
+        committed,
+      }
+    }
   }
 
   return { ok: true }
@@ -69,11 +84,14 @@ function prepareSlices(envelope: SaveEnvelope): PrepareSlicesResult {
     if (input === undefined) {
       return {
         ok: false,
-        reason: `Invalid snapshot at slices.${slice.name}: Required`,
+        reason: `${slice.name}: Required`,
       }
     }
 
-    const prepared = slice.prepareImport(input)
+    const migrated = prepareSlice(slice, input)
+    if (!migrated.ok) return migrated
+
+    const prepared = slice.prepareImport(migrated.value)
     if (!prepared.ok) return prepared
 
     preparedSlices[slice.name] = prepared.value
@@ -91,9 +109,68 @@ function prepareSlices(envelope: SaveEnvelope): PrepareSlicesResult {
     : { ok: true, snapshot }
 }
 
+function prepareSlice(
+  slice: (typeof saveSlices)[number],
+  input: unknown,
+): { ok: true; value: unknown } | { ok: false; reason: string } {
+  if (!slice.migrateFrom) return { ok: true, value: input }
+
+  let version = extractVersion(input)
+  let current = input
+
+  while (typeof version === 'number' && version < slice.currentVersion) {
+    const migration = slice.migrateFrom[version]
+    if (!migration) {
+      return {
+        ok: false,
+        reason: `${slice.name}: No migration from version ${version}. Current version is ${slice.currentVersion}.`,
+      }
+    }
+    const result = migration(current)
+    if (!result.ok) return result
+
+    current = result.value
+    version = extractVersion(current)
+  }
+
+  return { ok: true, value: current }
+}
+
+function extractVersion(input: unknown): unknown {
+  if (typeof input === 'object' && input !== null && 'version' in input) {
+    return (input as Record<string, unknown>).version
+  }
+  return undefined
+}
+
+type PostPrepareResult =
+  | { ok: true; snapshot: PreparedSnapshot; warnings?: string[] }
+  | { ok: false; reason: string }
+
+function runPostPrepare(snapshot: CurrentSnapshot): PostPrepareResult {
+  let current = { ...snapshot, slices: { ...snapshot.slices } }
+  const warnings: string[] = []
+
+  for (const slice of saveSlices) {
+    if (!slice.postPrepare) continue
+
+    const sliceData = current.slices[slice.name] as never
+    const result = slice.postPrepare(sliceData, current.slices as never)
+    if (!result.ok) return result
+
+    current = {
+      ...current,
+      slices: { ...current.slices, [slice.name]: result.value },
+    }
+    if (result.warnings) warnings.push(...result.warnings)
+  }
+
+  return { ok: true, snapshot: current as PreparedSnapshot, warnings }
+}
+
 function getMissingSliceInput(
   slice: (typeof saveSlices)[number],
 ): unknown | undefined {
   if (slice.missing.kind === 'required') return undefined
-  return slice.missing.getDefault()
+  return slice.missing.defaultValue
 }

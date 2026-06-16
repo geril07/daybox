@@ -119,7 +119,10 @@ describe('Google Drive store backup', () => {
 
 describe('Google Drive store restore', () => {
   it('discovers and restores a visible root backup when no id is stored', async () => {
-    const snapshotJson = JSON.stringify(buildSnapshot())
+    const snapshotResult = buildSnapshot()
+    const snapshotJson = JSON.stringify(
+      snapshotResult.ok ? snapshotResult.value : {},
+    )
     fetchMock
       .mockResolvedValueOnce({
         ok: true,

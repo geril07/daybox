@@ -108,7 +108,10 @@ describe('buildSnapshot', () => {
     })
     usePlannerStore.getState().setWeekStartDay(0)
 
-    const snapshot = buildSnapshot()
+    const result = buildSnapshot()
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const snapshot = result.value
 
     expect(snapshot.envelopeVersion).toBe(CURRENT_SAVE_ENVELOPE_VERSION)
     expect(Date.parse(snapshot.exportedAt)).not.toBeNaN()
@@ -127,7 +130,7 @@ describe('buildSnapshot', () => {
 })
 
 describe('prepareSnapshotImport', () => {
-  it('rejects flat v2 snapshots as Not a DayBox export file', () => {
+  it('rejects flat v2 snapshots with structured envelope error', () => {
     useTaskStore.setState({ tasks: [createTask({ id: 'existing' })] })
 
     const result = prepareSnapshotImport(
@@ -141,11 +144,12 @@ describe('prepareSnapshotImport', () => {
 
     expect(result.ok).toBe(false)
     if (result.ok) return
-    expect(result.reason).toBe('Not a DayBox export file.')
+    expect(result.reason).toContain('envelope.envelopeVersion')
+    expect(result.reason).not.toBe('Not a DayBox export file.')
     expect(useTaskStore.getState().tasks.map((t) => t.id)).toEqual(['existing'])
   })
 
-  it('rejects flat v3 snapshots as Not a DayBox export file', () => {
+  it('rejects flat v3 snapshots with structured envelope error', () => {
     useTaskStore.setState({ tasks: [createTask({ id: 'existing' })] })
 
     const result = prepareSnapshotImport(
@@ -161,8 +165,26 @@ describe('prepareSnapshotImport', () => {
 
     expect(result.ok).toBe(false)
     if (result.ok) return
-    expect(result.reason).toBe('Not a DayBox export file.')
+    expect(result.reason).toContain('envelope.envelopeVersion')
+    expect(result.reason).not.toBe('Not a DayBox export file.')
     expect(useTaskStore.getState().tasks.map((t) => t.id)).toEqual(['existing'])
+  })
+
+  it('rejects unknown slice keys with clear message', () => {
+    const snapshot = currentSnapshot()
+    const slices: Record<string, unknown> = {
+      ...snapshot.slices,
+      unknownCustom: true,
+    }
+
+    const result = prepareSnapshotImport(
+      JSON.stringify({ ...snapshot, slices }),
+    )
+
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reason).toContain('envelope.slices.unknownCustom')
+    expect(result.reason).toContain('Unknown slice')
   })
 
   it('uses missing-slice defaults for slices that declare defaults', () => {
@@ -370,5 +392,30 @@ describe('commitSnapshotImport', () => {
     // @ts-expect-error CurrentSnapshot must be normalized before commit.
     const prepared: PreparedSnapshot = snapshot
     expect(prepared).toBe(snapshot)
+  })
+
+  it('reports committed slice names on partial commit failure', () => {
+    const prepared = prepareSnapshotImport(
+      JSON.stringify(
+        currentSnapshot({
+          tasks: [createTask({ id: 'task-1', title: 'Imported' })],
+        }),
+      ),
+    )
+    expect(prepared.ok).toBe(true)
+    if (!prepared.ok) return
+
+    const corruptSlices = { ...prepared.snapshot.slices }
+    delete (corruptSlices as Record<string, unknown>).groups
+
+    const corrupt = {
+      ...prepared.snapshot,
+      slices: corruptSlices,
+    }
+
+    const result = commitSnapshotImport(corrupt as PreparedSnapshot)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.committed).toBeDefined()
   })
 })

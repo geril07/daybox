@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+import type { PrepareResult } from '@/shared/save-slice'
+
+import { knownSliceNames } from './registry'
+
 export const CURRENT_SAVE_ENVELOPE_VERSION = 1
 
 export const SaveEnvelopeSchema = z.object({
@@ -10,15 +14,23 @@ export const SaveEnvelopeSchema = z.object({
 
 export type SaveEnvelope = z.infer<typeof SaveEnvelopeSchema>
 
-export type ParseEnvelopeResult =
-  | { ok: true; envelope: SaveEnvelope }
-  | { ok: false; reason: string }
-
-export function parseSaveEnvelope(value: unknown): ParseEnvelopeResult {
+export function parseSaveEnvelope(value: unknown): PrepareResult<SaveEnvelope> {
   const result = SaveEnvelopeSchema.safeParse(value)
   if (!result.success) {
-    return { ok: false, reason: 'Not a DayBox export file.' }
+    const issue = result.error.issues[0]
+    const path = issue?.path.join('.') || 'root'
+    const message = issue?.message ?? 'Invalid value'
+    return { ok: false, reason: `envelope.${path}: ${message}` }
   }
 
-  return { ok: true, envelope: result.data }
+  for (const key of Object.keys(result.data.slices)) {
+    if (!knownSliceNames.has(key)) {
+      return {
+        ok: false,
+        reason: `envelope.slices.${key}: Unknown slice — not a registered feature`,
+      }
+    }
+  }
+
+  return { ok: true, value: result.data }
 }
