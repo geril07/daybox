@@ -88,7 +88,7 @@ export function App() {
             >
               <Menu size={18} />
             </Button>
-            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-[9px] bg-white">
+            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center">
               <svg
                 width="26"
                 height="26"
@@ -96,33 +96,43 @@ export function App() {
                 role="img"
                 aria-label="DayBox"
               >
-                <rect width="256" height="256" rx="58" fill="#fff" />
-                <rect
-                  x="38"
-                  y="44"
-                  width="152"
-                  height="168"
-                  rx="28"
+                <defs>
+                  <mask
+                    id="daybox-logo-clock-cutout"
+                    maskUnits="userSpaceOnUse"
+                  >
+                    <rect width="256" height="256" fill="#fff" />
+                    <circle cx="183" cy="177" r="57" fill="#000" />
+                  </mask>
+                </defs>
+                <g mask="url(#daybox-logo-clock-cutout)">
+                  <rect
+                    x="38"
+                    y="44"
+                    width="152"
+                    height="168"
+                    rx="28"
+                    fill="none"
+                    stroke="#d65332"
+                    strokeWidth="18"
+                  />
+                  <path
+                    d="M76 93h70M76 132h48"
+                    stroke="#d65332"
+                    strokeWidth="16"
+                    strokeLinecap="round"
+                  />
+                </g>
+                <circle
+                  cx="183"
+                  cy="177"
+                  r="48"
                   fill="none"
                   stroke="#d65332"
                   strokeWidth="18"
                 />
                 <path
-                  d="M76 93h70M76 132h48"
-                  stroke="#d65332"
-                  strokeWidth="16"
-                  strokeLinecap="round"
-                />
-                <circle
-                  cx="177"
-                  cy="177"
-                  r="48"
-                  fill="#fff"
-                  stroke="#d65332"
-                  strokeWidth="18"
-                />
-                <path
-                  d="M177 153v27l18 12"
+                  d="M183 153v27l18 12"
                   fill="none"
                   stroke="#d65332"
                   strokeWidth="14"
