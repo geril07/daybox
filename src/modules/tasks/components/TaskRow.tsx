@@ -156,7 +156,7 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       <DatePickerButton task={task} />
 
       <>
-        <div className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 hover:opacity-100 pointer-coarse:hidden">
+        <div className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 group-hover:opacity-100 pointer-coarse:hidden">
           <Button
             variant="ghostDestructive"
             size="icon-sm"
