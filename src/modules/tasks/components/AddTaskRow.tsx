@@ -68,7 +68,7 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
           type="text"
           value={title}
           onChange={handleInput}
-          placeholder="Add a task — type #group to assign..."
+          placeholder="Add a task…"
           className="text-foreground flex-1 border-none bg-transparent py-2 text-sm outline-none"
         />
         {showGroupUi && (
