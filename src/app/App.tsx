@@ -76,8 +76,8 @@ export function App() {
   )
 
   return (
-    <div className="app-shell bg-background text-foreground flex min-h-screen flex-col">
-      <header className="border-border bg-card sticky top-0 z-30 border-b">
+    <div className="app-shell bg-background text-foreground flex h-dvh flex-col overflow-hidden">
+      <header className="border-border bg-card border-b">
         <div className="mx-auto flex max-w-[680px] items-center justify-between px-4 py-3.5 md:max-w-none md:px-5">
           <div className="flex items-center gap-2.5">
             <Button
@@ -149,12 +149,12 @@ export function App() {
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div className="flex min-h-0 flex-1">
         <aside className="border-border hidden w-[220px] shrink-0 border-r md:block">
           {sidebarNav}
         </aside>
 
-        <main className="flex-1">
+        <main className="flex-1 scrollbar-gutter-stable overflow-y-auto">
           <div className="container mx-auto w-full max-w-[680px] px-4 md:px-7">
             <MotionConfig reducedMotion="user">
               <div className="task-list-area py-1 pb-10">
