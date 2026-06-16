@@ -12,12 +12,13 @@ import { formatDate, getWeekDays, getWeekSectionLabel } from '@/shared/dates'
 
 import { usePlannerStore } from './store'
 
-export type View = 'today' | 'tomorrow' | 'week' | 'unscheduled' | 'date'
+export type View = 'today' | 'tomorrow' | 'week' | 'unscheduled' | 'later' | 'date'
 
 export type TaskRange =
   | { kind: 'date'; date: string }
   | { kind: 'range'; start: string; end: string }
   | { kind: 'undated' }
+  | { kind: 'after'; start: string }
 
 export type DayViewMeta = {
   title: string
@@ -55,6 +56,12 @@ export const viewMetaMap: Record<
     emptyTitle: 'No unscheduled tasks.',
     emptyDescription: 'Capture whatever comes to mind.',
   },
+  later: {
+    title: 'Later',
+    emptyTitle: 'Nothing planned for later.',
+    emptyDescription:
+      'Add a task with a date after this week to see it here.',
+  },
 }
 
 export function viewToRange(
@@ -80,6 +87,13 @@ export function viewToRange(
     }
     case 'unscheduled':
       return { kind: 'undated' }
+    case 'later': {
+      const days = getWeekDays(weekStartDay)
+      const lastDay = days[6]
+      const firstAfter = new Date(lastDay)
+      firstAfter.setDate(lastDay.getDate() + 1)
+      return { kind: 'after', start: formatDate(firstAfter) }
+    }
     case 'date':
       return { kind: 'date', date: today }
   }
@@ -110,6 +124,16 @@ export function useFilteredTasks(view: View) {
         filtered = selectUndated(tasks)
         bucketDate = null
         break
+      case 'after':
+        filtered = tasks
+          .filter((t) => t.date !== null && t.date >= range.start)
+          .sort((a, b) => {
+            if (a.date! < b.date!) return -1
+            if (a.date! > b.date!) return 1
+            return a.sortOrder - b.sortOrder
+          })
+        bucketDate = null
+        break
     }
 
     if (view === 'today') {
@@ -137,6 +161,8 @@ export function defaultDateForView(
       return today
     case 'undated':
       return undefined
+    case 'after':
+      return range.start
   }
 }
 
@@ -172,5 +198,43 @@ export function useWeekSections(): Section[] {
     }
 
     return sections
+  }, [tasks, weekStartDay])
+}
+
+export function filterByGroup(
+  tasks: Task[],
+  groupId: string | null,
+): Task[] {
+  if (groupId === null) return tasks
+  return tasks.filter((t) => t.groupId === groupId)
+}
+
+export function useLaterSections(): Section[] {
+  const tasks = useTaskStore((s) => s.tasks)
+  const weekStartDay = usePlannerStore((s) => s.weekStartDay)
+
+  return useMemo(() => {
+    const days = getWeekDays(weekStartDay)
+    const lastDay = days[6]
+    const firstAfter = new Date(lastDay)
+    firstAfter.setDate(lastDay.getDate() + 1)
+    const start = formatDate(firstAfter)
+
+    const byDate = new Map<string, Task[]>()
+    for (const task of tasks) {
+      if (task.date === null || task.date < start) continue
+      const list = byDate.get(task.date) || []
+      list.push(task)
+      byDate.set(task.date, list)
+    }
+
+    const sortedDates = Array.from(byDate.keys()).sort()
+
+    return sortedDates.map((date) => ({
+      key: date,
+      label: getWeekSectionLabel(new Date(date + 'T00:00:00')),
+      tasks: byDate.get(date)!.sort((a, b) => a.sortOrder - b.sortOrder),
+      date,
+    }))
   }, [tasks, weekStartDay])
 }
