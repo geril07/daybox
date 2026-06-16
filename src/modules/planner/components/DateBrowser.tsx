@@ -1,5 +1,4 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { LayoutGroup } from 'motion/react'
 
 import { TaskList, selectForDate, useTaskStore } from '@/modules/tasks'
 import { EmptyState } from '@/shared/ui'
@@ -27,7 +26,7 @@ export function DateBrowser() {
   }
 
   return (
-    <LayoutGroup id="planner-date">
+    <>
       <div className="flex items-center justify-center gap-1.5 pt-2 pb-3">
         <Button
           variant="ghost"
@@ -50,6 +49,6 @@ export function DateBrowser() {
         </Button>
       </div>
       <TaskList tasks={dateTasks} date={browseDate} />
-    </LayoutGroup>
+    </>
   )
 }

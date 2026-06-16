@@ -1,5 +1,3 @@
-import { LayoutGroup } from 'motion/react'
-
 import { TaskList } from '@/modules/tasks'
 import { EmptyState } from '@/shared/ui'
 
@@ -31,7 +29,7 @@ export function DayView({ view, selectedGroupId = null }: DayViewProps) {
   const isSortable = selectedGroupId === null
 
   return (
-    <LayoutGroup id="planner-day">
+    <>
       {filteredOverdue.length > 0 && (
         <div>
           <SectionHeader label="Overdue" tone="destructive" />
@@ -40,6 +38,6 @@ export function DayView({ view, selectedGroupId = null }: DayViewProps) {
       )}
       <SectionHeader label={meta.title} />
       <TaskList tasks={filteredTasks} date={bucketDate} sortable={isSortable} />
-    </LayoutGroup>
+    </>
   )
 }

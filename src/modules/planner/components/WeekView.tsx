@@ -1,5 +1,3 @@
-import { LayoutGroup } from 'motion/react'
-
 import { TaskList } from '@/modules/tasks'
 import { EmptyState } from '@/shared/ui'
 
@@ -34,7 +32,7 @@ export function WeekView({ selectedGroupId = null }: WeekViewProps) {
   const isSortable = selectedGroupId === null
 
   return (
-    <LayoutGroup id="planner-week">
+    <>
       {filtered.map((section) => (
         <div key={section.key} className="mb-2">
           <SectionHeader label={section.label} tone={section.tone} />
@@ -51,6 +49,6 @@ export function WeekView({ selectedGroupId = null }: WeekViewProps) {
           )}
         </div>
       ))}
-    </LayoutGroup>
+    </>
   )
 }

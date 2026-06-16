@@ -1,5 +1,3 @@
-import { LayoutGroup } from 'motion/react'
-
 import { TaskList } from '@/modules/tasks'
 import { EmptyState } from '@/shared/ui'
 
@@ -32,7 +30,7 @@ export function LaterView({ selectedGroupId = null }: LaterViewProps) {
   const isSortable = selectedGroupId === null
 
   return (
-    <LayoutGroup id="planner-later">
+    <>
       {filtered.map((section) => (
         <div key={section.key} className="mb-2">
           <SectionHeader label={section.label} />
@@ -43,6 +41,6 @@ export function LaterView({ selectedGroupId = null }: LaterViewProps) {
           />
         </div>
       ))}
-    </LayoutGroup>
+    </>
   )
 }

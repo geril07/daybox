@@ -1,5 +1,4 @@
 import { Menu, Settings } from 'lucide-react'
-import { MotionConfig } from 'motion/react'
 import { useState, useEffect } from 'react'
 
 import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
@@ -156,15 +155,13 @@ export function App() {
 
         <main className="flex-1 scrollbar-gutter-stable overflow-y-auto">
           <div className="container mx-auto w-full max-w-[680px] px-4 md:px-7">
-            <MotionConfig reducedMotion="user">
-              <div className="task-list-area py-1 pb-10">
-                <AddTaskRow
-                  defaultDate={defaultDate}
-                  defaultGroupId={selectedGroupId}
-                />
-                {renderView()}
-              </div>
-            </MotionConfig>
+            <div className="task-list-area py-1 pb-10">
+              <AddTaskRow
+                defaultDate={defaultDate}
+                defaultGroupId={selectedGroupId}
+              />
+              {renderView()}
+            </div>
           </div>
         </main>
       </div>
