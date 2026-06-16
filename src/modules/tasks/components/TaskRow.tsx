@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
-import { useGroupStore } from '@/modules/groups'
+import { GroupSelect, useGroupStore } from '@/modules/groups'
 import { useTimerStore } from '@/modules/timer'
 import { isOverdue, formatDate, getTomorrow } from '@/shared/dates'
 import {
@@ -135,15 +135,20 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
       </div>
 
       {showGroupUi && group && (
-        <div className="flex shrink-0 items-center gap-1.5">
+        <GroupSelect
+          groupId={task.groupId}
+          groups={groups}
+          onChange={(newGroupId) =>
+            updateTask(task.id, { groupId: newGroupId })
+          }
+          triggerProps={{ className: 'flex shrink-0 items-center gap-1.5' }}
+        >
           <span
             className="h-[7px] w-[7px] shrink-0 rounded-full"
             style={{ background: group.color }}
           />
-          {group.name !== 'General' && (
-            <span className="text-muted-foreground text-xs">{group.name}</span>
-          )}
-        </div>
+          <span className="text-muted-foreground text-xs">{group.name}</span>
+        </GroupSelect>
       )}
 
       {overdue && (

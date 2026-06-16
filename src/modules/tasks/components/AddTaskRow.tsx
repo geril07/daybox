@@ -1,8 +1,8 @@
 import { Plus, ChevronDown } from 'lucide-react'
 import { useState, useRef, type SubmitEvent } from 'react'
 
-import { useGroupStore, type Group } from '@/modules/groups'
-import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui'
+import { GroupSelect, useGroupStore, type Group } from '@/modules/groups'
+import { Button, Popover, PopoverContent } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
 import { useTaskStore } from '../store'
@@ -139,11 +139,22 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
           className="text-foreground flex-1 border-none bg-transparent py-2 text-sm outline-none"
         />
         {showGroupUi && (
-          <GroupChip
-            group={currentGroup}
+          <GroupSelect
+            groupId={currentGroup.id}
             groups={groups}
-            onSelect={setStickyGroupId}
-          />
+            onChange={setStickyGroupId}
+            triggerProps={{
+              className:
+                'border-border text-muted-foreground flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs transition-colors duration-140',
+            }}
+          >
+            <span
+              className="h-[7px] w-[7px] shrink-0 rounded-full"
+              style={{ background: currentGroup.color }}
+            />
+            {currentGroup.name}
+            <ChevronDown size={10} />
+          </GroupSelect>
         )}
         <Button
           type="submit"
@@ -180,51 +191,6 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
         </PopoverContent>
       </Popover>
     </form>
-  )
-}
-
-function GroupChip({
-  group,
-  groups,
-  onSelect,
-}: {
-  group: Group
-  groups: Group[]
-  onSelect: (id: string) => void
-}) {
-  return (
-    <Popover>
-      <PopoverTrigger>
-        <span className="border-border text-muted-foreground flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs transition-colors duration-140">
-          <span
-            className="h-[7px] w-[7px] shrink-0 rounded-full"
-            style={{ background: group.color }}
-          />
-          {group.name}
-          <ChevronDown size={10} />
-        </span>
-      </PopoverTrigger>
-      <PopoverContent className="z-50 min-w-[140px] p-2" align="end">
-        {groups.map((g) => (
-          <Button
-            key={g.id}
-            variant="ghost"
-            size="none"
-            className={cn(
-              'w-full justify-start gap-2 rounded px-3 py-2 text-left text-sm duration-100',
-              g.id === group.id ? 'text-accent' : 'text-fg-2',
-            )}
-            onClick={() => onSelect(g.id)}
-          >
-            <span
-              className="size-2 shrink-0 rounded-full"
-              style={{ background: g.color }}
-            />
-            {g.name}
-          </Button>
-        ))}
-      </PopoverContent>
-    </Popover>
   )
 }
 
