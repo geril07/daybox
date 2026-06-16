@@ -29,8 +29,6 @@ export function WeekView({ selectedGroupId = null }: WeekViewProps) {
     )
   }
 
-  const isSortable = selectedGroupId === null
-
   return (
     <>
       {filtered.map((section) => (
@@ -40,7 +38,7 @@ export function WeekView({ selectedGroupId = null }: WeekViewProps) {
             <TaskList
               tasks={section.tasks}
               date={section.date}
-              sortable={isSortable}
+              groupId={selectedGroupId}
             />
           ) : (
             <div className="text-muted-foreground px-1.5 py-2 text-xs">

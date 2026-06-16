@@ -86,4 +86,13 @@ describe('TaskList sortable prop', () => {
 
     expect(document.body.textContent).toContain('Task 1')
   })
+
+  it('renders DragDropProvider when groupId is set alongside date', () => {
+    const tasks = [makeTask({ date: '2026-06-10', groupId: 'work' })]
+    useTaskStore.setState({ tasks })
+
+    render(<TaskList tasks={tasks} date="2026-06-10" groupId="work" />)
+
+    expect(document.body.textContent).toContain('Task 1')
+  })
 })

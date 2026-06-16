@@ -1,9 +1,8 @@
 import { Plus, ChevronDown } from 'lucide-react'
 import { useState, useRef, type SubmitEvent } from 'react'
 
-import { GroupSelect, useGroupStore, type Group } from '@/modules/groups'
-import { Button, Popover, PopoverContent } from '@/shared/ui'
-import { cn } from '@/shared/utils/cn'
+import { GroupSelect, useGroupStore } from '@/modules/groups'
+import { Button } from '@/shared/ui'
 
 import { useTaskStore } from '../store'
 
@@ -14,8 +13,6 @@ interface AddTaskRowProps {
 
 export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
   const [title, setTitle] = useState('')
-  const [showTypeahead, setShowTypeahead] = useState(false)
-  const [highlightIndex, setHighlightIndex] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const groups = useGroupStore((s) => s.groups)
   const addTask = useTaskStore((s) => s.addTask)
@@ -53,71 +50,11 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
 
     addTask(taskTitle, groupId, defaultDate)
     setTitle('')
-    setShowTypeahead(false)
-    setHighlightIndex(null)
-    inputRef.current?.focus()
-  }
-
-  const typeaheadQuery = title.match(/#(\S*)$/)?.[1] || ''
-  const typeaheadMatches = typeaheadQuery
-    ? groups
-        .filter((g) =>
-          g.name.toLowerCase().startsWith(typeaheadQuery.toLowerCase()),
-        )
-        .slice(0, 5)
-    : groups.slice(0, 5)
-
-  const handleAccept = (group: Group) => {
-    setTitle(title.replace(/#\S*$/, `#${group.name} `))
-    setShowTypeahead(false)
-    setHighlightIndex(null)
     inputRef.current?.focus()
   }
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value)
-    setHighlightIndex(null)
-    const hashMatch = e.target.value.match(/#(\S*)$/)
-    setShowTypeahead(!!hashMatch)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      if (
-        showTypeahead &&
-        highlightIndex != null &&
-        typeaheadMatches.length > 0
-      ) {
-        e.preventDefault()
-        handleAccept(typeaheadMatches[highlightIndex])
-        return
-      }
-      return
-    }
-    if (e.key === 'Escape' && showTypeahead) {
-      e.preventDefault()
-      setShowTypeahead(false)
-      setHighlightIndex(null)
-      return
-    }
-    if (showTypeahead && typeaheadMatches.length > 0) {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setHighlightIndex((prev) =>
-          prev == null ? 0 : (prev + 1) % typeaheadMatches.length,
-        )
-        return
-      }
-      if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setHighlightIndex((prev) =>
-          prev == null
-            ? typeaheadMatches.length - 1
-            : (prev - 1 + typeaheadMatches.length) % typeaheadMatches.length,
-        )
-        return
-      }
-    }
   }
 
   return (
@@ -126,15 +63,11 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
       onSubmit={handleSubmit}
     >
       <div className="flex items-center gap-2.5">
-        <div className="text-muted-foreground border-border-strong flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-dashed transition-[border-color,color] duration-140">
-          <Plus size={10} strokeWidth={3} />
-        </div>
         <input
           ref={inputRef}
           type="text"
           value={title}
           onChange={handleInput}
-          onKeyDown={handleKeyDown}
           placeholder="Add a task — type #group to assign..."
           className="text-foreground flex-1 border-none bg-transparent py-2 text-sm outline-none"
         />
@@ -168,79 +101,6 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
           <Plus />
         </Button>
       </div>
-      <Popover
-        open={showTypeahead}
-        onOpenChange={(open) => {
-          if (!open) setShowTypeahead(false)
-        }}
-      >
-        <PopoverContent
-          anchor={inputRef}
-          side="bottom"
-          align="start"
-          sideOffset={4}
-          initialFocus={false}
-          className="bg-card text-popover-foreground min-w-[180px] gap-0 p-1"
-        >
-          <GroupTypeahead
-            query={typeaheadQuery}
-            groups={groups}
-            highlightIndex={highlightIndex}
-            onSelect={handleAccept}
-          />
-        </PopoverContent>
-      </Popover>
     </form>
-  )
-}
-
-function GroupTypeahead({
-  query,
-  groups,
-  highlightIndex,
-  onSelect,
-}: {
-  query: string
-  groups: Group[]
-  highlightIndex: number | null
-  onSelect: (group: Group) => void
-}) {
-  const matched = query
-    ? groups
-        .filter((g) => g.name.toLowerCase().startsWith(query.toLowerCase()))
-        .slice(0, 5)
-    : groups.slice(0, 5)
-
-  if (matched.length === 0 && query) {
-    return (
-      <div className="text-muted-foreground w-full px-3 py-2 text-sm">
-        Press Enter to create group &quot;{query}&quot;
-      </div>
-    )
-  }
-
-  return (
-    <>
-      {matched.map((g, i) => (
-        <Button
-          key={g.id}
-          variant="ghost"
-          size="none"
-          tabIndex={-1}
-          data-highlighted={i === highlightIndex ? 'true' : undefined}
-          className={cn(
-            'text-fg-2 w-full justify-start gap-2 rounded px-3 py-2 text-left text-sm duration-100',
-            i === highlightIndex && 'bg-muted text-foreground',
-          )}
-          onClick={() => onSelect(g)}
-        >
-          <span
-            className="h-[7px] w-[7px] shrink-0 rounded-full"
-            style={{ background: g.color }}
-          />
-          {g.name}
-        </Button>
-      ))}
-    </>
   )
 }

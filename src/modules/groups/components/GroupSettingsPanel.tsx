@@ -145,7 +145,7 @@ function GroupItem({
             <button
               type="button"
               aria-label="Change group color"
-              className="size-2.5 shrink-0 cursor-pointer rounded-full ring-offset-background transition-colors hover:ring-2 hover:ring-border"
+              className="ring-offset-background hover:ring-border size-2.5 shrink-0 cursor-pointer rounded-full transition-colors hover:ring-2"
               style={{ background: group.color }}
             />
           }

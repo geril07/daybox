@@ -26,8 +26,6 @@ export function DayView({ view, selectedGroupId = null }: DayViewProps) {
     )
   }
 
-  const isSortable = selectedGroupId === null
-
   return (
     <>
       {filteredOverdue.length > 0 && (
@@ -37,7 +35,11 @@ export function DayView({ view, selectedGroupId = null }: DayViewProps) {
         </div>
       )}
       <SectionHeader label={meta.title} />
-      <TaskList tasks={filteredTasks} date={bucketDate} sortable={isSortable} />
+      <TaskList
+        tasks={filteredTasks}
+        date={bucketDate}
+        groupId={selectedGroupId}
+      />
     </>
   )
 }

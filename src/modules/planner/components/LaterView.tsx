@@ -27,8 +27,6 @@ export function LaterView({ selectedGroupId = null }: LaterViewProps) {
     )
   }
 
-  const isSortable = selectedGroupId === null
-
   return (
     <>
       {filtered.map((section) => (
@@ -37,7 +35,7 @@ export function LaterView({ selectedGroupId = null }: LaterViewProps) {
           <TaskList
             tasks={section.tasks}
             date={section.date}
-            sortable={isSortable}
+            groupId={selectedGroupId}
           />
         </div>
       ))}
