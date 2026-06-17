@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 
 import { useTheme } from '@/app/theme'
+import type { ThemeModePreference } from '@/app/themes'
 import {
   buildSnapshot,
   commitSnapshotImport,
@@ -17,7 +18,6 @@ import {
   SheetHeader,
   SheetTitle,
   Button,
-  Switch,
   Select,
   SelectTrigger,
   SelectValue,
@@ -51,7 +51,18 @@ export function SettingsDrawer({
 }) {
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
   const setWeekStartDay = usePlannerStore((s) => s.setWeekStartDay)
-  const [theme, setTheme] = useTheme()
+  const { settings, presets, availableModes, setMode, setPreset } = useTheme()
+
+  const presetItems = presets.map((p) => ({
+    value: p.id,
+    label: p.name,
+  }))
+
+  const modeItems = availableModes.map((m) => ({
+    value: m,
+    label: m === 'system' ? 'System' : m.charAt(0).toUpperCase() + m.slice(1),
+  }))
+
   const sheetContentRef = useRef<HTMLDivElement | null>(null)
 
   const [importConfirmOpen, setImportConfirmOpen] = useState(false)
@@ -145,11 +156,41 @@ export function SettingsDrawer({
                 </SelectContent>
               </Select>
             </SettingRow>
-            <SettingRow label="Dark theme">
-              <Switch
-                checked={theme === 'dark'}
-                onCheckedChange={(v) => setTheme(v ? 'dark' : 'light')}
-              />
+            <SettingRow label="Theme">
+              <Select
+                items={presetItems}
+                value={settings.preset}
+                onValueChange={(v) => v && setPreset(v)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {presetItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SettingRow>
+            <SettingRow label="Mode">
+              <Select
+                items={modeItems}
+                value={settings.mode}
+                onValueChange={(v) => v && setMode(v as ThemeModePreference)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {modeItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </SettingRow>
           </div>
 

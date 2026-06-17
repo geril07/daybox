@@ -1,0 +1,40 @@
+import type { ThemePreset } from './types'
+
+export const defaultPreset: ThemePreset = {
+  id: 'default',
+  name: 'Default',
+  modes: {
+    light: {
+      bg: 'oklch(0.97 0.008 72)',
+      bgCard: 'oklch(0.996 0.003 72)',
+      bgHover: 'oklch(0.956 0.011 72)',
+      fg: 'oklch(0.18 0.015 65)',
+      fg2: 'oklch(0.44 0.015 65)',
+      fg3: 'oklch(0.63 0.01 70)',
+      border: 'oklch(0.905 0.012 72)',
+      borderStrong: 'oklch(0.84 0.016 70)',
+      accent: 'oklch(0.545 0.185 28)',
+      accentBg: 'oklch(0.975 0.026 28)',
+      breakColor: 'oklch(0.5 0.13 155)',
+      lbreakColor: 'oklch(0.5 0.13 255)',
+      overdue: 'oklch(0.52 0.155 28)',
+      overdueBg: 'oklch(0.975 0.03 28)',
+    },
+    dark: {
+      bg: 'oklch(0.147 0.012 286)',
+      bgCard: 'oklch(0.185 0.014 286)',
+      bgHover: 'oklch(0.22 0.016 286)',
+      fg: 'oklch(0.92 0.008 286)',
+      fg2: 'oklch(0.72 0.01 286)',
+      fg3: 'oklch(0.53 0.012 286)',
+      border: 'oklch(0.26 0.016 286)',
+      borderStrong: 'oklch(0.33 0.018 286)',
+      accent: 'oklch(0.62 0.16 28)',
+      accentBg: 'oklch(0.2 0.03 28)',
+      breakColor: 'oklch(0.5 0.13 155)',
+      lbreakColor: 'oklch(0.5 0.13 255)',
+      overdue: 'oklch(0.65 0.14 28)',
+      overdueBg: 'oklch(0.21 0.03 28)',
+    },
+  },
+}
