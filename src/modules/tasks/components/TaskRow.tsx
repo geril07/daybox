@@ -124,7 +124,7 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
         ) : (
           <span
             className={cn(
-              'block cursor-text truncate text-sm leading-snug font-[450]',
+              'block cursor-text text-sm leading-snug font-[450]',
               task.completed ? 'text-fg-3 line-through' : 'text-fg',
             )}
             onClick={handleStartEdit}
