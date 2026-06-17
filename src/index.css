@@ -5,6 +5,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  color-scheme: light;
+
   --bg: oklch(0.97 0.008 72);
   --bg-card: oklch(0.996 0.003 72);
   --bg-hover: oklch(0.956 0.011 72);
@@ -49,6 +51,8 @@
 }
 
 .dark {
+  color-scheme: dark;
+
   --bg: oklch(0.147 0.012 286);
   --bg-card: oklch(0.185 0.014 286);
   --bg-hover: oklch(0.22 0.016 286);
