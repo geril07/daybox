@@ -163,17 +163,21 @@ export function App() {
           {sidebarNav}
         </aside>
 
-        <main className="flex-1 scrollbar-gutter-stable overflow-y-auto">
-          <div className="container mx-auto w-full max-w-[680px] px-4 md:px-7">
-            <div className="task-list-area py-1 pb-10">
-              <AddTaskRow
-                defaultDate={defaultDate}
-                defaultGroupId={selectedGroupId}
-              />
-              {renderView()}
+        <div className="flex min-h-0 flex-1 flex-col">
+          <main className="flex-1 scrollbar-gutter-stable overflow-y-auto">
+            <div className="container mx-auto w-full max-w-[680px] px-4 md:px-7">
+              <div className="task-list-area py-1 pb-10">
+                <AddTaskRow
+                  defaultDate={defaultDate}
+                  defaultGroupId={selectedGroupId}
+                />
+                {renderView()}
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+
+          <TimerBar />
+        </div>
       </div>
 
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -182,7 +186,6 @@ export function App() {
         </SheetContent>
       </Sheet>
 
-      <TimerBar />
       <SettingsDrawer
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
