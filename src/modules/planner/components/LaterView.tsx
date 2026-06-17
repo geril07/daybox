@@ -32,11 +32,7 @@ export function LaterView({ selectedGroupId = null }: LaterViewProps) {
       {filtered.map((section) => (
         <div key={section.key} className="mb-2">
           <SectionHeader label={section.label} />
-          <TaskList
-            tasks={section.tasks}
-            date={section.date}
-            groupId={selectedGroupId}
-          />
+          <TaskList tasks={section.tasks} date={section.date} />
         </div>
       ))}
     </>

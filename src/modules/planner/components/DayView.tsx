@@ -35,11 +35,7 @@ export function DayView({ view, selectedGroupId = null }: DayViewProps) {
         </div>
       )}
       <SectionHeader label={meta.title} />
-      <TaskList
-        tasks={filteredTasks}
-        date={bucketDate}
-        groupId={selectedGroupId}
-      />
+      <TaskList tasks={filteredTasks} date={bucketDate} />
     </>
   )
 }

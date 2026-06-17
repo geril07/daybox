@@ -110,24 +110,21 @@ describe('Task Store - focused-task cascade', () => {
     if (!t1 || !t2) throw new Error('addTask returned null')
     useTimerStore.getState().setFocusedTaskId(t1.id)
 
-    useTaskStore
-      .getState()
-      .reorderTasks({ date: '2026-06-08', taskIds: [t2.id, t1.id] })
+    useTaskStore.getState().reorderTasks({ taskIds: [t2.id, t1.id] })
 
     expect(useTimerStore.getState().focusedTaskId).toBe(t1.id)
   })
 })
 
-describe('Task Store - reorderTasks bucket scope', () => {
-  it('reorders tasks within a single date bucket and assigns sortOrder 0..n-1', () => {
+describe('Task Store - reorderTasks', () => {
+  it('redistributes existing sortOrders to taskIds in the given order', () => {
     const t1 = useTaskStore.getState().addTask('One', 'g1', '2026-06-08')
     const t2 = useTaskStore.getState().addTask('Two', 'g1', '2026-06-08')
     const t3 = useTaskStore.getState().addTask('Three', 'g1', '2026-06-08')
     if (!t1 || !t2 || !t3) throw new Error('addTask returned null')
+    // Initial sortOrders: t1=0, t2=1, t3=2
 
-    useTaskStore
-      .getState()
-      .reorderTasks({ date: '2026-06-08', taskIds: [t3.id, t1.id, t2.id] })
+    useTaskStore.getState().reorderTasks({ taskIds: [t3.id, t1.id, t2.id] })
 
     const byId = Object.fromEntries(
       useTaskStore.getState().tasks.map((t) => [t.id, t]),
@@ -137,31 +134,24 @@ describe('Task Store - reorderTasks bucket scope', () => {
     expect(byId[t2.id].sortOrder).toBe(2)
   })
 
-  it('reorders an undated (date: null) bucket without affecting dated tasks', () => {
-    const u1 = useTaskStore.getState().addTask('Undated 1', 'g1', null)
-    const u2 = useTaskStore.getState().addTask('Undated 2', 'g1', null)
-    const dated = useTaskStore.getState().addTask('Dated', 'g1', '2026-06-08')
-    if (!u1 || !u2 || !dated) throw new Error('addTask returned null')
-    const originalDatedSortOrder = useTaskStore
+  it('leaves tasks outside taskIds untouched', () => {
+    const a = useTaskStore.getState().addTask('A', 'g1', '2026-06-08')
+    const b = useTaskStore.getState().addTask('B', 'g1', '2026-06-09')
+    if (!a || !b) throw new Error('addTask returned null')
+    const bOriginalSortOrder = useTaskStore
       .getState()
-      .tasks.find((t) => t.id === dated.id)!.sortOrder
+      .tasks.find((t) => t.id === b.id)!.sortOrder
 
-    useTaskStore
-      .getState()
-      .reorderTasks({ date: null, taskIds: [u2.id, u1.id] })
+    useTaskStore.getState().reorderTasks({ taskIds: [a.id] })
 
     const byId = Object.fromEntries(
       useTaskStore.getState().tasks.map((t) => [t.id, t]),
     )
-    expect(byId[u2.id].sortOrder).toBe(0)
-    expect(byId[u1.id].sortOrder).toBe(1)
-    // The dated task is untouched in every observable way.
-    expect(byId[dated.id].date).toBe('2026-06-08')
-    expect(byId[dated.id].sortOrder).toBe(originalDatedSortOrder)
+    expect(byId[b.id].sortOrder).toBe(bOriginalSortOrder)
+    expect(byId[b.id].date).toBe('2026-06-09')
   })
 
-  it('does not delete tasks in other buckets when reordering one bucket', () => {
-    // Regression test for the destructive `set({ tasks: subset })` bug.
+  it('does not delete tasks outside taskIds', () => {
     const today1 = useTaskStore
       .getState()
       .addTask('Today 1', 'g1', '2026-06-08')
@@ -174,9 +164,7 @@ describe('Task Store - reorderTasks bucket scope', () => {
     if (!today1 || !today2 || !tomorrow)
       throw new Error('addTask returned null')
 
-    useTaskStore
-      .getState()
-      .reorderTasks({ date: '2026-06-08', taskIds: [today2.id, today1.id] })
+    useTaskStore.getState().reorderTasks({ taskIds: [today2.id, today1.id] })
 
     const allTasks = useTaskStore.getState().tasks
     expect(allTasks).toHaveLength(3)
@@ -186,74 +174,61 @@ describe('Task Store - reorderTasks bucket scope', () => {
     expect(surviving!.sortOrder).toBe(tomorrow.sortOrder)
   })
 
-  it('ignores ids that are not in the bucket and emits a single warning', () => {
-    const inBucket = useTaskStore.getState().addTask('In', 'g1', '2026-06-08')
-    const otherBucket = useTaskStore
-      .getState()
-      .addTask('Other', 'g1', '2026-06-09')
-    if (!inBucket || !otherBucket) throw new Error('addTask returned null')
-    const originalOtherSortOrder = useTaskStore
-      .getState()
-      .tasks.find((t) => t.id === otherBucket.id)!.sortOrder
+  it('ignores unknown ids and emits a single warning', () => {
+    const valid = useTaskStore.getState().addTask('Valid', 'g1', '2026-06-08')
+    if (!valid) throw new Error('addTask returned null')
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     useTaskStore.getState().reorderTasks({
-      date: '2026-06-08',
-      taskIds: [inBucket.id, otherBucket.id, 'nonexistent-id'],
+      taskIds: [valid.id, 'nonexistent-id'],
     })
 
     const byId = Object.fromEntries(
       useTaskStore.getState().tasks.map((t) => [t.id, t]),
     )
-    expect(byId[inBucket.id].sortOrder).toBe(0)
-    expect(byId[otherBucket.id].sortOrder).toBe(originalOtherSortOrder)
-    expect(byId[otherBucket.id].date).toBe('2026-06-09')
+    // valid task gets its own sortOrder back (only one in the set)
+    expect(byId[valid.id].sortOrder).toBe(0)
     expect(warnSpy).toHaveBeenCalledTimes(1)
 
     warnSpy.mockRestore()
   })
 
-  it('does not warn when every id is in the bucket', () => {
+  it('does not warn when every id is valid', () => {
     const t1 = useTaskStore.getState().addTask('One', 'g1', '2026-06-08')
     const t2 = useTaskStore.getState().addTask('Two', 'g1', '2026-06-08')
     if (!t1 || !t2) throw new Error('addTask returned null')
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
-    useTaskStore
-      .getState()
-      .reorderTasks({ date: '2026-06-08', taskIds: [t2.id, t1.id] })
+    useTaskStore.getState().reorderTasks({ taskIds: [t2.id, t1.id] })
 
     expect(warnSpy).not.toHaveBeenCalled()
     warnSpy.mockRestore()
   })
-})
 
-describe('Task Store - reorderTasks group scope', () => {
-  it('swaps sortOrders within group, preserves other groups', () => {
+  it('preserves sortOrders of tasks not included in taskIds', () => {
     const a = useTaskStore.getState().addTask('A', 'g1', '2026-06-08')
     const b = useTaskStore.getState().addTask('B', 'g2', '2026-06-08')
     const c = useTaskStore.getState().addTask('C', 'g1', '2026-06-08')
     const d = useTaskStore.getState().addTask('D', 'g2', '2026-06-08')
     if (!a || !b || !c || !d) throw new Error('addTask returned null')
+    // Initial sortOrders: A=0, B=1, C=2, D=3
 
-    useTaskStore.getState().reorderTasks({
-      date: '2026-06-08',
-      taskIds: [c.id, a.id],
-      groupId: 'g1',
-    })
+    useTaskStore.getState().reorderTasks({ taskIds: [c.id, a.id] })
 
     const byId = Object.fromEntries(
       useTaskStore.getState().tasks.map((t) => [t.id, t]),
     )
+    // survivingSortOrders = [0, 2], C→0, A→2
     expect(byId[c.id].sortOrder).toBe(0)
     expect(byId[a.id].sortOrder).toBe(2)
+    // B and D untouched
     expect(byId[b.id].sortOrder).toBe(1)
     expect(byId[d.id].sortOrder).toBe(3)
   })
 
-  it('preserves other groups sortOrders unchanged', () => {
+  it('single task reorder is a no-op for sortOrder', () => {
     const a = useTaskStore.getState().addTask('A', 'g1', '2026-06-08')
     const b = useTaskStore.getState().addTask('B', 'g2', '2026-06-08')
     if (!a || !b) throw new Error('addTask returned null')
@@ -261,71 +236,30 @@ describe('Task Store - reorderTasks group scope', () => {
       .getState()
       .tasks.find((t) => t.id === b.id)!.sortOrder
 
-    useTaskStore.getState().reorderTasks({
-      date: '2026-06-08',
-      taskIds: [a.id],
-      groupId: 'g1',
-    })
+    useTaskStore.getState().reorderTasks({ taskIds: [a.id] })
 
     const byId = Object.fromEntries(
       useTaskStore.getState().tasks.map((t) => [t.id, t]),
     )
+    expect(byId[a.id].sortOrder).toBe(0)
     expect(byId[b.id].sortOrder).toBe(bOriginalSortOrder)
   })
 
-  it('reorders undated bucket with groupId', () => {
-    const a = useTaskStore.getState().addTask('A', 'g1', null)
-    const b = useTaskStore.getState().addTask('B', 'g2', null)
-    const c = useTaskStore.getState().addTask('C', 'g1', null)
-    if (!a || !b || !c) throw new Error('addTask returned null')
-
-    useTaskStore.getState().reorderTasks({
-      date: null,
-      taskIds: [c.id, a.id],
-      groupId: 'g1',
-    })
-
-    const byId = Object.fromEntries(
-      useTaskStore.getState().tasks.map((t) => [t.id, t]),
-    )
-    expect(byId[c.id].sortOrder).toBe(0)
-    expect(byId[a.id].sortOrder).toBe(2)
-    expect(byId[b.id].sortOrder).toBe(1)
-  })
-
-  it('warns and aborts on slot mismatch', () => {
-    const a = useTaskStore.getState().addTask('A', 'g1', '2026-06-08')
-    const b = useTaskStore.getState().addTask('B', 'g2', '2026-06-08')
-    if (!a || !b) throw new Error('addTask returned null')
-
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    useTaskStore.getState().reorderTasks({
-      date: '2026-06-08',
-      taskIds: [a.id, b.id],
-      groupId: 'g1',
-    })
-
-    expect(warnSpy).toHaveBeenCalledTimes(1)
-    warnSpy.mockRestore()
-  })
-
-  it('without groupId assigns sortOrders 0..n-1 as before', () => {
+  it('redistributes sortOrders across groups within the same date', () => {
     const a = useTaskStore.getState().addTask('A', 'g1', '2026-06-08')
     const b = useTaskStore.getState().addTask('B', 'g2', '2026-06-08')
     const c = useTaskStore.getState().addTask('C', 'g1', '2026-06-08')
     if (!a || !b || !c) throw new Error('addTask returned null')
+    // Initial sortOrders: A=0, B=1, C=2
 
-    useTaskStore.getState().reorderTasks({
-      date: '2026-06-08',
-      taskIds: [c.id, b.id, a.id],
-    })
+    useTaskStore.getState().reorderTasks({ taskIds: [b.id, c.id, a.id] })
 
     const byId = Object.fromEntries(
       useTaskStore.getState().tasks.map((t) => [t.id, t]),
     )
-    expect(byId[c.id].sortOrder).toBe(0)
-    expect(byId[b.id].sortOrder).toBe(1)
+    // survivingSortOrders = [0, 1, 2], B→0, C→1, A→2
+    expect(byId[b.id].sortOrder).toBe(0)
+    expect(byId[c.id].sortOrder).toBe(1)
     expect(byId[a.id].sortOrder).toBe(2)
   })
 })

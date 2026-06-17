@@ -13,7 +13,6 @@ interface TaskListProps {
   emptyMessage?: string
   date?: string | null
   sortable?: boolean
-  groupId?: string | null
 }
 
 export function TaskList({
@@ -21,7 +20,6 @@ export function TaskList({
   emptyMessage,
   date,
   sortable,
-  groupId,
 }: TaskListProps) {
   const reorderTasks = useTaskStore((s) => s.reorderTasks)
 
@@ -41,11 +39,7 @@ export function TaskList({
     if (initialIndex >= tasks.length || index >= tasks.length) return
 
     const reorderedIds = arrayMove(tasks, initialIndex, index).map((t) => t.id)
-    reorderTasks({
-      date,
-      taskIds: reorderedIds,
-      groupId: groupId ?? undefined,
-    })
+    reorderTasks({ taskIds: reorderedIds })
   }
 
   if (tasks.length === 0) {
