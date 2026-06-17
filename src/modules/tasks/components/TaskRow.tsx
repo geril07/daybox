@@ -89,10 +89,15 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
     >
       <div
         ref={dragHandleRef}
-        className="text-muted-foreground shrink-0 cursor-grab p-0.5 opacity-0 transition-opacity duration-120 group-hover:opacity-100 active:cursor-grabbing pointer-coarse:opacity-100"
+        className={cn(
+          'text-muted-foreground flex w-4 shrink-0 justify-center p-0.5',
+          // eslint-disable-next-line react-hooks/refs -- checking presence of callback ref, not reading .current
+          dragHandleRef &&
+            'cursor-grab opacity-0 transition-opacity duration-120 group-hover:opacity-100 active:cursor-grabbing pointer-coarse:opacity-100',
+        )}
         onClick={(e) => e.stopPropagation()}
       >
-        <GripVertical size={12} />
+        {dragHandleRef && <GripVertical size={12} />}
       </div>
 
       <Button

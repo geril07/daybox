@@ -157,15 +157,25 @@ describe('TaskRow', () => {
     expect(useTimerStore.getState().focusedTaskId).toBe('test-1')
   })
 
-  it('keeps the drag handle hidden at rest on fine pointers', () => {
+  it('preserves the grip space but hides the icon when dragHandleRef is omitted', () => {
     render(<TaskRow task={createMockTask()} />)
+    const container = document.querySelector('.p-0\\.5.shrink-0')
+    expect(container).not.toBeNull()
+    expect(container!.querySelector('svg')).toBeNull()
+    expect(document.querySelector('.cursor-grab')).toBeNull()
+  })
+
+  it('renders the drag handle with proper classes when dragHandleRef is provided', () => {
+    const handleRef = () => {}
+    render(<TaskRow task={createMockTask()} dragHandleRef={handleRef} />)
     expect(dragHandle().className).toContain('opacity-0')
     expect(dragHandle().className).toContain('group-hover:opacity-100')
   })
 
   it('shows the drag handle at rest on coarse pointers', () => {
     restoreMatchMedia = installCoarsePointerMatchMediaStub()
-    render(<TaskRow task={createMockTask()} />)
+    const handleRef = () => {}
+    render(<TaskRow task={createMockTask()} dragHandleRef={handleRef} />)
     expect(dragHandle().className).toContain('pointer-coarse:opacity-100')
   })
 
