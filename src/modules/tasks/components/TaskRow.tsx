@@ -83,8 +83,8 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
     <div
       className={cn(
         'transition-background border-border group flex min-h-[46px] items-center gap-2.5 rounded border-b px-1.5 py-2 duration-120',
-        isFocused && 'bg-accent-bg',
-        !isFocused && overdue && 'bg-overdue-bg',
+        overdue && 'bg-overdue-bg',
+        isFocused && 'border-l-accent border-l-[3px]',
       )}
     >
       <div
@@ -149,12 +149,6 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
           />
           <span className="text-muted-foreground text-xs">{group.name}</span>
         </GroupSelect>
-      )}
-
-      {overdue && (
-        <span className="text-destructive bg-overdue-bg border-overdue-border shrink-0 rounded-full border px-[7px] py-0.5 text-xs font-medium">
-          OVERDUE
-        </span>
       )}
 
       <PomoArea task={task} />
