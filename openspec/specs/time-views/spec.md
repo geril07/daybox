@@ -1,6 +1,6 @@
 ## Purpose
 
-Four time views (Today, Tomorrow, This Week, Unscheduled) plus a date browser for arbitrary dates. Overdue tasks surface in Today and This Week. Each view has a contextual empty state.
+Five time views (Today, Tomorrow, This Week, Later, Unscheduled) plus a date browser for arbitrary dates, accessed via sidebar navigation. Overdue tasks surface in Today and This Week. Each view has a contextual empty state.
 
 ## Requirements
 
@@ -158,33 +158,109 @@ The system SHALL persist the currently-browsed date in the planner feature's own
 - **WHEN** user steps the Date Browser to `2026-06-15` and reloads the page
 - **THEN** the Date Browser reopens showing tasks for `2026-06-15`
 
-### Requirement: View tabs compress on narrow viewports
+### Requirement: Sidebar navigation selects planner time views
 
-The view tabs in the planner header (`Today`, `Tomorrow`, `This Week`, `Unscheduled`) SHALL display a shorter label when the viewport is narrower than the `sm` breakpoint (640 px), and SHALL display the full label at or above that breakpoint. The "This Week" tab's short label SHALL be `Week`; the other three tabs (`Today`, `Tomorrow`, `Unscheduled`) SHALL display their full label at all viewport widths.
+The system SHALL replace the planner tab strip with sidebar navigation. The sidebar's `Views` section SHALL list the time views in this order: `Today`, `Tomorrow`, `This Week`, `Later`, `Unscheduled`.
 
-The selection state, the `value` enum mapping, and the `onValueChange` callback SHALL be unchanged across viewport widths. Only the visible text in the `TabsTrigger` differs.
+`Today` SHALL be the initial selected view on each app load. The selected view SHALL remain app-shell runtime state and SHALL NOT be persisted across reloads.
 
-#### Scenario: Compressed label below the sm breakpoint
+On narrow viewports, the system SHALL expose the same sidebar navigation in a left-side sheet opened from the header. The system SHALL NOT render the previous horizontal planner tab strip on any viewport.
 
-- **WHEN** the viewport width is less than 640 px and the user is on the planner header
-- **THEN** the `This Week` tab's trigger displays the text `Week`
-- **AND** the other three tabs display their full labels (`Today`, `Tomorrow`, `Unscheduled`)
+#### Scenario: Desktop sidebar shows view items
 
-#### Scenario: Full label at or above the sm breakpoint
+- **WHEN** the user opens DayBox on a viewport wide enough for the persistent sidebar
+- **THEN** the app shows a sidebar `Views` section
+- **AND** the section contains `Today`, `Tomorrow`, `This Week`, `Later`, and `Unscheduled` in that order
+- **AND** no planner tab strip is rendered in the header
 
-- **WHEN** the viewport width is 640 px or greater
-- **THEN** the `This Week` tab's trigger displays the text `This Week`
-- **AND** the other three tabs display their full labels
+#### Scenario: Today is selected first
 
-#### Scenario: Tab selection is preserved across a resize
+- **WHEN** the user loads or reloads DayBox
+- **THEN** the selected planner view is `Today`
+- **AND** the previously selected sidebar view is not restored from localStorage
 
-- **WHEN** the user has `This Week` selected on a viewport narrower than 640 px (where the trigger reads `Week`)
-- **AND** the user resizes the viewport to 640 px or greater
-- **THEN** the trigger text updates to `This Week`
-- **AND** the active view remains `week` (no re-selection needed)
+#### Scenario: Mobile navigation uses a sidebar sheet
 
-#### Scenario: Tab values are not viewport-dependent
+- **WHEN** the user opens DayBox on a narrow viewport
+- **THEN** the header exposes a control for opening planner navigation
+- **AND** activating that control opens a left-side sheet with the same `Views` section
+- **AND** no horizontal planner tab strip is rendered
 
-- **WHEN** the planner header is rendered at any viewport width
-- **THEN** the `value` attribute of the `This Week` tab's `TabsTrigger` is `'week'`
-- **AND** selecting it at any width sets the planner's `view` state to `'week'`
+### Requirement: Later view shows tasks after the current week
+
+The system SHALL provide a `Later` time view that displays tasks with `date` set to a value after the end of the current configured week. The configured week boundary SHALL respect `weekStartDay` from the planner store.
+
+The `Later` view SHALL render one section per matching date, sorted by date ascending. Each section SHALL render tasks for that date sorted by the existing task sort order. Dates with no matching tasks SHALL NOT be rendered as empty sections.
+
+Quick-add while `Later` is selected SHALL default the task date to the first day after the current configured week.
+
+#### Scenario: Later shows future tasks after week end
+
+- **WHEN** the configured week ends on Sunday
+- **AND** one task is dated Sunday
+- **AND** one task is dated Monday after that Sunday
+- **THEN** the `Later` view shows the Monday task
+- **AND** the `Later` view does not show the Sunday task
+
+#### Scenario: Later respects first day of week
+
+- **WHEN** the user configures Sunday as the first day of week
+- **THEN** the current week ends on Saturday
+- **AND** the `Later` view includes tasks dated Sunday after that Saturday
+
+#### Scenario: Later sections are sparse
+
+- **WHEN** matching later tasks exist on `2026-06-22` and `2026-06-30`
+- **AND** there are no tasks on dates between them
+- **THEN** the `Later` view renders sections for `2026-06-22` and `2026-06-30`
+- **AND** it does not render blank sections for intervening dates
+
+#### Scenario: Empty Later view
+
+- **WHEN** there are no tasks dated after the current configured week
+- **THEN** the `Later` view shows a contextual empty state
+
+#### Scenario: Quick-add from Later stays visible
+
+- **WHEN** the user is in the `Later` view
+- **AND** the current configured week ends on Sunday
+- **AND** the user creates a task without choosing a date manually
+- **THEN** the new task is dated Monday after that Sunday
+- **AND** the new task appears in the `Later` view
+
+### Requirement: Group lens filters planner time views
+
+The system SHALL apply the selected sidebar group lens to every sidebar time view. A selected group value of `null` SHALL mean `All groups` and SHALL NOT filter tasks by group. A concrete group id SHALL limit visible tasks to tasks whose `groupId` matches that group.
+
+The group lens SHALL apply to dated sections, undated sections, and overdue sections. Empty states SHALL be evaluated after group filtering.
+
+#### Scenario: All groups shows unfiltered Today
+
+- **WHEN** `Today` is selected
+- **AND** the group lens is `All groups`
+- **THEN** Today's visible tasks include tasks from every group
+
+#### Scenario: Concrete group filters Today
+
+- **WHEN** `Today` is selected
+- **AND** the group lens is `Work`
+- **THEN** Today's visible tasks include only tasks assigned to `Work`
+
+#### Scenario: Concrete group filters overdue tasks
+
+- **WHEN** `Today` is selected
+- **AND** overdue tasks exist in `Work` and `Personal`
+- **AND** the group lens is `Work`
+- **THEN** the Overdue section includes only overdue tasks assigned to `Work`
+
+#### Scenario: Concrete group filters Unscheduled
+
+- **WHEN** `Unscheduled` is selected
+- **AND** the group lens is `Personal`
+- **THEN** the view shows only undated tasks assigned to `Personal`
+
+#### Scenario: Empty state follows group filter
+
+- **WHEN** `Tomorrow` has tasks in `Personal` but none in `Work`
+- **AND** the group lens is `Work`
+- **THEN** the `Tomorrow` view shows its empty state

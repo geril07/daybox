@@ -1,6 +1,6 @@
 ## Purpose
 
-The planner feature owns its own preferences — the first day of the week (used by the Week view) and the currently-browsed date (used by the Date Browser). Both are persisted in the planner's own Zustand store under `daybox-planner`. The header view selector is **not** part of this capability — it lives in the app shell and is not persisted.
+The planner feature owns its own preferences — the first day of the week (used by the Week view) and the currently-browsed date (used by the Date Browser). Both are persisted in the planner's own Zustand store under `daybox-planner`. The sidebar view selector is **not** part of this capability — it lives in the app shell and is not persisted.
 
 ## Requirements
 

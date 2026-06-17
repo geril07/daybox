@@ -8,21 +8,30 @@ Create, edit, delete, reorder, and complete tasks. Each task has a title, group 
 
 The system SHALL allow users to create tasks with a title, group assignment, optional date, and optional pomodoro estimate. The add-task row SHALL submit through a native form submit path instead of relying solely on an input `keydown` handler for `Enter`.
 
+When the active sidebar group lens is a concrete group id and the user does not provide an explicit `#group` suffix, quick-add SHALL assign the new task to that active group. When the active sidebar group lens is `All groups`, quick-add SHALL use the existing sticky/default group behavior. Explicit `#group` syntax SHALL continue to override the sidebar group lens.
+
 #### Scenario: Create task via quick-add
 
 - **WHEN** user types a title in the add-task input and presses Enter
-- **THEN** a new task is created with the typed title, assigned to the default (or lens-active) group, with no date and 0 pomodoro estimate
+- **THEN** a new task is created with the typed title, assigned to the default or sticky group, with no date and 0 pomodoro estimate
+
+#### Scenario: Create task with active sidebar group lens
+
+- **WHEN** the active sidebar group lens is `Work`
+- **AND** user types `Write report` in the add-task input and presses Enter
+- **THEN** the new task is assigned to `Work`
 
 #### Scenario: Create task with #group syntax
 
 - **WHEN** user types "Write report #work" in the add-task input
 - **THEN** the task is created with group "work" (created if not exists)
+- **AND** the `#group` assignment is used even when a different sidebar group lens is active
 
 #### Scenario: Native form submit creates a task
 
 - **WHEN** the user types a task title into the add-task input
 - **AND** the browser dispatches a form submit event for the row
-- **THEN** the task is created using the existing title and `#group` parsing rules
+- **THEN** the task is created using the existing title, active sidebar group lens, and `#group` parsing rules
 
 #### Scenario: Mobile submit button creates a task
 
@@ -35,6 +44,33 @@ The system SHALL allow users to create tasks with a title, group assignment, opt
 
 - **WHEN** the add-task input is empty or only whitespace
 - **THEN** the coarse-pointer `Add task` submit button is disabled
+
+### Requirement: Specific group lens renders date buckets as static lists
+
+The system SHALL preserve existing date-bucket drag reorder behavior when the active group lens is `All groups`. When the active group lens is a concrete group id, task lists filtered by that group SHALL render without drag-and-drop wiring and SHALL NOT call `useTaskStore.reorderTasks`.
+
+This applies to single-date sections, undated sections, and per-date sections in multi-section views. Overdue sections remain non-sortable as before.
+
+#### Scenario: All groups keeps date-bucket reorder
+
+- **WHEN** the active group lens is `All groups`
+- **AND** the user views a sortable date bucket such as `Today`
+- **THEN** the task list preserves the existing drag-and-drop reorder behavior
+
+#### Scenario: Concrete group lens disables date-bucket reorder
+
+- **WHEN** the active group lens is `Work`
+- **AND** the user views `Today`
+- **THEN** the task rows are not registered for drag-and-drop sorting
+- **AND** no reorder action is available for that filtered list
+
+#### Scenario: Concrete group lens does not reorder hidden tasks
+
+- **WHEN** the active group lens is `Work`
+- **AND** the visible list is filtered to `Work` tasks
+- **AND** tasks from other groups exist in the same date bucket
+- **THEN** the system does not call `useTaskStore.reorderTasks` from that filtered list
+- **AND** hidden tasks keep their existing sort order
 
 ### Requirement: User can edit a task title
 
@@ -116,7 +152,7 @@ The `⋯` button itself SHALL carry `title="More actions"`. The sheet header SHA
 - **WHEN** the sheet is open on a task row and the user taps `Delete`
 - **THEN** `useTaskStore.deleteTask(task.id)` is called
 - **AND** the sheet closes
-- **AND** the row animates out per the existing delete animation requirement
+- **AND** the row is removed from the list immediately with no animation
 
 #### Scenario: Sheet dismisses on Escape
 
@@ -162,7 +198,7 @@ A **date bucket** is identified by a `date: string | null` key — either a YYYY
 
 Per-bucket `group` keys SHALL prevent dnd-kit from indicating valid drops across sections (e.g., a Monday row cannot show a drop indicator over the Tuesday list in `WeekView`).
 
-The existing reorder animation behaviour — `flushSync` + `setSnapLayout(true)` + `requestAnimationFrame(() => setSnapLayout(false))` around the `reorderTasks` call — SHALL be preserved so that the dragged row lands without a layout animation.
+On drag end, the reorder SHALL be applied immediately via store update. The dropped row and displaced sibling rows SHALL appear in their new positions instantly with no layout animation, snap mechanism, or motion library involvement.
 
 On a coarse-pointer device, the `useSortable` instance SHALL be configured with a `PointerSensor` whose `activationConstraints` is a function returning `[PointerActivationConstraints.Delay(250, 5)]` when the triggering `PointerEvent` has `pointerType === 'touch'`, and `undefined` (default no-delay behavior) otherwise. The 250 ms press delay SHALL NOT apply to fine-pointer inputs; a mouse drag SHALL begin on the same frame as the mouse press, with no perceptible delay.
 
@@ -365,64 +401,6 @@ The system SHALL allow users to bind the Pomodoro timer to a task by clicking it
 - **AND** the timer state (`phase`, `elapsed`, `startedAt`, `isRunning`) is unchanged
 - **AND** the timer's running clock is not reset to full focus duration
 - **AND** the timer does not auto-start as a result of the click
-
-### Requirement: Task rows animate on enter, exit, and reorder
-
-The system SHALL animate task rows when they are added, removed, or rearranged within a stable view, using the `motion` library's layout/FLIP system. View-switch transitions (e.g., Today → Tomorrow) SHALL NOT animate; within a stable view, all task mutations SHALL animate.
-
-#### Scenario: Adding a task animates the row in
-
-- **WHEN** user creates a task via the add-task input and presses Enter
-- **THEN** the new row appears by fading in and sliding a small distance (≤ 8px) from its final position over a duration between 140ms and 200ms with a snappy ease-out curve
-
-#### Scenario: Deleting a task animates the row out
-
-- **WHEN** user clicks the delete button on a task row
-- **THEN** the row fades out and slides upward by a small distance (≤ 8px) over a duration between 120ms and 180ms with an ease-in curve
-- **AND** the rows below the deleted row glide upward to fill the gap
-
-#### Scenario: Reordering a task via drag-and-drop snaps the result
-
-- **WHEN** user drags a task to a new position in the list and releases
-- **THEN** the dragged row lands in its new position instantly, with no slide or layout animation
-- **AND** sibling rows that were displaced by the move likewise land instantly
-- **AND** any subsequent re-render (e.g., a later store update from a delete) reverts to the smooth transition
-
-#### Scenario: Rescheduling a task to a different section animates the cross-section move
-
-- **WHEN** user changes a task's date such that it leaves one section of the current view (e.g., Overdue) and enters another (e.g., Today)
-- **THEN** the row visually travels from its source position to its destination position as a single continuous motion, with no observable gap where the row is absent from either section
-- **AND** this continuous motion is scoped to a single view: switching the active view (Today → Tomorrow) does not bridge a task from the old view to the new view
-
-#### Scenario: Toggling a task complete animates the opacity change
-
-- **WHEN** user clicks the complete checkbox on an uncompleted task
-- **THEN** the row's opacity transitions smoothly from 1 to the dimmed completion value (0.52) over a duration between 120ms and 180ms
-- **AND** uncompleting a task reverses the animation from 0.52 back to 1
-
-#### Scenario: View switch is not animated
-
-- **WHEN** user switches from one view to another (Today, Tomorrow, This Week, Backlog, Date)
-- **THEN** the previous view's task list unmounts and the new view's task list mounts without any enter or exit animation
-- **AND** this is the case even if a task was present in both views
-
-#### Scenario: Reduced motion disables slide and layout animations
-
-- **WHEN** the user's operating system reports `prefers-reduced-motion: reduce`
-- **THEN** task rows still appear, disappear, and reorder, but the slide and FLIP/layout animations are disabled
-- **AND** the opacity tween on toggle-complete MAY still play (or be collapsed to instant at the implementer's discretion)
-- **AND** the system does not check the preference at the row level; the configuration is applied once at the task-list-area level
-
-#### Scenario: First render of a rehydrated list does not animate
-
-- **WHEN** the app loads with existing tasks in localStorage
-- **THEN** the rendered list appears at its final layout instantly, with no enter animation playing on any row
-
-#### Scenario: Empty list and adding the first task animates normally
-
-- **WHEN** the task list is empty and the user adds a task
-- **THEN** the new row animates in per the "Adding a task" scenario
-- **AND** the empty-state placeholder is not shown during the animation (it has already been replaced by the new list with one row)
 
 ### Requirement: Group suggestions appear as a popover anchored to the add-task input
 

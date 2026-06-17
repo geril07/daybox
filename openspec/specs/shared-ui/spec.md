@@ -58,26 +58,23 @@ Consumer code SHALL NOT use raw `<button>`, inline `style={{}}`, or imperative h
 
 ### Requirement: Component availability
 
-The following shadcn components SHALL be available after migration:
+The following shadcn-derived components SHALL be available in `src/shared/ui/` and re-exported from the `@/shared/ui` barrel:
 
-| Component   | Status  | Replaces                  |
-| ----------- | ------- | ------------------------- |
-| Button      | replace | existing button.tsx       |
-| Select      | replace | existing select-menu.tsx  |
-| Sheet       | replace | existing side-panel.tsx   |
-| Switch      | replace | existing toggle.tsx       |
-| Slider      | replace | existing range-slider.tsx |
-| AlertDialog | replace | existing alert-dialog.tsx |
-| Popover     | replace | existing popover-card.tsx |
-| Input       | add     | none                      |
-| Label       | add     | none                      |
-| Separator   | add     | none                      |
-| Badge       | add     | none                      |
-| Card        | add     | none                      |
-| Tabs        | add     | none                      |
+| Component   | Purpose                                         |
+| ----------- | ----------------------------------------------- |
+| Button      | Styled button with variant prop                 |
+| Select      | Dropdown selection (compound)                   |
+| Sheet       | Slide-in panel (compound)                       |
+| Switch      | Toggle switch                                   |
+| Slider      | Range slider                                    |
+| AlertDialog | Modal confirmation dialog (compound)            |
+| Popover     | Floating anchored layer (compound)              |
+| Menu        | Dropdown menu (compound)                        |
+| Tabs        | Tabbed navigation (compound)                    |
+| NumberInput | Numeric input with increment/decrement controls |
+| EmptyState  | Contextual empty-state placeholder              |
 
 #### Scenario: Component inventory
 
-- **WHEN** the migration is complete
-- **THEN** all components in the table above SHALL be present in `src/shared/ui/`
-- **THEN** old wrappers not in the table SHALL be removed
+- **WHEN** a developer needs a shared UI primitive
+- **THEN** the components listed above SHALL be present in `src/shared/ui/` and importable from `@/shared/ui`
