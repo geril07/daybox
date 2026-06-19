@@ -1,37 +1,4 @@
-## Purpose
-
-Organize tasks into named groups with user-selectable colors from a 16-color palette (plus custom hex). Group UI is progressively disclosed — the task-row tag and add-row chip are hidden when only one group exists, while the sidebar `Groups` section is always visible. Group CRUD (create, rename, recolor, delete) lives in the sidebar.
-
-## Requirements
-
-### Requirement: Default group exists on fresh install
-
-The system SHALL create a single default group named "General" when no groups exist. The default group SHALL use a fixed red color (palette index 0).
-
-#### Scenario: Fresh install has default group
-
-- **WHEN** the app loads with no data in localStorage
-- **THEN** a default group "General" is created with the fixed red color `oklch(0.550 0.150 0)`
-
-### Requirement: Task-row group tag and add-row group chip are hidden with one group
-
-The system SHALL hide the task-row group tag (the small colored dot + name rendered on each task row) and the add-row group chip when exactly one group exists. The sidebar `Groups` section is NOT covered by this requirement; it is governed by its own requirement.
-
-#### Scenario: Single group hides the task-row group tag
-
-- **WHEN** only one group exists
-- **THEN** no group tag appears on any task row
-
-#### Scenario: Single group hides the add-row group chip
-
-- **WHEN** only one group exists
-- **THEN** no group chip appears on the add-task row
-
-#### Scenario: Group tag and add-row chip appear after second group
-
-- **WHEN** a second group is created
-- **THEN** a group tag appears on each task row
-- **AND** the add-row group chip appears
+## ADDED Requirements
 
 ### Requirement: Sidebar Groups section is always visible
 
@@ -135,6 +102,28 @@ The settings drawer SHALL NOT render a `Groups` section, a group create input, a
 - **WHEN** the user clicks the `⋮` button on a group row
 - **OR** the user clicks the colored dot on a group row
 - **THEN** the active group lens is unchanged
+
+## MODIFIED Requirements
+
+### Requirement: Task-row group tag and add-row group chip are hidden with one group
+
+The system SHALL hide the task-row group tag (the small colored dot + name rendered on each task row) and the add-row group chip when exactly one group exists. The sidebar `Groups` section is NOT covered by this requirement; it is governed by its own requirement.
+
+#### Scenario: Single group hides the task-row group tag
+
+- **WHEN** only one group exists
+- **THEN** no group tag appears on any task row
+
+#### Scenario: Single group hides the add-row group chip
+
+- **WHEN** only one group exists
+- **THEN** no group chip appears on the add-task row
+
+#### Scenario: Group tag and add-row chip appear after second group
+
+- **WHEN** a second group is created
+- **THEN** a group tag appears on each task row
+- **AND** the add-row group chip appears
 
 ### Requirement: Group tags appear with 2+ groups
 
@@ -243,53 +232,6 @@ The system SHALL require resolution of the group's tasks before deleting a group
 - **WHEN** only one group exists
 - **THEN** the `Delete` item in the `⋮` menu is disabled (or the menu is not shown) for that group
 
-### Requirement: Quick-add group chip
-
-The system SHALL show a group chip on the add-task row when 2+ groups exist, showing the target group with a picker.
-
-#### Scenario: Group chip visible on add row
-
-- **WHEN** user focuses the add-task input and 2+ groups exist
-- **THEN** a group chip shows next to the input with the current target group
-
-#### Scenario: Change group via add chip
-
-- **WHEN** user clicks the group chip on the add row
-- **THEN** a dropdown appears with all groups to select from
-
-### Requirement: Default group identifier has a single canonical declaration
-
-The string `'default'` is the identifier of the seeded "General" group and is the fallback used when a task references an unknown group. This string SHALL be declared exactly once, exported from `src/modules/groups/store.ts` as `export const DEFAULT_GROUP_ID`, and re-exported from the `modules/groups` barrel. No other file in `src/` SHALL declare `const DEFAULT_GROUP_ID` or hard-code the literal `'default'` as a group identifier in production code. Test fixtures and the import path's reference-reassignment default are exempt — they may use the literal because the _canonical declaration_ is the source of the value.
-
-Consumers that need the default-group identifier SHALL import it from `@/modules/groups`.
-
-#### Scenario: A consumer imports the canonical default-group id
-
-- **WHEN** `src/modules/tasks/store.ts` needs the default group identifier
-- **THEN** the file imports `DEFAULT_GROUP_ID` from `@/modules/groups`
-- **AND** the file does NOT declare its own `const DEFAULT_GROUP_ID`
-
-#### Scenario: A component hard-codes the literal
-
-- **WHEN** a sidebar group component reassigns tasks to the default group on group deletion
-- **THEN** the code uses the imported `DEFAULT_GROUP_ID`, not the bare literal `'default'`
-
-#### Scenario: A future change to the default-group id flows through one place
-
-- **WHEN** the default-group identifier is changed from `'default'` to something else
-- **THEN** the only edit required is the declaration in `src/modules/groups/store.ts`
-- **AND** every consumer that imports `DEFAULT_GROUP_ID` is updated by a typecheck + tsc error pointing at the import
-
-### Requirement: Header does not render the group lens
-
-The `App` shell SHALL NOT render the `<GroupLens />` component in the header. The header's right-side controls consist of the settings button only. The group lens MAY be rendered in the sidebar navigation when group UI is eligible to appear.
-
-#### Scenario: The header has no group-lens dropdown
-
-- **WHEN** the user opens the app
-- **THEN** the header's right-side controls contain only the settings (gear) button
-- **AND** no group-lens dropdown is visible in the header
-
 ### Requirement: Sidebar provides a group lens
 
 When the sidebar `Groups` section is rendered (governed by the "Sidebar Groups section is always visible" requirement), the first item SHALL be `All groups` when two or more groups exist, followed by the user groups. With exactly one group, `All groups` SHALL be omitted and the single group row SHALL be the only filter target (it shows all tasks, since there is only one group). Selecting `All groups` SHALL set the active group lens to `null`. Selecting a user group SHALL set the active group lens to that group's id.
@@ -325,67 +267,3 @@ The selected group lens SHALL remain app-shell runtime state and SHALL NOT be pe
 - **WHEN** the user selects the `Work` group in the sidebar
 - **AND** reloads DayBox
 - **THEN** the active group lens returns to `All groups`
-
-### Requirement: Default group cannot be deleted
-
-The system SHALL prevent deletion of the seeded default group (identified by `DEFAULT_GROUP_ID`). This rule SHALL be enforced both at the UI affordance level and at the group-store action level, so that the default group remains the safe fallback target for orphaned task references regardless of how deletion is invoked.
-
-#### Scenario: Default group's delete menu item is disabled
-
-- **WHEN** the `⋮` menu is opened on the default group's row in the sidebar
-- **THEN** its `Delete` menu item is disabled
-
-#### Scenario: Store refuses to delete the default group
-
-- **WHEN** `useGroupStore.deleteGroup` is called with `DEFAULT_GROUP_ID`
-- **THEN** the groups list is unchanged
-- **AND** no error is thrown
-
-### Requirement: Group deletion routes through the bulk task helpers
-
-The system SHALL resolve a group's tasks during deletion by invoking the canonical bulk helpers in `task-management`, never by iterating per-task. Specifically:
-
-- If the user chooses to move tasks to the default group, the implementation SHALL invoke `useTaskStore.reassignTasks(groupId, DEFAULT_GROUP_ID)` exactly once.
-- If the user chooses to delete all tasks in the group, the implementation SHALL invoke `useTaskStore.deleteTasksByGroupId(groupId)` exactly once.
-
-The implementation SHALL NOT iterate per-task to call `updateTask` or `deleteTask` for these resolutions. This rule exists because the bulk helpers carry the focused-task cascade behavior defined in `task-management`, and per-task callers would bypass it.
-
-#### Scenario: Move uses `reassignTasks` exactly once
-
-- **WHEN** the user deletes a group with tasks and chooses "Move tasks to General"
-- **THEN** `useTaskStore.reassignTasks(groupId, DEFAULT_GROUP_ID)` is invoked exactly once
-- **AND** no per-task `updateTask` calls occur for the moved tasks
-
-#### Scenario: Delete-all uses `deleteTasksByGroupId` exactly once
-
-- **WHEN** the user deletes a group with tasks and chooses "Delete all tasks"
-- **THEN** `useTaskStore.deleteTasksByGroupId(groupId)` is invoked exactly once
-- **AND** no per-task `deleteTask` calls occur for the deleted tasks
-
-### Requirement: Group deletion preserves focus on moved tasks and clears focus on deleted tasks
-
-The system SHALL surface the focused-task cascade defined in `task-management` at the user-visible group-deletion boundary with the following guarantees:
-
-- When the user moves the tasks of the focused group to the default group during deletion, `useTimerStore.focusedTaskId` SHALL remain pointing at the (relocated) focused task.
-- When the user deletes all tasks of the focused group during deletion, `useTimerStore.focusedTaskId` SHALL become `null` because the focused task no longer exists.
-- When the user deletes a group that does not contain the focused task, `useTimerStore.focusedTaskId` SHALL remain unchanged.
-
-#### Scenario: Moving the focused task's group preserves focus
-
-- **WHEN** the focused task is `'t-1'` with `groupId: 'work'`
-- **AND** the user deletes group `'work'` choosing "Move tasks to General"
-- **THEN** task `'t-1'` now has `groupId: DEFAULT_GROUP_ID`
-- **AND** `useTimerStore.focusedTaskId` remains `'t-1'`
-
-#### Scenario: Deleting the focused task's group clears focus
-
-- **WHEN** the focused task is `'t-1'` with `groupId: 'work'`
-- **AND** the user deletes group `'work'` choosing "Delete all tasks"
-- **THEN** task `'t-1'` no longer exists
-- **AND** `useTimerStore.focusedTaskId` is `null`
-
-#### Scenario: Deleting an unfocused group leaves focus alone
-
-- **WHEN** the focused task is `'t-1'` with `groupId: 'home'`
-- **AND** the user deletes group `'work'` (which does not contain `'t-1'`)
-- **THEN** `useTimerStore.focusedTaskId` remains `'t-1'`

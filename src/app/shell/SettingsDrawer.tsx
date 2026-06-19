@@ -9,7 +9,6 @@ import {
   type PreparedSnapshot,
 } from '@/modules/data-portability'
 import { GoogleDrivePanel } from '@/modules/google-drive'
-import { GroupSettingsPanel } from '@/modules/groups'
 import { usePlannerStore } from '@/modules/planner'
 import { TimerSettingsPanel } from '@/modules/timer'
 import {
@@ -192,13 +191,6 @@ export function SettingsDrawer({
                 </SelectContent>
               </Select>
             </SettingRow>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-              Groups
-            </div>
-            <GroupSettingsPanel />
           </div>
 
           <div className="flex flex-col gap-3">
