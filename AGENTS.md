@@ -16,15 +16,16 @@
 
 ## Commands
 
-| Command             | What it does                          |
-| ------------------- | ------------------------------------- |
-| `npm run dev`       | Start Vite dev server                 |
-| `npm run build`     | `prebuild` (typecheck) → `vite build` |
-| `npm run typecheck` | `tsc -b` (standalone)                 |
-| `npm run lint`      | ESLint flat config on `.`             |
-| `npm run format`    | Prettier on `.`                       |
-| `npm run test`      | `vitest` (watch mode)                 |
-| `npm run preview`   | Preview production build              |
+| Command              | What it does                          |
+| -------------------- | ------------------------------------- |
+| - `npm run dev:full` | Start Vercel dev server (SPA + API)   |
+| - `npm run dev`      | Start Vite dev server for UI-only HMR |
+| `npm run build`      | `prebuild` (typecheck) → `vite build` |
+| `npm run typecheck`  | `tsc -b` (standalone)                 |
+| `npm run lint`       | ESLint flat config on `.`             |
+| `npm run format`     | Prettier on `.`                       |
+| `npm run test`       | `vitest` (watch mode)                 |
+| `npm run preview`    | Preview production build              |
 
 Testing: `vitest` config in `vite.config.ts`, environment `jsdom`. Test files sit next to source: `dates.ts` → `dates.test.ts`, `TaskRow.tsx` → `TaskRow.test.tsx`. Run a single file with `npx vitest run src/path/to/file.test.ts`.
 

@@ -29,13 +29,30 @@ Open the local URL printed by Vite.
 
 ## Scripts
 
-- `npm run dev` starts the Vite development server.
+- `npm run dev` starts the Vite development server for UI-only HMR.
+- `npm run dev:full` starts the full stack via `vercel dev` (SPA + API + OAuth cookies).
 - `npm run build` typechecks and builds the production app.
 - `npm run typecheck` runs TypeScript checks.
 - `npm run lint` runs ESLint.
 - `npm run format` formats the codebase with Prettier.
 - `npm run test` runs Vitest.
 - `npm run preview` previews the production build.
+
+## Google Drive Backup
+
+Drive backup uses a stateless Hono backend on Vercel. The backend performs the OAuth Authorization Code + PKCE exchange and stores an encrypted refresh token in an `HttpOnly` cookie. The SPA never sees the refresh token.
+
+Required environment variables (server-only, never prefixed with `VITE_`):
+
+- `GOOGLE_CLIENT_ID` — OAuth Web Client ID.
+- `GOOGLE_CLIENT_SECRET` — OAuth Web Client Secret.
+- `TOKEN_ENC_KEY` — 32-byte hex key for AES-256-GCM cookie encryption (generate with `openssl rand -hex 32`).
+
+In Google Cloud Console, add these callback URLs to the Web Client ID's **Authorized redirect URIs**:
+
+- `http://localhost:3000/api/auth/callback` (local `vercel dev`)
+- `https://<your-production-domain>/api/auth/callback`
+- `https://<project>-<branch>.vercel.app/api/auth/callback` for preview deploys
 
 ## Tech Stack
 

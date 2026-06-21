@@ -3,9 +3,6 @@ import { z } from 'zod'
 import { DriveApiError } from '@/shared/google-drive/drive-api'
 
 export const GoogleDriveAuthSchema = z.object({
-  accessToken: z.string(),
-  expiresAt: z.number().int().positive(),
-  email: z.string().email().optional(),
   dayboxFileId: z.string().optional(),
   backupFileSpace: z.literal('drive-root').optional(),
   lastBackupAt: z.string().optional(),
@@ -13,10 +10,6 @@ export const GoogleDriveAuthSchema = z.object({
 
 export const BackupErrorSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('not-configured') }),
-  z.object({
-    kind: z.literal('script-load'),
-    message: z.string(),
-  }),
   z.object({
     kind: z.literal('network'),
     status: z.number().optional(),
@@ -51,11 +44,11 @@ export function classifyDriveError(
   }
   if (err instanceof Error) {
     const message = err.message
-    if (message.toLowerCase().includes('identity services')) {
-      return { kind: 'script-load', message }
-    }
-    if (message.toLowerCase().includes('vite_google_client_id')) {
+    if (message.toLowerCase().includes('server configuration error')) {
       return { kind: 'not-configured' }
+    }
+    if (message.toLowerCase().includes('refresh failed (401)')) {
+      return { kind: 'token-expired' }
     }
     return { kind: 'unknown', message }
   }

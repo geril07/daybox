@@ -11,7 +11,8 @@
     "typecheck": "tsc -b",
     "preview": "vite preview",
     "format": "prettier --write -l .",
-    "test": "vitest"
+    "test": "vitest",
+    "dev:full": "vercel dev"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -22,6 +23,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "es-toolkit": "^1.47.1",
+    "hono": "^4.12.26",
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

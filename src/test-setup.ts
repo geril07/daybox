@@ -62,3 +62,11 @@ class AudioContextMock {
 }
 
 vi.stubGlobal('AudioContext', AudioContextMock)
+
+const matchMediaMock = vi.fn(() => ({
+  matches: false,
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+}))
+vi.stubGlobal('matchMedia', matchMediaMock)

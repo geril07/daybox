@@ -29,13 +29,10 @@ export function GoogleDrivePanel() {
   const backup = useGoogleDriveStore((s) => s.backup)
   const restore = useGoogleDriveStore((s) => s.restore)
   const clearError = useGoogleDriveStore((s) => s.clearError)
-
   const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false)
   const [warnings, setWarnings] = useState<string[] | null>(null)
 
-  const clientConfigured = isClientConfigured()
-
-  if (!clientConfigured) {
+  if (error?.kind === 'not-configured') {
     return (
       <div className="text-muted-foreground flex flex-col gap-1 text-xs">
         <div className="flex items-center gap-1.5">
@@ -65,12 +62,6 @@ export function GoogleDrivePanel() {
           <div className="text-muted-foreground text-xs">
             Sign-in cancelled.
           </div>
-        )}
-        {error && error.kind === 'script-load' && (
-          <InlineError
-            text="Could not load Google Identity Services."
-            onDismiss={clearError}
-          />
         )}
         {error && error.kind === 'network' && (
           <InlineError
@@ -188,19 +179,8 @@ export function GoogleDrivePanel() {
       {error && error.kind === 'envelope' && (
         <InlineError text={error.message} onDismiss={clearError} />
       )}
-      {error && error.kind === 'script-load' && (
-        <InlineError
-          text="Could not load Google Identity Services."
-          onDismiss={clearError}
-        />
-      )}
     </div>
   )
-}
-
-function isClientConfigured(): boolean {
-  const id = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
-  return Boolean(id && id.length > 0)
 }
 
 function InlineError({

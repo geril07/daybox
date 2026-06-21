@@ -1,14 +1,15 @@
 import { renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { useIsConnected } from './queries'
+import { useAccountEmail, useIsConnected } from './queries'
 import { useGoogleDriveStore } from './store'
 
 beforeEach(() => {
   useGoogleDriveStore.setState({
+    connected: false,
+    email: null,
     accessToken: undefined,
     expiresAt: undefined,
-    email: undefined,
     dayboxFileId: undefined,
     backupFileSpace: undefined,
     lastBackupAt: undefined,
@@ -18,16 +19,15 @@ beforeEach(() => {
 })
 
 describe('useIsConnected', () => {
-  it('returns false with no remembered Google Drive metadata', () => {
+  it('returns false when not connected', () => {
     const { result } = renderHook(() => useIsConnected())
 
     expect(result.current).toBe(false)
   })
 
-  it('returns true when remembered metadata exists after token expiry', () => {
+  it('returns true when the runtime connected flag is true', () => {
     useGoogleDriveStore.setState({
-      accessToken: 'expired-token',
-      expiresAt: Date.now() - 60_000,
+      connected: true,
       email: 'me@example.com',
     })
 
@@ -35,15 +35,20 @@ describe('useIsConnected', () => {
 
     expect(result.current).toBe(true)
   })
+})
 
-  it('returns true for legacy states that only have an access token', () => {
-    useGoogleDriveStore.setState({
-      accessToken: 'legacy-token',
-      expiresAt: Date.now() - 60_000,
-    })
+describe('useAccountEmail', () => {
+  it('returns the email from runtime state', () => {
+    useGoogleDriveStore.setState({ email: 'me@example.com' })
 
-    const { result } = renderHook(() => useIsConnected())
+    const { result } = renderHook(() => useAccountEmail())
 
-    expect(result.current).toBe(true)
+    expect(result.current).toBe('me@example.com')
+  })
+
+  it('returns null when no email is set', () => {
+    const { result } = renderHook(() => useAccountEmail())
+
+    expect(result.current).toBeNull()
   })
 })

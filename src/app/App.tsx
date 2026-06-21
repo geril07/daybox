@@ -2,6 +2,7 @@ import { Menu, Settings } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 import { SettingsDrawer } from '@/app/shell/SettingsDrawer'
+import { useGoogleDriveStore } from '@/modules/google-drive'
 import {
   DayView,
   DateBrowser,
@@ -13,6 +14,7 @@ import {
 } from '@/modules/planner'
 import { AddTaskRow } from '@/modules/tasks'
 import { TimerBar, togglePlayPauseWithClick } from '@/modules/timer'
+import { getAuthStatus } from '@/shared/google-drive/server-auth'
 import { registerShortcuts } from '@/shared/keyboard'
 import { Button, Sheet, SheetContent } from '@/shared/ui'
 
@@ -40,6 +42,22 @@ export function App() {
       },
     })
     return cleanup
+  }, [])
+
+  useEffect(() => {
+    const hydrate = async () => {
+      const params = new URLSearchParams(window.location.search)
+      const connectedParam = params.get('connected')
+      if (connectedParam === '1' || connectedParam === '0') {
+        params.delete('connected')
+        const search = params.toString()
+        const url = `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`
+        window.history.replaceState(null, '', url)
+      }
+      const status = await getAuthStatus()
+      useGoogleDriveStore.getState().hydrateFromStatus(status)
+    }
+    void hydrate()
   }, [])
 
   const renderView = () => {

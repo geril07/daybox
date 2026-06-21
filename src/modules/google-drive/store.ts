@@ -7,16 +7,15 @@ import {
   prepareSnapshotImport,
 } from '@/modules/data-portability'
 import {
-  createTokenClient,
-  loadGoogleIdentityScript,
-  type TokenResponse,
-} from '@/shared/google-drive/client'
-import {
   downloadDriveFile,
   findDriveRootFile,
-  getUserEmail,
   uploadDriveRootFile,
 } from '@/shared/google-drive/drive-api'
+import {
+  disconnectAuth,
+  refreshAccessToken,
+  startAuth,
+} from '@/shared/google-drive/server-auth'
 import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
 import { GoogleDriveAuthSchema, classifyDriveError } from './schema'
@@ -26,18 +25,22 @@ const BACKUP_FILENAME = 'daybox.json'
 const BACKUP_FILE_SPACE = 'drive-root'
 const TOKEN_SAFETY_MARGIN_MS = 60_000
 
-type PersistedSlice = Partial<GoogleDriveAuth>
+type PersistedSlice = GoogleDriveAuth
 
-const PersistedSliceSchema = GoogleDriveAuthSchema.partial()
+const PersistedSliceSchema = GoogleDriveAuthSchema
 
 type RuntimeState = {
   status: 'idle' | 'connecting' | 'backing-up' | 'restoring'
   error: BackupError | null
+  connected: boolean
+  email: string | null
+  accessToken: string | undefined
+  expiresAt: number | undefined
 }
 
 interface GoogleDriveActions {
-  connect: () => Promise<void>
-  disconnect: () => void
+  connect: () => void
+  disconnect: () => Promise<void>
   backup: () => Promise<
     { ok: true; warnings?: string[] } | { ok: false; error: BackupError }
   >
@@ -45,6 +48,10 @@ interface GoogleDriveActions {
     { ok: true; warnings?: string[] } | { ok: false; error: BackupError }
   >
   clearError: () => void
+  hydrateFromStatus: (status: {
+    connected: boolean
+    email: string | null
+  }) => void
 }
 
 export type GoogleDriveStore = PersistedSlice &
@@ -54,63 +61,30 @@ export type GoogleDriveStore = PersistedSlice &
 const googleDriveInit: RuntimeState = {
   status: 'idle',
   error: null,
-}
-
-function isClientConfigured(): boolean {
-  const id = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
-  return Boolean(id && id.length > 0)
-}
-
-function hasFreshToken(
-  state: PersistedSlice,
-): state is PersistedSlice &
-  Required<Pick<PersistedSlice, 'accessToken' | 'expiresAt'>> {
-  return Boolean(
-    state.accessToken &&
-    state.expiresAt &&
-    state.expiresAt > Date.now() + TOKEN_SAFETY_MARGIN_MS,
-  )
-}
-
-async function ensureFreshToken(
-  state: PersistedSlice,
-  setPersisted: (partial: PersistedSlice) => void,
-): Promise<string> {
-  if (hasFreshToken(state)) {
-    return state.accessToken
-  }
-  return new Promise<string>((resolve, reject) => {
-    const onToken = (response: TokenResponse) => {
-      setPersisted({
-        accessToken: response.access_token,
-        expiresAt: Date.now() + response.expires_in * 1000,
-      })
-      resolve(response.access_token)
-    }
-    const onError = (err: { type?: string; message?: string }) => {
-      if (err.type === 'user_denied' || err.type === 'access_denied') {
-        reject(new Error('denied'))
-      } else {
-        reject(new Error(err.message ?? 'OAuth error'))
-      }
-    }
-    try {
-      const client = createTokenClient({ onToken, onError })
-      client.requestAccessToken({ prompt: '' })
-    } catch (e) {
-      reject(e)
-    }
-  })
+  connected: false,
+  email: null,
+  accessToken: undefined,
+  expiresAt: undefined,
 }
 
 async function ensureActionToken(
-  state: PersistedSlice,
-  setPersisted: (partial: PersistedSlice) => void,
+  get: () => GoogleDriveStore,
+  set: (partial: Partial<GoogleDriveStore>) => void,
 ): Promise<string> {
-  if (!hasFreshToken(state)) {
-    await loadGoogleIdentityScript()
+  const state = get()
+  if (
+    state.accessToken &&
+    state.expiresAt &&
+    state.expiresAt > Date.now() + TOKEN_SAFETY_MARGIN_MS
+  ) {
+    return state.accessToken
   }
-  return ensureFreshToken(state, setPersisted)
+  const { accessToken, expiresIn } = await refreshAccessToken()
+  set({
+    accessToken,
+    expiresAt: Date.now() + expiresIn * 1000,
+  })
+  return accessToken
 }
 
 export const useGoogleDriveStore = create<GoogleDriveStore>()(
@@ -120,62 +94,39 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
 
       clearError: () => set({ error: null }),
 
-      connect: async () => {
-        if (!isClientConfigured()) {
-          set({ error: { kind: 'not-configured' } })
-          return
-        }
-        set({ status: 'connecting', error: null })
-        try {
-          await loadGoogleIdentityScript()
-          const token = await ensureFreshToken(get(), (p) => set(p))
-          try {
-            const email = await getUserEmail({ token })
-            if (email) set({ email })
-          } catch {
-            set({})
-          }
-          set({ status: 'idle' })
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err)
-          if (message === 'denied') {
-            set({ status: 'idle', error: { kind: 'denied' } })
-          } else {
-            set({ status: 'idle', error: classifyDriveError(err) })
-          }
-        }
+      hydrateFromStatus: ({ connected, email }) => {
+        set({ connected, email })
       },
 
-      disconnect: () => {
+      connect: () => {
+        set({ status: 'connecting', error: null })
+        startAuth()
+      },
+
+      disconnect: async () => {
+        try {
+          await disconnectAuth()
+        } catch (err) {
+          // Best-effort: still clear local state even if server-side revoke failed.
+          console.warn('Disconnect failed on server:', err)
+        }
         set({
           accessToken: undefined,
           expiresAt: undefined,
-          email: undefined,
+          email: null,
           dayboxFileId: undefined,
           backupFileSpace: undefined,
           lastBackupAt: undefined,
+          connected: false,
           status: 'idle',
           error: null,
         })
       },
 
       backup: async () => {
-        if (!isClientConfigured()) {
-          const error: BackupError = { kind: 'not-configured' }
-          set({ error })
-          return { ok: false, error }
-        }
         set({ status: 'backing-up', error: null })
         try {
-          const token = await ensureActionToken(get(), (p) => set(p))
-          if (!get().email) {
-            try {
-              const email = await getUserEmail({ token })
-              if (email) set({ email })
-            } catch {
-              set({})
-            }
-          }
+          const token = await ensureActionToken(get, set)
           const snapshotResult = buildSnapshot()
           if (!snapshotResult.ok) {
             const error = {
@@ -209,12 +160,6 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
           })
           return { ok: true }
         } catch (err) {
-          const message = err instanceof Error ? err.message : String(err)
-          if (message === 'denied') {
-            const error: BackupError = { kind: 'denied' }
-            set({ status: 'idle', error })
-            return { ok: false, error }
-          }
           const error = classifyDriveError(err)
           set({ status: 'idle', error })
           return { ok: false, error }
@@ -222,14 +167,9 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
       },
 
       restore: async () => {
-        if (!isClientConfigured()) {
-          const error: BackupError = { kind: 'not-configured' }
-          set({ error })
-          return { ok: false, error }
-        }
         set({ status: 'restoring', error: null })
         try {
-          const token = await ensureActionToken(get(), (p) => set(p))
+          const token = await ensureActionToken(get, set)
           let fileId =
             get().backupFileSpace === BACKUP_FILE_SPACE
               ? get().dayboxFileId
@@ -268,12 +208,6 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
           })
           return { ok: true, warnings: prepared.warnings }
         } catch (err) {
-          const message = err instanceof Error ? err.message : String(err)
-          if (message === 'denied') {
-            const error: BackupError = { kind: 'denied' }
-            set({ status: 'idle', error })
-            return { ok: false, error }
-          }
           const error = classifyDriveError(err)
           set({ status: 'idle', error })
           return { ok: false, error }
@@ -283,24 +217,18 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
     {
       name: 'daybox-google-drive',
       partialize: (state: GoogleDriveStore) => ({
-        accessToken: state.accessToken,
-        expiresAt: state.expiresAt,
-        email: state.email,
         dayboxFileId: state.dayboxFileId,
         backupFileSpace: state.backupFileSpace,
         lastBackupAt: state.lastBackupAt,
       }),
-      version: 1,
+      version: 2,
       migrate: (persisted) => {
         if (!persisted || typeof persisted !== 'object') return persisted
         const state = persisted as PersistedSlice
         return {
-          ...state,
-          accessToken: undefined,
-          expiresAt: undefined,
-          dayboxFileId: undefined,
-          backupFileSpace: undefined,
-          lastBackupAt: undefined,
+          dayboxFileId: state.dayboxFileId,
+          backupFileSpace: state.backupFileSpace,
+          lastBackupAt: state.lastBackupAt,
         }
       },
       onRehydrateStorage: createValidatedRehydrate<GoogleDriveStore>({

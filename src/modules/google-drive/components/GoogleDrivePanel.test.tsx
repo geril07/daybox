@@ -10,20 +10,19 @@ const disconnect = vi.fn()
 const backup = vi.fn()
 const restore = vi.fn()
 const clearError = vi.fn()
+const hydrateFromStatus = vi.fn()
 
 function setStoreState(partial: {
-  accessToken?: string
-  expiresAt?: number
-  email?: string
+  connected?: boolean
+  email?: string | null
   dayboxFileId?: string
   backupFileSpace?: 'drive-root'
   lastBackupAt?: string
   error?: ReturnType<typeof useGoogleDriveStore.getState>['error']
 }) {
   useGoogleDriveStore.setState({
-    accessToken: partial.accessToken,
-    expiresAt: partial.expiresAt,
-    email: partial.email,
+    connected: partial.connected ?? false,
+    email: partial.email ?? null,
     dayboxFileId: partial.dayboxFileId,
     backupFileSpace: partial.backupFileSpace,
     lastBackupAt: partial.lastBackupAt,
@@ -33,11 +32,11 @@ function setStoreState(partial: {
 }
 
 beforeEach(() => {
-  vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'test-client-id')
   useGoogleDriveStore.setState({
+    connected: false,
+    email: null,
     accessToken: undefined,
     expiresAt: undefined,
-    email: undefined,
     dayboxFileId: undefined,
     backupFileSpace: undefined,
     lastBackupAt: undefined,
@@ -50,17 +49,18 @@ beforeEach(() => {
     backup: backup as never,
     restore: restore as never,
     clearError: clearError as never,
+    hydrateFromStatus: hydrateFromStatus as never,
   })
   backup.mockReset().mockResolvedValue({ ok: true })
   restore.mockReset().mockResolvedValue({ ok: true })
   connect.mockReset()
   disconnect.mockReset()
   clearError.mockReset()
+  hydrateFromStatus.mockReset()
 })
 
 afterEach(() => {
   cleanup()
-  vi.unstubAllEnvs()
 })
 
 describe('GoogleDrivePanel — disconnected', () => {
@@ -86,13 +86,22 @@ describe('GoogleDrivePanel — disconnected', () => {
       screen.getByRole('button', { name: /connect with google/i }),
     ).toBeTruthy()
   })
+
+  it('triggers connect on button click', async () => {
+    const user = userEvent.setup()
+    render(<GoogleDrivePanel />)
+    const connectBtn = screen.getByRole('button', {
+      name: /connect with google/i,
+    })
+    await user.click(connectBtn)
+    expect(connect).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('GoogleDrivePanel — connected, no backup', () => {
   beforeEach(() => {
     setStoreState({
-      accessToken: 'tok',
-      expiresAt: Date.now() + 60 * 60_000,
+      connected: true,
       email: 'me@example.com',
     })
   })
@@ -118,8 +127,7 @@ describe('GoogleDrivePanel — connected, no backup', () => {
 describe('GoogleDrivePanel — connected, with backup', () => {
   beforeEach(() => {
     setStoreState({
-      accessToken: 'tok',
-      expiresAt: Date.now() + 60 * 60_000,
+      connected: true,
       email: 'me@example.com',
       dayboxFileId: 'file-id',
       backupFileSpace: 'drive-root',
@@ -157,8 +165,7 @@ describe('GoogleDrivePanel — connected, with backup', () => {
 
   it('shows an authorization message when token reacquisition is denied', () => {
     setStoreState({
-      accessToken: 'expired-token',
-      expiresAt: Date.now() - 60_000,
+      connected: true,
       email: 'me@example.com',
       error: { kind: 'denied' },
     })
@@ -170,8 +177,7 @@ describe('GoogleDrivePanel — connected, with backup', () => {
 
   it('shows an authorization message when the Drive API rejects a stale token', () => {
     setStoreState({
-      accessToken: 'stale-token',
-      expiresAt: Date.now() + 60 * 60_000,
+      connected: true,
       email: 'me@example.com',
       error: { kind: 'token-expired' },
     })
@@ -185,8 +191,7 @@ describe('GoogleDrivePanel — connected, with backup', () => {
 describe('GoogleDrivePanel — connected, old hidden backup id', () => {
   beforeEach(() => {
     setStoreState({
-      accessToken: 'tok',
-      expiresAt: Date.now() + 60 * 60_000,
+      connected: true,
       email: 'me@example.com',
       dayboxFileId: 'old-hidden-file-id',
     })
@@ -199,25 +204,13 @@ describe('GoogleDrivePanel — connected, old hidden backup id', () => {
   })
 })
 
-describe('GoogleDrivePanel — connected, expired access token', () => {
-  beforeEach(() => {
-    setStoreState({
-      accessToken: 'expired-token',
-      expiresAt: Date.now() - 60_000,
-      email: 'me@example.com',
-      lastBackupAt: new Date(Date.now() - 60_000).toISOString(),
-    })
-  })
-
-  it('keeps Drive actions available for remembered connections', () => {
+describe('GoogleDrivePanel — not configured', () => {
+  it('shows the not-configured message', () => {
+    setStoreState({ error: { kind: 'not-configured' } })
     render(<GoogleDrivePanel />)
-
-    expect(screen.queryByRole('button', { name: /connect with google/i })).toBe(
-      null,
-    )
-    expect(screen.getByText('me@example.com')).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^Back up$/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^Restore$/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^Disconnect$/i })).toBeTruthy()
+    expect(screen.getByText(/not configured for this build/i)).toBeTruthy()
+    expect(
+      screen.queryByRole('button', { name: /connect with google/i }),
+    ).toBeNull()
   })
 })

@@ -1,14 +1,10 @@
 import { useGoogleDriveStore } from './store'
 
 export function useIsConnected(): boolean {
-  const accessToken = useGoogleDriveStore((s) => s.accessToken)
-  const email = useGoogleDriveStore((s) => s.email)
-  const dayboxFileId = useGoogleDriveStore((s) => s.dayboxFileId)
-  const lastBackupAt = useGoogleDriveStore((s) => s.lastBackupAt)
-  return Boolean(accessToken || email || dayboxFileId || lastBackupAt)
+  return useGoogleDriveStore((s) => s.connected)
 }
 
-export function useAccountEmail(): string | undefined {
+export function useAccountEmail(): string | null {
   return useGoogleDriveStore((s) => s.email)
 }
 
