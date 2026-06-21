@@ -29,6 +29,7 @@ export function GoogleDrivePanel() {
   const backup = useGoogleDriveStore((s) => s.backup)
   const restore = useGoogleDriveStore((s) => s.restore)
   const clearError = useGoogleDriveStore((s) => s.clearError)
+  const [backupConfirmOpen, setBackupConfirmOpen] = useState(false)
   const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false)
   const [warnings, setWarnings] = useState<string[] | null>(null)
 
@@ -92,13 +93,40 @@ export function GoogleDrivePanel() {
       )}
 
       <div className="flex flex-col gap-1.5">
-        <Button
-          variant="outline"
-          onClick={() => void backup()}
-          disabled={status === 'backing-up' || status === 'restoring'}
+        <AlertDialog
+          open={backupConfirmOpen}
+          onOpenChange={setBackupConfirmOpen}
         >
-          {status === 'backing-up' ? 'Backing up...' : 'Back up'}
-        </Button>
+          <AlertDialogTrigger
+            render={
+              <Button
+                variant="outline"
+                disabled={status === 'backing-up' || status === 'restoring'}
+              />
+            }
+          >
+            {status === 'backing-up' ? 'Backing up...' : 'Back up'}
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogTitle>Back up to Google Drive</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will overwrite your cloud backup with the current local
+              snapshot.
+              {lastBackupAt && <> Last backup: {lastBackupAt}.</>}
+            </AlertDialogDescription>
+            <div className="flex flex-col gap-2">
+              <AlertDialogAction
+                onClick={async () => {
+                  setBackupConfirmOpen(false)
+                  await backup()
+                }}
+              >
+                Continue
+              </AlertDialogAction>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <AlertDialog
           open={restoreConfirmOpen}

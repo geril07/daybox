@@ -135,12 +135,35 @@ describe('GoogleDrivePanel — connected, with backup', () => {
     })
   })
 
-  it('calls backup on Back up click and updates lastBackupAt display', async () => {
+  it('shows a confirmation dialog on Back up click and does not call backup immediately', async () => {
     const user = userEvent.setup()
     render(<GoogleDrivePanel />)
     const backupBtn = screen.getByRole('button', { name: /^Back up$/i })
     await user.click(backupBtn)
+    expect(await screen.findByText(/overwrite your cloud backup/i)).toBeTruthy()
+    expect(backup).not.toHaveBeenCalled()
+  })
+
+  it('calls backup only after confirming the dialog', async () => {
+    const user = userEvent.setup()
+    render(<GoogleDrivePanel />)
+    const backupBtn = screen.getByRole('button', { name: /^Back up$/i })
+    await user.click(backupBtn)
+    await screen.findByText(/overwrite your cloud backup/i)
+    const continueBtn = screen.getByRole('button', { name: /^Continue$/i })
+    await user.click(continueBtn)
     expect(backup).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not call backup when the dialog is cancelled', async () => {
+    const user = userEvent.setup()
+    render(<GoogleDrivePanel />)
+    const backupBtn = screen.getByRole('button', { name: /^Back up$/i })
+    await user.click(backupBtn)
+    await screen.findByText(/overwrite your cloud backup/i)
+    const cancelBtn = screen.getByRole('button', { name: /^Cancel$/i })
+    await user.click(cancelBtn)
+    expect(backup).not.toHaveBeenCalled()
   })
 
   it('gates restore on a confirmation dialog', async () => {
