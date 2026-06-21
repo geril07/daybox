@@ -11,15 +11,15 @@ import {
   generateState,
   generateVerifier,
   setCookieHeader,
-} from '../lib/cookies'
-import { open, seal } from '../lib/encrypt'
+} from '../lib/cookies.js'
+import { open, seal } from '../lib/encrypt.js'
 import {
   buildAuthUrl,
   exchangeCode,
   fetchUserEmail,
   refreshAccessToken,
   revokeToken,
-} from '../lib/google'
+} from '../lib/google.js'
 
 function tokenEncKey(): string {
   return process.env.TOKEN_ENC_KEY ?? ''

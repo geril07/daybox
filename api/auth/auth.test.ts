@@ -4,10 +4,10 @@ import {
   REFRESH_TOKEN_COOKIE,
   STATE_COOKIE,
   VERIFIER_COOKIE,
-} from '../lib/cookies'
-import type { SealedPayload } from '../lib/encrypt'
-import { open, seal } from '../lib/encrypt'
-import app from './[[...route]]'
+} from '../lib/cookies.js'
+import type { SealedPayload } from '../lib/encrypt.js'
+import { open, seal } from '../lib/encrypt.js'
+import app from './[[...route]].js'
 
 const TOKEN_ENC_KEY = '0'.repeat(64)
 const CLIENT_ID = 'client-id-123'
