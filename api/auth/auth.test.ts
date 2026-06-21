@@ -7,7 +7,30 @@ import {
 } from '../lib/cookies.js'
 import type { SealedPayload } from '../lib/encrypt.js'
 import { open, seal } from '../lib/encrypt.js'
-import app from './[...route].js'
+import callbackApp from './callback.js'
+import disconnectApp from './disconnect.js'
+import refreshApp from './refresh.js'
+import startApp from './start.js'
+import statusApp from './status.js'
+
+const app = {
+  request(input: string | Request, init?: RequestInit) {
+    const url = new URL(typeof input === 'string' ? input : input.url)
+    if (url.pathname === '/api/auth/start') return startApp.request(input, init)
+    if (url.pathname === '/api/auth/callback') {
+      return callbackApp.request(input, init)
+    }
+    if (url.pathname === '/api/auth/refresh') {
+      return refreshApp.request(input, init)
+    }
+    if (url.pathname === '/api/auth/disconnect') {
+      return disconnectApp.request(input, init)
+    }
+    if (url.pathname === '/api/auth/status')
+      return statusApp.request(input, init)
+    throw new Error(`Unhandled test route: ${url.pathname}`)
+  },
+}
 
 const TOKEN_ENC_KEY = '0'.repeat(64)
 const CLIENT_ID = 'client-id-123'
@@ -61,9 +84,12 @@ describe('auth endpoints', () => {
 
   describe('GET /start', () => {
     it('sets verifier and state cookies and redirects to Google consent', async () => {
-      const res = await app.request('https://daybox.example.com/start', {
-        headers: { Origin: 'https://daybox.example.com' },
-      })
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/start',
+        {
+          headers: { Origin: 'https://daybox.example.com' },
+        },
+      )
       expect(res.status).toBe(302)
       const location = res.headers.get('Location')
       expect(location).toContain('https://accounts.google.com/o/oauth2/v2/auth')
@@ -87,7 +113,7 @@ describe('auth endpoints', () => {
     })
 
     it('uses unprefixed cookie names and no Secure on http localhost', async () => {
-      const res = await app.request('http://localhost:3000/start', {
+      const res = await app.request('http://localhost:3000/api/auth/start', {
         headers: { Origin: 'http://localhost:3000' },
       })
       expect(res.status).toBe(302)
@@ -101,9 +127,12 @@ describe('auth endpoints', () => {
 
     it('returns 500 when env vars are missing', async () => {
       vi.unstubAllEnvs()
-      const res = await app.request('https://daybox.example.com/start', {
-        headers: { Origin: 'https://daybox.example.com' },
-      })
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/start',
+        {
+          headers: { Origin: 'https://daybox.example.com' },
+        },
+      )
       expect(res.status).toBe(500)
     })
   })
@@ -111,9 +140,12 @@ describe('auth endpoints', () => {
   describe('GET /callback', () => {
     it('exchanges code and sets refresh token cookie on success', async () => {
       // First call: start to get verifier/state cookies.
-      const startRes = await app.request('https://daybox.example.com/start', {
-        headers: { Origin: 'https://daybox.example.com' },
-      })
+      const startRes = await app.request(
+        'https://daybox.example.com/api/auth/start',
+        {
+          headers: { Origin: 'https://daybox.example.com' },
+        },
+      )
       const verifier = cookieValue(
         extractCookieHeader(startRes, VERIFIER_COOKIE),
       )
@@ -131,7 +163,7 @@ describe('auth endpoints', () => {
       mockFetchOnce({ email: 'user@example.com' })
 
       const res = await app.request(
-        `https://daybox.example.com/callback?code=auth-code-123&state=${state}`,
+        `https://daybox.example.com/api/auth/callback?code=auth-code-123&state=${state}`,
         {
           headers: {
             Origin: 'https://daybox.example.com',
@@ -162,7 +194,7 @@ describe('auth endpoints', () => {
 
     it('rejects mismatched state with 400', async () => {
       const res = await app.request(
-        'https://daybox.example.com/callback?code=auth-code-123&state=bad',
+        'https://daybox.example.com/api/auth/callback?code=auth-code-123&state=bad',
         {
           headers: {
             Origin: 'https://daybox.example.com',
@@ -174,9 +206,12 @@ describe('auth endpoints', () => {
     })
 
     it('redirects to connected=0 on exchange failure', async () => {
-      const startRes = await app.request('https://daybox.example.com/start', {
-        headers: { Origin: 'https://daybox.example.com' },
-      })
+      const startRes = await app.request(
+        'https://daybox.example.com/api/auth/start',
+        {
+          headers: { Origin: 'https://daybox.example.com' },
+        },
+      )
       const verifier = cookieValue(
         extractCookieHeader(startRes, VERIFIER_COOKIE),
       )
@@ -186,7 +221,7 @@ describe('auth endpoints', () => {
       mockFetchOnce({ error: 'invalid_grant' }, 400)
 
       const res = await app.request(
-        `https://daybox.example.com/callback?code=auth-code-123&state=${state}`,
+        `https://daybox.example.com/api/auth/callback?code=auth-code-123&state=${state}`,
         {
           headers: {
             Origin: 'https://daybox.example.com',
@@ -215,13 +250,16 @@ describe('auth endpoints', () => {
         token_type: 'Bearer',
       })
 
-      const res = await app.request('https://daybox.example.com/refresh', {
-        method: 'POST',
-        headers: {
-          Origin: 'https://daybox.example.com',
-          Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}`,
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/refresh',
+        {
+          method: 'POST',
+          headers: {
+            Origin: 'https://daybox.example.com',
+            Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}`,
+          },
         },
-      })
+      )
       expect(res.status).toBe(200)
       const body = (await res.json()) as {
         accessToken: string
@@ -246,13 +284,16 @@ describe('auth endpoints', () => {
         token_type: 'Bearer',
       })
 
-      const res = await app.request('https://daybox.example.com/refresh', {
-        method: 'POST',
-        headers: {
-          Origin: 'https://daybox.example.com',
-          Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}`,
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/refresh',
+        {
+          method: 'POST',
+          headers: {
+            Origin: 'https://daybox.example.com',
+            Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}`,
+          },
         },
-      })
+      )
       expect(res.status).toBe(200)
       const refreshHeader = extractCookieHeader(res, REFRESH_TOKEN_COOKIE)
       expect(refreshHeader).toBeDefined()
@@ -263,21 +304,27 @@ describe('auth endpoints', () => {
     })
 
     it('returns 401 and clears cookie when cookie is missing', async () => {
-      const res = await app.request('https://daybox.example.com/refresh', {
-        method: 'POST',
-      })
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/refresh',
+        {
+          method: 'POST',
+        },
+      )
       expect(res.status).toBe(401)
       const header = extractCookieHeader(res, REFRESH_TOKEN_COOKIE)
       expect(header).toContain('Max-Age=0')
     })
 
     it('returns 401 and clears cookie when cookie is undecryptable', async () => {
-      const res = await app.request('https://daybox.example.com/refresh', {
-        method: 'POST',
-        headers: {
-          Cookie: `${REFRESH_TOKEN_COOKIE}=not-valid-base64-or-tampered`,
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/refresh',
+        {
+          method: 'POST',
+          headers: {
+            Cookie: `${REFRESH_TOKEN_COOKIE}=not-valid-base64-or-tampered`,
+          },
         },
-      })
+      )
       expect(res.status).toBe(401)
       const header = extractCookieHeader(res, REFRESH_TOKEN_COOKIE)
       expect(header).toContain('Max-Age=0')
@@ -293,10 +340,13 @@ describe('auth endpoints', () => {
 
       mockFetchOnce({ error: 'invalid_grant' }, 400)
 
-      const res = await app.request('https://daybox.example.com/refresh', {
-        method: 'POST',
-        headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}` },
-      })
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/refresh',
+        {
+          method: 'POST',
+          headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}` },
+        },
+      )
       expect(res.status).toBe(401)
       const header = extractCookieHeader(res, REFRESH_TOKEN_COOKIE)
       expect(header).toContain('Max-Age=0')
@@ -313,10 +363,13 @@ describe('auth endpoints', () => {
       const sealed = seal(payload, TOKEN_ENC_KEY)
       mockFetchOnce({}, 200)
 
-      const res = await app.request('https://daybox.example.com/disconnect', {
-        method: 'POST',
-        headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}` },
-      })
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/disconnect',
+        {
+          method: 'POST',
+          headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}` },
+        },
+      )
       expect(res.status).toBe(200)
       const header = extractCookieHeader(res, REFRESH_TOKEN_COOKIE)
       expect(header).toContain('Max-Age=0')
@@ -331,19 +384,25 @@ describe('auth endpoints', () => {
       const sealed = seal(payload, TOKEN_ENC_KEY)
       mockFetchOnce({ error: 'invalid_token' }, 400)
 
-      const res = await app.request('https://daybox.example.com/disconnect', {
-        method: 'POST',
-        headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}` },
-      })
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/disconnect',
+        {
+          method: 'POST',
+          headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}` },
+        },
+      )
       expect(res.status).toBe(200)
       const header = extractCookieHeader(res, REFRESH_TOKEN_COOKIE)
       expect(header).toContain('Max-Age=0')
     })
 
     it('is a no-op when no cookie is present', async () => {
-      const res = await app.request('https://daybox.example.com/disconnect', {
-        method: 'POST',
-      })
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/disconnect',
+        {
+          method: 'POST',
+        },
+      )
       expect(res.status).toBe(200)
       const header = extractCookieHeader(res, REFRESH_TOKEN_COOKIE)
       expect(header).toContain('Max-Age=0')
@@ -358,9 +417,12 @@ describe('auth endpoints', () => {
         createdAt: Date.now(),
       }
       const sealed = seal(payload, TOKEN_ENC_KEY)
-      const res = await app.request('https://daybox.example.com/status', {
-        headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}` },
-      })
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/status',
+        {
+          headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${sealed}` },
+        },
+      )
       expect(res.status).toBe(200)
       const body = (await res.json()) as { connected: boolean; email: string }
       expect(body.connected).toBe(true)
@@ -368,7 +430,9 @@ describe('auth endpoints', () => {
     })
 
     it('returns disconnected when cookie is missing', async () => {
-      const res = await app.request('https://daybox.example.com/status')
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/status',
+      )
       expect(res.status).toBe(200)
       const body = (await res.json()) as { connected: boolean; email: null }
       expect(body.connected).toBe(false)
@@ -376,9 +440,12 @@ describe('auth endpoints', () => {
     })
 
     it('returns disconnected when cookie is undecryptable', async () => {
-      const res = await app.request('https://daybox.example.com/status', {
-        headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=garbage` },
-      })
+      const res = await app.request(
+        'https://daybox.example.com/api/auth/status',
+        {
+          headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=garbage` },
+        },
+      )
       expect(res.status).toBe(200)
       const body = (await res.json()) as { connected: boolean; email: null }
       expect(body.connected).toBe(false)
