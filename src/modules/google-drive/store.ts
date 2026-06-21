@@ -103,6 +103,16 @@ async function ensureFreshToken(
   })
 }
 
+async function ensureActionToken(
+  state: PersistedSlice,
+  setPersisted: (partial: PersistedSlice) => void,
+): Promise<string> {
+  if (!hasFreshToken(state)) {
+    await loadGoogleIdentityScript()
+  }
+  return ensureFreshToken(state, setPersisted)
+}
+
 export const useGoogleDriveStore = create<GoogleDriveStore>()(
   persist(
     (set, get) => ({
@@ -157,7 +167,7 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
         }
         set({ status: 'backing-up', error: null })
         try {
-          const token = await ensureFreshToken(get(), (p) => set(p))
+          const token = await ensureActionToken(get(), (p) => set(p))
           if (!get().email) {
             try {
               const email = await getUserEmail({ token })
@@ -219,7 +229,7 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
         }
         set({ status: 'restoring', error: null })
         try {
-          const token = await ensureFreshToken(get(), (p) => set(p))
+          const token = await ensureActionToken(get(), (p) => set(p))
           let fileId =
             get().backupFileSpace === BACKUP_FILE_SPACE
               ? get().dayboxFileId

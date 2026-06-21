@@ -76,6 +76,16 @@ describe('GoogleDrivePanel — disconnected', () => {
     expect(screen.getByText(/visible daybox\.json/i)).toBeTruthy()
     expect(screen.getByText(/google drive root/i)).toBeTruthy()
   })
+
+  it('stays disconnected when no remembered metadata exists', () => {
+    setStoreState({})
+
+    render(<GoogleDrivePanel />)
+
+    expect(
+      screen.getByRole('button', { name: /connect with google/i }),
+    ).toBeTruthy()
+  })
 })
 
 describe('GoogleDrivePanel — connected, no backup', () => {
@@ -144,6 +154,32 @@ describe('GoogleDrivePanel — connected, with backup', () => {
     await user.click(disconnectBtn)
     expect(disconnect).toHaveBeenCalledTimes(1)
   })
+
+  it('shows an authorization message when token reacquisition is denied', () => {
+    setStoreState({
+      accessToken: 'expired-token',
+      expiresAt: Date.now() - 60_000,
+      email: 'me@example.com',
+      error: { kind: 'denied' },
+    })
+
+    render(<GoogleDrivePanel />)
+
+    expect(screen.getByText(/google authorization is required/i)).toBeTruthy()
+  })
+
+  it('shows an authorization message when the Drive API rejects a stale token', () => {
+    setStoreState({
+      accessToken: 'stale-token',
+      expiresAt: Date.now() + 60 * 60_000,
+      email: 'me@example.com',
+      error: { kind: 'token-expired' },
+    })
+
+    render(<GoogleDrivePanel />)
+
+    expect(screen.getByText(/google authorization is required/i)).toBeTruthy()
+  })
 })
 
 describe('GoogleDrivePanel — connected, old hidden backup id', () => {
@@ -160,5 +196,28 @@ describe('GoogleDrivePanel — connected, old hidden backup id', () => {
     render(<GoogleDrivePanel />)
     const restoreBtn = screen.getByRole('button', { name: /^Restore$/i })
     expect((restoreBtn as HTMLButtonElement).disabled).toBe(false)
+  })
+})
+
+describe('GoogleDrivePanel — connected, expired access token', () => {
+  beforeEach(() => {
+    setStoreState({
+      accessToken: 'expired-token',
+      expiresAt: Date.now() - 60_000,
+      email: 'me@example.com',
+      lastBackupAt: new Date(Date.now() - 60_000).toISOString(),
+    })
+  })
+
+  it('keeps Drive actions available for remembered connections', () => {
+    render(<GoogleDrivePanel />)
+
+    expect(screen.queryByRole('button', { name: /connect with google/i })).toBe(
+      null,
+    )
+    expect(screen.getByText('me@example.com')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Back up$/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Restore$/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Disconnect$/i })).toBeTruthy()
   })
 })

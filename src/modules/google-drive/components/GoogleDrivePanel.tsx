@@ -173,6 +173,12 @@ export function GoogleDrivePanel() {
           onDismiss={clearError}
         />
       )}
+      {(error?.kind === 'denied' || error?.kind === 'token-expired') && (
+        <InlineError
+          text="Google authorization is required. Try again and choose your Google account."
+          onDismiss={clearError}
+        />
+      )}
       {error && error.kind === 'network' && (
         <InlineError
           text={`Network error: ${error.message}`}

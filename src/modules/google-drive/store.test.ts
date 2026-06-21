@@ -4,16 +4,39 @@ import { buildSnapshot } from '@/modules/data-portability'
 
 import { useGoogleDriveStore } from './store'
 
+const googleClient = vi.hoisted(() => ({
+  loadGoogleIdentityScript: vi.fn(),
+  createTokenClient: vi.fn(),
+  requestAccessToken: vi.fn(),
+  tokenResponse: undefined as
+    | { access_token: string; expires_in: number; token_type: string }
+    | undefined,
+  tokenError: undefined as { type: string; message?: string } | undefined,
+}))
+
+vi.mock('@/shared/google-drive/client', () => ({
+  loadGoogleIdentityScript: googleClient.loadGoogleIdentityScript,
+  createTokenClient: googleClient.createTokenClient,
+}))
+
 const fetchMock = vi.fn()
 
-function resetConnectedState(partial: { dayboxFileId?: string } = {}) {
+function resetConnectedState(
+  partial: {
+    accessToken?: string
+    expiresAt?: number
+    dayboxFileId?: string
+    backupFileSpace?: 'drive-root'
+    lastBackupAt?: string
+  } = {},
+) {
   useGoogleDriveStore.setState({
-    accessToken: 'tok',
-    expiresAt: Date.now() + 60 * 60_000,
+    accessToken: partial.accessToken ?? 'tok',
+    expiresAt: partial.expiresAt ?? Date.now() + 60 * 60_000,
     email: 'me@example.com',
     dayboxFileId: partial.dayboxFileId,
-    backupFileSpace: undefined,
-    lastBackupAt: undefined,
+    backupFileSpace: partial.backupFileSpace,
+    lastBackupAt: partial.lastBackupAt,
     status: 'idle',
     error: null,
   })
@@ -23,7 +46,53 @@ beforeEach(() => {
   localStorage.clear()
   fetchMock.mockReset()
   vi.stubGlobal('fetch', fetchMock)
+  googleClient.loadGoogleIdentityScript.mockReset().mockResolvedValue(undefined)
+  googleClient.createTokenClient
+    .mockReset()
+    .mockImplementation((callbacks) => ({
+      requestAccessToken: googleClient.requestAccessToken.mockImplementation(
+        () => {
+          if (googleClient.tokenError) {
+            callbacks.onError(googleClient.tokenError)
+            return
+          }
+          callbacks.onToken(
+            googleClient.tokenResponse ?? {
+              access_token: 'new-token',
+              expires_in: 3600,
+              token_type: 'Bearer',
+            },
+          )
+        },
+      ),
+    }))
+  googleClient.requestAccessToken.mockReset()
+  googleClient.tokenResponse = undefined
+  googleClient.tokenError = undefined
   resetConnectedState()
+})
+
+describe('Google Drive store disconnect', () => {
+  it('clears all remembered Google Drive metadata', () => {
+    resetConnectedState({
+      dayboxFileId: 'visible-id',
+      backupFileSpace: 'drive-root',
+      lastBackupAt: '2026-01-01T00:00:00.000Z',
+    })
+
+    useGoogleDriveStore.getState().disconnect()
+
+    expect(useGoogleDriveStore.getState()).toMatchObject({
+      accessToken: undefined,
+      expiresAt: undefined,
+      email: undefined,
+      dayboxFileId: undefined,
+      backupFileSpace: undefined,
+      lastBackupAt: undefined,
+      status: 'idle',
+      error: null,
+    })
+  })
 })
 
 describe('Google Drive store backup', () => {
@@ -115,6 +184,61 @@ describe('Google Drive store backup', () => {
     expect(useGoogleDriveStore.getState().dayboxFileId).toBe('new-root-id')
     expect(useGoogleDriveStore.getState().backupFileSpace).toBe('drive-root')
   })
+
+  it('loads GIS and reacquires an expired token before backing up', async () => {
+    resetConnectedState({
+      accessToken: 'expired-token',
+      expiresAt: Date.now() - 60_000,
+    })
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ files: [] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ id: 'new-root-id' }),
+      })
+
+    const result = await useGoogleDriveStore.getState().backup()
+
+    expect(result).toEqual({ ok: true })
+    expect(googleClient.loadGoogleIdentityScript).toHaveBeenCalledTimes(1)
+    expect(googleClient.createTokenClient).toHaveBeenCalledTimes(1)
+    expect(googleClient.requestAccessToken).toHaveBeenCalledWith({ prompt: '' })
+    expect(useGoogleDriveStore.getState().accessToken).toBe('new-token')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    const [, listInit] = fetchMock.mock.calls[0]
+    expect((listInit as RequestInit).headers).toEqual({
+      Authorization: 'Bearer new-token',
+    })
+  })
+
+  it('keeps remembered metadata when silent backup authorization fails', async () => {
+    resetConnectedState({
+      accessToken: 'expired-token',
+      expiresAt: Date.now() - 60_000,
+      dayboxFileId: 'visible-id',
+      backupFileSpace: 'drive-root',
+      lastBackupAt: '2026-01-01T00:00:00.000Z',
+    })
+    googleClient.tokenError = { type: 'access_denied' }
+
+    const result = await useGoogleDriveStore.getState().backup()
+
+    expect(result).toEqual({ ok: false, error: { kind: 'denied' } })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(useGoogleDriveStore.getState()).toMatchObject({
+      accessToken: 'expired-token',
+      email: 'me@example.com',
+      dayboxFileId: 'visible-id',
+      backupFileSpace: 'drive-root',
+      lastBackupAt: '2026-01-01T00:00:00.000Z',
+      error: { kind: 'denied' },
+    })
+  })
 })
 
 describe('Google Drive store restore', () => {
@@ -175,5 +299,60 @@ describe('Google Drive store restore', () => {
     expect(result).toEqual({ ok: false, error: { kind: 'not-found' } })
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0][0]).not.toContain('old-hidden-id')
+  })
+
+  it('loads GIS and reacquires an expired token before restoring', async () => {
+    const snapshotResult = buildSnapshot()
+    const snapshotJson = JSON.stringify(
+      snapshotResult.ok ? snapshotResult.value : {},
+    )
+    resetConnectedState({
+      accessToken: 'expired-token',
+      expiresAt: Date.now() - 60_000,
+      dayboxFileId: 'visible-id',
+      backupFileSpace: 'drive-root',
+    })
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      text: async () => snapshotJson,
+    })
+
+    const result = await useGoogleDriveStore.getState().restore()
+
+    expect(result).toEqual({ ok: true, warnings: undefined })
+    expect(googleClient.loadGoogleIdentityScript).toHaveBeenCalledTimes(1)
+    expect(googleClient.createTokenClient).toHaveBeenCalledTimes(1)
+    expect(googleClient.requestAccessToken).toHaveBeenCalledWith({ prompt: '' })
+    expect(useGoogleDriveStore.getState().accessToken).toBe('new-token')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [, downloadInit] = fetchMock.mock.calls[0]
+    expect((downloadInit as RequestInit).headers).toEqual({
+      Authorization: 'Bearer new-token',
+    })
+  })
+
+  it('keeps remembered metadata when silent restore authorization fails', async () => {
+    resetConnectedState({
+      accessToken: 'expired-token',
+      expiresAt: Date.now() - 60_000,
+      dayboxFileId: 'visible-id',
+      backupFileSpace: 'drive-root',
+      lastBackupAt: '2026-01-01T00:00:00.000Z',
+    })
+    googleClient.tokenError = { type: 'access_denied' }
+
+    const result = await useGoogleDriveStore.getState().restore()
+
+    expect(result).toEqual({ ok: false, error: { kind: 'denied' } })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(useGoogleDriveStore.getState()).toMatchObject({
+      accessToken: 'expired-token',
+      email: 'me@example.com',
+      dayboxFileId: 'visible-id',
+      backupFileSpace: 'drive-root',
+      lastBackupAt: '2026-01-01T00:00:00.000Z',
+      error: { kind: 'denied' },
+    })
   })
 })

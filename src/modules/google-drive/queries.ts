@@ -1,10 +1,11 @@
 import { useGoogleDriveStore } from './store'
 
 export function useIsConnected(): boolean {
-  const expiresAt = useGoogleDriveStore((s) => s.expiresAt)
   const accessToken = useGoogleDriveStore((s) => s.accessToken)
-  if (!accessToken || !expiresAt) return false
-  return expiresAt > safeNow()
+  const email = useGoogleDriveStore((s) => s.email)
+  const dayboxFileId = useGoogleDriveStore((s) => s.dayboxFileId)
+  const lastBackupAt = useGoogleDriveStore((s) => s.lastBackupAt)
+  return Boolean(accessToken || email || dayboxFileId || lastBackupAt)
 }
 
 export function useAccountEmail(): string | undefined {
@@ -14,10 +15,6 @@ export function useAccountEmail(): string | undefined {
 export function useLastBackupAge(): string | null {
   const lastBackupAt = useGoogleDriveStore((s) => s.lastBackupAt)
   return useLastBackupAgeFrom(lastBackupAt)
-}
-
-function safeNow(): number {
-  return Date.now()
 }
 
 function useLastBackupAgeFrom(lastBackupAt: string | undefined): string | null {
