@@ -7,7 +7,7 @@ import {
 } from '../lib/cookies.js'
 import type { SealedPayload } from '../lib/encrypt.js'
 import { open, seal } from '../lib/encrypt.js'
-import app from './[[...route]].js'
+import app from './[...route].js'
 
 const TOKEN_ENC_KEY = '0'.repeat(64)
 const CLIENT_ID = 'client-id-123'
