@@ -1,4 +1,4 @@
-import { render, cleanup } from '@testing-library/react'
+import { render, cleanup, fireEvent, screen } from '@testing-library/react'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 import { useGroupStore } from '@/modules/groups'
@@ -136,5 +136,61 @@ describe('TimerBar', () => {
       new Event('click'),
     )
     expect(focusSpy).toHaveBeenCalledTimes(1)
+  })
+
+  describe('clear focus button', () => {
+    it('is hidden when focusedTaskId is null', () => {
+      render(<TimerBar />)
+      expect(screen.queryByRole('button', { name: 'Clear focus' })).toBeNull()
+    })
+
+    it('is visible when a task is focused and exists in the store', () => {
+      const task = createTask()
+      useTaskStore.setState({ tasks: [task] })
+      useTimerStore.setState({ focusedTaskId: task.id })
+      render(<TimerBar />)
+      expect(
+        screen.queryByRole('button', { name: 'Clear focus' }),
+      ).not.toBeNull()
+    })
+
+    it('is visible when the focused task is stale (not in the store)', () => {
+      useTimerStore.setState({ focusedTaskId: 'stale-task' })
+      render(<TimerBar />)
+      expect(
+        screen.queryByRole('button', { name: 'Clear focus' }),
+      ).not.toBeNull()
+    })
+
+    it('sets focusedTaskId to null when clicked', () => {
+      const task = createTask()
+      useTaskStore.setState({ tasks: [task] })
+      useTimerStore.setState({ focusedTaskId: task.id })
+      render(<TimerBar />)
+      fireEvent.click(screen.getByRole('button', { name: 'Clear focus' }))
+      expect(useTimerStore.getState().focusedTaskId).toBeNull()
+    })
+
+    it('does not disturb timer state when clicked', () => {
+      const task = createTask()
+      useTaskStore.setState({ tasks: [task] })
+      useTimerStore.setState({
+        focusedTaskId: task.id,
+        phase: 'focus',
+        elapsed: 60000,
+        isRunning: true,
+        startedAt: Date.now() - 1000,
+        sessionPomoCount: 2,
+      })
+      render(<TimerBar />)
+      fireEvent.click(screen.getByRole('button', { name: 'Clear focus' }))
+      const state = useTimerStore.getState()
+      expect(state.focusedTaskId).toBeNull()
+      expect(state.phase).toBe('focus')
+      expect(state.elapsed).toBe(60000)
+      expect(state.isRunning).toBe(true)
+      expect(state.startedAt).toBeGreaterThan(0)
+      expect(state.sessionPomoCount).toBe(2)
+    })
   })
 })

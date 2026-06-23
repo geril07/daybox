@@ -1,4 +1,11 @@
-import { RotateCcw, RefreshCcw, Pause, Play, SkipForward } from 'lucide-react'
+import {
+  RotateCcw,
+  RefreshCcw,
+  Pause,
+  Play,
+  SkipForward,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
 import { useTaskStore } from '@/modules/tasks'
@@ -33,6 +40,7 @@ export function TimerBar() {
   const startedAt = useTimerStore((s) => s.startedAt)
   const elapsed = useTimerStore((s) => s.elapsed)
   const sessionPomoCount = useTimerStore((s) => s.sessionPomoCount)
+  const setFocusedTaskId = useTimerStore((s) => s.setFocusedTaskId)
   const reset = useTimerStore((s) => s.reset)
   const resetSession = useTimerStore((s) => s.resetSession)
   const setPhase = useTimerStore((s) => s.setPhase)
@@ -163,6 +171,10 @@ export function TimerBar() {
       longBreakInterval: settings.longBreakInterval,
     })
     alarmPlayedRef.current = false
+  }
+
+  const handleClearFocus = () => {
+    setFocusedTaskId(null)
   }
 
   const phaseColor =
@@ -297,18 +309,30 @@ export function TimerBar() {
             </div>
           </div>
         </div>
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-h-[20px] min-w-0 items-center gap-1.5">
           <span className="text-fg-3 shrink-0 text-xs font-semibold tracking-widest uppercase">
             Working on
           </span>
           <span
             className={cn(
-              'truncate text-xs',
+              'min-w-0 shrink truncate text-xs',
               focusedTask ? 'text-fg-2' : 'text-fg-3',
             )}
           >
             {focusedTask ? focusedTask.title : 'No task focused'}
           </span>
+          {focusedTaskId && (
+            <Button
+              variant="ghost"
+              size="none"
+              className="text-muted-foreground hover:text-fg size-5 shrink-0 rounded-full p-0"
+              onClick={handleClearFocus}
+              title="Clear focus"
+              aria-label="Clear focus"
+            >
+              <X size={12} />
+            </Button>
+          )}
         </div>
       </div>
     </div>
