@@ -79,7 +79,7 @@ function SortableTaskRow({
   index: number
   groupKey: string
 }) {
-  const { ref, handleRef } = useSortable({
+  const { ref, handleRef, isDragSource } = useSortable({
     id: task.id,
     index,
     group: groupKey,
@@ -92,7 +92,11 @@ function SortableTaskRow({
 
   return (
     <div ref={ref}>
-      <TaskRow task={task} dragHandleRef={handleRef} />
+      <TaskRow
+        task={task}
+        dragHandleRef={handleRef}
+        isDragSource={isDragSource}
+      />
     </div>
   )
 }

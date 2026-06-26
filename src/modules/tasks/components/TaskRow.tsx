@@ -27,9 +27,10 @@ import { TaskActionSheet } from './TaskActionSheet'
 interface TaskRowProps {
   task: Task
   dragHandleRef?: (element: Element | null) => void
+  isDragSource?: boolean
 }
 
-export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
+export function TaskRow({ task, dragHandleRef, isDragSource }: TaskRowProps) {
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [actionSheetOpen, setActionSheetOpen] = useState(false)
@@ -82,9 +83,10 @@ export function TaskRow({ task, dragHandleRef }: TaskRowProps) {
   return (
     <div
       className={cn(
-        'transition-background border-border group flex min-h-[46px] items-center gap-2.5 rounded border-b px-1.5 py-2 duration-120',
+        'border-border group flex min-h-[46px] items-center gap-2.5 rounded border-b px-1.5 py-2 transition-[background-color,transform,box-shadow] duration-200 ease-out',
         overdue && 'bg-overdue-bg',
         isFocused && 'border-l-accent border-l-[3px]',
+        isDragSource && 'relative z-10 -translate-y-1 scale-[1.02] shadow-lg',
       )}
     >
       <div
