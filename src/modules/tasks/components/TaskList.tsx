@@ -39,7 +39,7 @@ export function TaskList({
     if (initialIndex >= tasks.length || index >= tasks.length) return
 
     const reorderedIds = arrayMove(tasks, initialIndex, index).map((t) => t.id)
-    reorderTasks({ taskIds: reorderedIds })
+    reorderTasks({ date, taskIds: reorderedIds })
   }
 
   if (tasks.length === 0) {

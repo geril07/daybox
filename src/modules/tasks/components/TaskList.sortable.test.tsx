@@ -1,8 +1,8 @@
 import { render, cleanup } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import { useTaskStore, type Task } from '@/modules/tasks'
-
+import { useTaskStore } from '../store'
+import type { Task } from '../types'
 import { TaskList } from './TaskList'
 
 let idCounter = 0

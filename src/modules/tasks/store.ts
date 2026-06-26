@@ -8,6 +8,11 @@ import { generateId } from '@/shared/id'
 import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
 import { TaskSchema } from './schema'
+import {
+  compactBucket,
+  compactAllBuckets,
+  nextSortOrder,
+} from './store.helpers'
 import type { Task } from './types'
 
 const TaskStateSchema = z.object({
@@ -27,7 +32,7 @@ interface TaskActions {
   updateTask: (id: string, updates: Partial<Task>) => void
   deleteTask: (id: string) => void
   toggleTask: (id: string) => void
-  reorderTasks: (params: { taskIds: string[] }) => void
+  reorderTasks: (params: { date: string | null; taskIds: string[] }) => void
   reassignTasks: (fromGroupId: string, toGroupId: string) => void
   deleteTasksByGroupId: (groupId: string) => void
 }
@@ -58,33 +63,48 @@ export const useTaskStore = create<TaskStore>()(
             )
             return null
           }
+          const taskDate = date !== undefined ? date : null
+          const sortOrder = nextSortOrder(get().tasks, taskDate)
           const task: Task = {
             id: generateId(),
             title: trimmed,
             groupId: groupId || DEFAULT_GROUP_ID,
-            date: date !== undefined ? date : null,
+            date: taskDate,
             pomoEstimate: 0,
             pomoCompleted: 0,
-            sortOrder: 0,
+            sortOrder,
             completed: false,
             completedAt: null,
             createdAt: new Date().toISOString(),
           }
-          set((state) => {
-            const sortOrder = state.tasks.filter(
-              (t) => t.date === (date !== undefined ? date : null),
-            ).length
-            return { tasks: [...state.tasks, { ...task, sortOrder }] }
-          })
+          set({ tasks: [...get().tasks, task] })
           return task
         },
 
         updateTask: (id, updates) =>
-          set((state) => ({
-            tasks: state.tasks.map((t) =>
-              t.id === id ? { ...t, ...updates } : t,
-            ),
-          })),
+          set((state) => {
+            const existing = state.tasks.find((t) => t.id === id)
+            if (!existing) return state
+            const dateChanged =
+              updates.date !== undefined && updates.date !== existing.date
+            if (dateChanged) {
+              const newDate = updates.date as string | null
+              const merged = {
+                ...updates,
+                sortOrder: nextSortOrder(state.tasks, newDate),
+              }
+              return {
+                tasks: state.tasks.map((t) =>
+                  t.id === id ? { ...t, ...merged } : t,
+                ),
+              }
+            }
+            return {
+              tasks: state.tasks.map((t) =>
+                t.id === id ? { ...t, ...updates } : t,
+              ),
+            }
+          }),
 
         deleteTask: (id) => {
           clearFocusIfMatching(id)
@@ -106,10 +126,14 @@ export const useTaskStore = create<TaskStore>()(
             ),
           })),
 
-        reorderTasks: ({ taskIds }) =>
+        reorderTasks: ({ date, taskIds }) =>
           set((state) => {
+            // Phase 1: defensive compact heals duplicates and gaps
+            const compacted = compactBucket(state.tasks, date)
+
+            // Phase 2: redistribute
             const valid = taskIds.filter((id) =>
-              state.tasks.some((t) => t.id === id),
+              compacted.some((t) => t.id === id && t.date === date),
             )
 
             if (valid.length !== taskIds.length) {
@@ -118,10 +142,10 @@ export const useTaskStore = create<TaskStore>()(
               )
             }
 
-            if (valid.length === 0) return { tasks: state.tasks }
+            if (valid.length === 0) return { tasks: compacted }
 
-            const survivingSortOrders = state.tasks
-              .filter((t) => taskIds.includes(t.id))
+            const survivingSortOrders = compacted
+              .filter((t) => valid.includes(t.id))
               .map((t) => t.sortOrder)
               .sort((a, b) => a - b)
 
@@ -130,7 +154,7 @@ export const useTaskStore = create<TaskStore>()(
             )
 
             return {
-              tasks: state.tasks.map((t) =>
+              tasks: compacted.map((t) =>
                 newOrder.has(t.id)
                   ? { ...t, sortOrder: newOrder.get(t.id)! }
                   : t,
@@ -139,11 +163,25 @@ export const useTaskStore = create<TaskStore>()(
           }),
 
         reassignTasks: (fromGroupId, toGroupId) => {
-          set((state) => ({
-            tasks: state.tasks.map((t) =>
+          set((state) => {
+            if (!state.tasks.some((t) => t.groupId === fromGroupId)) {
+              return state
+            }
+            const affectedDates = new Set<string | null>()
+            for (const t of state.tasks) {
+              if (t.groupId === fromGroupId) {
+                affectedDates.add(t.date)
+              }
+            }
+            const rewritten = state.tasks.map((t) =>
               t.groupId === fromGroupId ? { ...t, groupId: toGroupId } : t,
-            ),
-          }))
+            )
+            let result = rewritten
+            for (const date of affectedDates) {
+              result = compactBucket(result, date)
+            }
+            return { tasks: result }
+          })
         },
 
         deleteTasksByGroupId: (groupId) => {
@@ -166,6 +204,10 @@ export const useTaskStore = create<TaskStore>()(
         name: 'daybox-tasks',
         schema: TaskStateSchema,
         init: taskInit,
+        // afterValidate only fires after successful schema validation (see persistence.ts:39)
+        afterValidate: (state) => {
+          state.tasks = compactAllBuckets(state.tasks)
+        },
       }),
     },
   ),
