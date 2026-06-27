@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 
-import { useTheme } from '@/app/theme'
+import { setThemeWithViewTransition, useTheme } from '@/app/theme'
 import type { ThemeModePreference } from '@/app/themes'
 import {
   buildSnapshot,
@@ -159,7 +159,17 @@ export function SettingsDrawer({
               <Select
                 items={presetItems}
                 value={settings.preset}
-                onValueChange={(v) => v && setPreset(v)}
+                onValueChange={(v, details) => {
+                  if (!v) return
+                  if (
+                    details?.reason === 'item-press' &&
+                    details.event instanceof MouseEvent
+                  ) {
+                    setThemeWithViewTransition({ preset: v }, details.event)
+                  } else {
+                    setPreset(v)
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -177,7 +187,20 @@ export function SettingsDrawer({
               <Select
                 items={modeItems}
                 value={settings.mode}
-                onValueChange={(v) => v && setMode(v as ThemeModePreference)}
+                onValueChange={(v, details) => {
+                  if (!v) return
+                  if (
+                    details?.reason === 'item-press' &&
+                    details.event instanceof MouseEvent
+                  ) {
+                    setThemeWithViewTransition(
+                      { mode: v as ThemeModePreference },
+                      details.event,
+                    )
+                  } else {
+                    setMode(v as ThemeModePreference)
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />

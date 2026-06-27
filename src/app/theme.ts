@@ -181,6 +181,60 @@ function getServerSnapshot() {
   }
 }
 
+function enableViewTransitions(): boolean {
+  return (
+    typeof document !== 'undefined' &&
+    'startViewTransition' in document &&
+    window.matchMedia('(prefers-reduced-motion: no-preference)').matches
+  )
+}
+
+export function setThemeWithViewTransition(
+  patch: Partial<ThemeSettings>,
+  event: { clientX: number; clientY: number },
+): void {
+  const { settings } = cachedResolved
+  const nextSettings: ThemeSettings = { ...settings, ...patch }
+
+  if (!enableViewTransitions()) {
+    setTheme(nextSettings)
+    return
+  }
+
+  const { clientX: x, clientY: y } = event
+  const endRadius = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y),
+  )
+  const clipPathFrom = `circle(0px at ${x}px ${y}px)`
+  const clipPathTo = `circle(${endRadius}px at ${x}px ${y}px)`
+
+  const resolved = resolveTheme(nextSettings)
+
+  const transition = document.startViewTransition(() => {
+    cachedSettings = resolved.settings
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cachedSettings))
+    }
+    applyTheme(resolved.tokens, resolved.effectiveMode)
+    manageSystemListener(cachedSettings.mode)
+    cachedResolved = resolved
+    notify()
+  })
+
+  transition.ready.then(() => {
+    document.documentElement.animate(
+      { clipPath: [clipPathFrom, clipPathTo] },
+      {
+        duration: 300,
+        easing: 'ease-in',
+        fill: 'forwards',
+        pseudoElement: '::view-transition-new(root)',
+      },
+    )
+  })
+}
+
 export function setTheme(settings: ThemeSettings): void {
   const resolved = resolveTheme(settings)
   if (
