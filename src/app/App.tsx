@@ -19,6 +19,7 @@ import { registerShortcuts } from '@/shared/keyboard'
 import { Button, Sheet, SheetContent } from '@/shared/ui'
 
 import { Sidebar } from './Sidebar'
+import { ViewTabs } from './ViewTabs'
 
 export function App() {
   const [view, setView] = useState<View>('today')
@@ -79,11 +80,6 @@ export function App() {
 
   const sidebarNav = (
     <Sidebar
-      selectedView={view}
-      onSelectView={(v) => {
-        setView(v)
-        setSidebarOpen(false)
-      }}
       selectedGroupId={selectedGroupId}
       onSelectGroup={(id) => {
         setSelectedGroupId(id)
@@ -184,7 +180,8 @@ export function App() {
         <div className="flex min-h-0 flex-1 flex-col">
           <main className="flex-1 scrollbar-gutter-stable overflow-y-auto">
             <div className="container mx-auto w-full max-w-[680px] px-4 md:px-7">
-              <div className="task-list-area py-1 pb-10">
+              <ViewTabs value={view} onChange={setView} />
+              <div className="task-list-area py-1 pb-4">
                 <AddTaskRow
                   defaultDate={defaultDate}
                   defaultGroupId={selectedGroupId}

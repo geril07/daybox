@@ -7,7 +7,6 @@ import { useTaskStore } from '@/modules/tasks'
 import { useTimerStore } from '@/modules/timer'
 
 import { Sidebar } from './Sidebar'
-import { sidebarViews } from './sidebarViews'
 
 beforeEach(() => {
   useTaskStore.setState({ tasks: [] })
@@ -77,75 +76,9 @@ function colorDotFor(name: string): HTMLElement {
   return dot as HTMLElement
 }
 
-describe('sidebar views', () => {
-  it('includes the five view items in expected order', () => {
-    const labels = sidebarViews.map((v) => v.label)
-    expect(labels).toEqual([
-      'Today',
-      'Tomorrow',
-      'This Week',
-      'Later',
-      'Unscheduled',
-    ])
-  })
-
-  it('each view has a unique value', () => {
-    const values = sidebarViews.map((v) => v.value)
-    expect(new Set(values).size).toBe(values.length)
-  })
-})
-
 describe('Sidebar navigation', () => {
-  it('renders the Views section with all five items', () => {
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
-
-    for (const item of sidebarViews) {
-      expect(screen.getByText(item.label)).toBeTruthy()
-    }
-  })
-
-  it('highlights the active view', () => {
-    const { rerender } = render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
-
-    const todayBtn = screen.getByText('Today').closest('button')!
-    expect(todayBtn.className).toContain('bg-muted')
-
-    rerender(
-      <Sidebar
-        selectedView="tomorrow"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
-
-    const tomorrowBtn = screen.getByText('Tomorrow').closest('button')!
-    expect(tomorrowBtn.className).toContain('bg-muted')
-  })
-
   it('shows the Groups section with the single group and add affordance when only one group exists', () => {
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     expect(screen.getByText('Groups')).toBeTruthy()
     expect(screen.queryByText('All groups')).toBeNull()
@@ -172,14 +105,7 @@ describe('Sidebar navigation', () => {
       ],
     })
 
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     expect(screen.getByText('Groups')).toBeTruthy()
     expect(screen.getByText('All groups')).toBeTruthy()
@@ -205,14 +131,7 @@ describe('Sidebar navigation', () => {
       ],
     })
 
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId="work"
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId="work" onSelectGroup={() => {}} />)
 
     const allBtn = screen.getByText('All groups').closest('button')!
     const workRow = rowFor('Work')
@@ -220,24 +139,6 @@ describe('Sidebar navigation', () => {
     expect(allBtn.className).toMatch(/(^|\s)text-muted-foreground($|\s)/)
     expect(workRow.className).toMatch(/(^|\s)bg-muted($|\s)/)
     expect(workRow.className).toMatch(/(^|\s)text-foreground($|\s)/)
-  })
-
-  it('calls onSelectView when a view item is clicked', async () => {
-    const user = userEvent.setup()
-    let selected = ''
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={(v) => {
-          selected = v
-        }}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
-
-    await user.click(screen.getByText('Unscheduled'))
-    expect(selected).toBe('unscheduled')
   })
 
   it('calls onSelectGroup when a group item is clicked', async () => {
@@ -262,8 +163,6 @@ describe('Sidebar navigation', () => {
     let selected: string | null = 'initial'
     render(
       <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
         selectedGroupId={null}
         onSelectGroup={(id) => {
           selected = id
@@ -280,14 +179,7 @@ describe('Sidebar navigation', () => {
 
   it('renders the group color dot and actions menu button', () => {
     seedGroup('Work')
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     expect(colorDotFor('Work')).toBeTruthy()
     expect(menuButtonFor('Work')).toBeTruthy()
@@ -297,14 +189,7 @@ describe('Sidebar navigation', () => {
 describe('Sidebar group CRUD', () => {
   it('shows the add input and buttons when clicking the title-row +', async () => {
     const user = userEvent.setup()
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: 'Add group' }))
 
@@ -319,14 +204,7 @@ describe('Sidebar group CRUD', () => {
 
   it('creates a group from the add input on Enter', async () => {
     const user = userEvent.setup()
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: 'Add group' }))
     const input = screen.getByPlaceholderText('Add group...')
@@ -339,14 +217,7 @@ describe('Sidebar group CRUD', () => {
 
   it('creates a group from the add input on blur when non-empty', async () => {
     const user = userEvent.setup()
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: 'Add group' }))
     const input = screen.getByPlaceholderText('Add group...')
@@ -359,14 +230,7 @@ describe('Sidebar group CRUD', () => {
 
   it('does not create a group on blur when the name is empty', async () => {
     const user = userEvent.setup()
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: 'Add group' }))
     const input = screen.getByPlaceholderText('Add group...')
@@ -379,14 +243,7 @@ describe('Sidebar group CRUD', () => {
 
   it('closes the add input on Escape without creating a group', async () => {
     const user = userEvent.setup()
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: 'Add group' }))
     const input = screen.getByPlaceholderText('Add group...')
@@ -400,14 +257,7 @@ describe('Sidebar group CRUD', () => {
 
   it('creates a group when clicking the success button', async () => {
     const user = userEvent.setup()
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: 'Add group' }))
     const input = screen.getByPlaceholderText('Add group...')
@@ -421,14 +271,7 @@ describe('Sidebar group CRUD', () => {
 
   it('closes without creating when clicking the cancel button', async () => {
     const user = userEvent.setup()
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await user.click(screen.getByRole('button', { name: 'Add group' }))
     const input = screen.getByPlaceholderText('Add group...')
@@ -444,14 +287,7 @@ describe('Sidebar group CRUD', () => {
   it('opens the color popover when clicking the color dot', async () => {
     const user = userEvent.setup()
     seedGroup('Work')
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await user.click(colorDotFor('Work'))
 
@@ -461,14 +297,7 @@ describe('Sidebar group CRUD', () => {
   it('changes group color when clicking a swatch', async () => {
     const user = userEvent.setup()
     const work = seedGroup('Work')
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await user.click(colorDotFor('Work'))
 
@@ -488,14 +317,7 @@ describe('Sidebar group CRUD', () => {
   it('opens the actions menu and turns rename into an inline input', async () => {
     const user = userEvent.setup()
     seedGroup('Work')
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Rename'))
@@ -519,14 +341,7 @@ describe('Sidebar group CRUD', () => {
   it('saves rename when clicking the confirm button', async () => {
     const user = userEvent.setup()
     seedGroup('Work')
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Rename'))
@@ -546,14 +361,7 @@ describe('Sidebar group CRUD', () => {
   it('cancels rename when clicking the cancel button', async () => {
     const user = userEvent.setup()
     seedGroup('Work')
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Rename'))
@@ -574,14 +382,7 @@ describe('Sidebar group CRUD', () => {
   it('cancels rename on Escape', async () => {
     const user = userEvent.setup()
     seedGroup('Work')
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Rename'))
@@ -601,14 +402,7 @@ describe('Sidebar group CRUD', () => {
   it('saves rename on blur when name changed', async () => {
     const user = userEvent.setup()
     seedGroup('Work')
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Rename'))
@@ -630,8 +424,6 @@ describe('Sidebar group CRUD', () => {
     let selected: string | null = 'before-test'
     render(
       <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
         selectedGroupId={null}
         onSelectGroup={(id) => {
           selected = id
@@ -656,14 +448,7 @@ describe('Sidebar group delete flow', () => {
   it('deletes an empty group immediately without opening a popover', async () => {
     const user = userEvent.setup()
     const work = seedGroup('Work')
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
@@ -681,14 +466,7 @@ describe('Sidebar group delete flow', () => {
     seedTask('Task A', work.id)
     seedTask('Task B', work.id)
     seedTask('Task C', work.id)
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
@@ -717,14 +495,7 @@ describe('Sidebar group delete flow', () => {
     const user = userEvent.setup()
     const work = seedGroup('Work')
     seedTask('Solo', work.id)
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
@@ -736,14 +507,7 @@ describe('Sidebar group delete flow', () => {
     const user = userEvent.setup()
     const work = seedGroup('Work')
     const task = seedTask('Task A', work.id)
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
@@ -762,14 +526,7 @@ describe('Sidebar group delete flow', () => {
     const user = userEvent.setup()
     const work = seedGroup('Work')
     const task = seedTask('Task A', work.id)
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
@@ -787,14 +544,7 @@ describe('Sidebar group delete flow', () => {
     const user = userEvent.setup()
     const work = seedGroup('Work')
     const task = seedTask('Task A', work.id)
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
@@ -819,14 +569,7 @@ describe('Sidebar group delete flow', () => {
       useTaskStore.getState(),
       'deleteTasksByGroupId',
     )
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
@@ -845,14 +588,7 @@ describe('Sidebar group delete flow', () => {
   it('does not delete the default group when Delete is selected', async () => {
     seedGroup('Work')
     const user = userEvent.setup()
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'General')
     const deleteItem = screen.getByRole('menuitem', { name: 'Delete' })
@@ -870,14 +606,7 @@ describe('Sidebar group delete — focused-task cascade', () => {
     const work = seedGroup('Work')
     const task = seedTask('Focus me', work.id)
     useTimerStore.getState().setFocusedTaskId(task.id)
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
@@ -895,14 +624,7 @@ describe('Sidebar group delete — focused-task cascade', () => {
     const work = seedGroup('Work')
     const task = seedTask('Focus me', work.id)
     useTimerStore.getState().setFocusedTaskId(task.id)
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
@@ -921,14 +643,7 @@ describe('Sidebar group delete — focused-task cascade', () => {
     const focused = seedTask('Stay focused', home.id)
     seedTask('Other task', work.id)
     useTimerStore.getState().setFocusedTaskId(focused.id)
-    render(
-      <Sidebar
-        selectedView="today"
-        onSelectView={() => {}}
-        selectedGroupId={null}
-        onSelectGroup={() => {}}
-      />,
-    )
+    render(<Sidebar selectedGroupId={null} onSelectGroup={() => {}} />)
 
     await openMenuFor(user, 'Work')
     await user.click(screen.getByText('Delete'))
