@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-07-11
+goal: Make URLs in task titles clickable across the planner, action sheet, and
+  timer bar

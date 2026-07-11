@@ -15,6 +15,7 @@ import {
 } from '@/shared/notifications'
 import {
   Button,
+  LinkifiedText,
   Menu,
   MenuTrigger,
   MenuContent,
@@ -319,7 +320,11 @@ export function TimerBar() {
               focusedTask ? 'text-fg-2' : 'text-fg-3',
             )}
           >
-            {focusedTask ? focusedTask.title : 'No task focused'}
+            {focusedTask ? (
+              <LinkifiedText text={focusedTask.title} />
+            ) : (
+              'No task focused'
+            )}
           </span>
           {focusedTaskId && (
             <Button

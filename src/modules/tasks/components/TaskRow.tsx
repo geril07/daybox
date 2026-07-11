@@ -13,6 +13,7 @@ import { useTimerStore } from '@/modules/timer'
 import { isOverdue, formatDate, getTomorrow } from '@/shared/dates'
 import {
   Button,
+  LinkifiedText,
   NumberInput,
   Popover,
   PopoverTrigger,
@@ -136,7 +137,7 @@ export function TaskRow({ task, dragHandleRef, isDragSource }: TaskRowProps) {
             )}
             onClick={handleStartEdit}
           >
-            {task.title}
+            <LinkifiedText text={task.title} />
           </span>
         )}
       </div>

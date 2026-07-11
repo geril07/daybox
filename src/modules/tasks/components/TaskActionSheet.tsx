@@ -1,6 +1,7 @@
 import { useTimerStore } from '@/modules/timer'
 import {
   Button,
+  LinkifiedText,
   Sheet,
   SheetContent,
   SheetHeader,
@@ -35,7 +36,9 @@ export function TaskActionSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom">
         <SheetHeader>
-          <SheetTitle>{task.title}</SheetTitle>
+          <SheetTitle>
+            <LinkifiedText text={task.title} />
+          </SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-1 px-2 pb-4">
           <Button
