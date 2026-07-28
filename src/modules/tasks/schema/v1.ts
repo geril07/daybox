@@ -8,7 +8,7 @@ export const TaskV1Schema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullable(),
-  pomoEstimate: z.number().int().min(0).max(99),
+  pomoEstimate: z.number().min(0).max(99),
   pomoCompleted: z.number().int().min(0).max(99),
   sortOrder: z.number(),
   completed: z.boolean(),

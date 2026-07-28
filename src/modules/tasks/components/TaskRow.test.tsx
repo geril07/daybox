@@ -318,6 +318,20 @@ describe('TaskRow', () => {
     expect(updated?.pomoCompleted).toBe(4)
   })
 
+  it('setting a fractional estimate preserves pomoCompleted', async () => {
+    const user = userEvent.setup()
+    const task = createMockTask({ pomoEstimate: 3, pomoCompleted: 1 })
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+    await openPomoPopover(user)
+    const estimateInput = visibleInput('3')
+    await user.clear(estimateInput)
+    fireEvent.change(estimateInput, { target: { value: '2.5' } })
+    const updated = useTaskStore.getState().tasks[0]
+    expect(updated?.pomoEstimate).toBe(2.5)
+    expect(updated?.pomoCompleted).toBe(1)
+  })
+
   it('lowering a high estimate does not change pomoCompleted', async () => {
     const user = userEvent.setup()
     const task = createMockTask({ pomoEstimate: 20, pomoCompleted: 14 })

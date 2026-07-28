@@ -675,6 +675,34 @@ describe('Task Store - rehydrate compaction (Section 7)', () => {
     ])
   })
 
+  it('rehydrate keeps tasks when pomoEstimate is fractional', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const TaskStateSchema = z.object({
+      tasks: z.array(TaskSchema),
+    })
+    const onRehydrate = createValidatedRehydrate<{ tasks: Task[] }>({
+      name: 'test',
+      schema: TaskStateSchema,
+      init: { tasks: [] },
+      afterValidate: (state) => {
+        state.tasks = compactAllBuckets(state.tasks)
+      },
+    })
+    const postRehydrate = onRehydrate(undefined as unknown as { tasks: Task[] })
+
+    const tasks: Task[] = [
+      makeTask({ id: 'a', pomoEstimate: 2.5, sortOrder: 0 }),
+      makeTask({ id: 'b', pomoEstimate: 1, sortOrder: 1 }),
+    ]
+    const state = { tasks }
+    postRehydrate!(state, undefined)
+
+    expect(state.tasks).toHaveLength(2)
+    expect(state.tasks[0]?.pomoEstimate).toBe(2.5)
+    expect(warnSpy).not.toHaveBeenCalled()
+    warnSpy.mockRestore()
+  })
+
   it('schema validation failure does not invoke afterValidate', () => {
     const afterValidate = vi.fn()
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
