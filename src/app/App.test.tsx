@@ -1,4 +1,4 @@
-import { cleanup, render, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { App } from './App'
@@ -6,6 +6,13 @@ import { App } from './App'
 const serverAuth = vi.hoisted(() => ({
   getAuthStatus: vi.fn(),
 }))
+
+type AudioContextMockApi = {
+  instances: unknown[]
+  reset: () => void
+}
+
+const getAudioContextMock = () => AudioContext as unknown as AudioContextMockApi
 
 vi.mock('@/shared/google-drive/server-auth', () => ({
   startAuth: vi.fn(),
@@ -24,6 +31,7 @@ vi.mock('@/modules/google-drive', () => ({
 
 beforeEach(() => {
   cleanup()
+  getAudioContextMock().reset()
   serverAuth.getAuthStatus.mockReset().mockResolvedValue({
     connected: false,
     email: null,
@@ -71,5 +79,27 @@ describe('App shell boot hydration', () => {
     await waitFor(() => {
       expect(window.location.search).toBe('')
     })
+  })
+
+  it('does not unlock audio for untrusted synthetic interactions', () => {
+    render(<App />)
+
+    fireEvent(window, new Event('pointerdown'))
+    fireEvent(window, new KeyboardEvent('keydown', { key: 'a' }))
+
+    expect(getAudioContextMock().instances).toHaveLength(0)
+  })
+
+  it('unlocks audio for a trusted pointer interaction', () => {
+    const addEventListenerSpy = vi.spyOn(window, 'addEventListener')
+    render(<App />)
+
+    const pointerListener = addEventListenerSpy.mock.calls.find(
+      ([type]) => type === 'pointerdown',
+    )?.[1]
+    expect(pointerListener).toEqual(expect.any(Function))
+    ;(pointerListener as EventListener)({ isTrusted: true } as Event)
+
+    expect(getAudioContextMock().instances).toHaveLength(1)
   })
 })

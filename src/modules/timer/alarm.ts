@@ -3,25 +3,81 @@ import { useTimerStore } from './store'
 type SoundName = 'bell' | 'digital' | 'gentle' | 'ping'
 
 let audioContext: AudioContext | null = null
+let audioUnlocked = false
+let resumePromise: Promise<boolean> | null = null
 
-function getAudioContext(): AudioContext {
-  if (!audioContext) {
+function createAudioContext(): AudioContext | null {
+  if (audioContext) return audioContext
+  if (typeof AudioContext === 'undefined') return null
+
+  try {
     audioContext = new AudioContext()
+    return audioContext
+  } catch {
+    return null
   }
-  if (audioContext.state === 'suspended') {
-    audioContext.resume()
+}
+
+async function resumeContext(ctx: AudioContext): Promise<boolean> {
+  if (ctx.state === 'running') return true
+  if (ctx.state === 'closed') return false
+
+  try {
+    await ctx.resume()
+  } catch {
+    return false
+  }
+
+  return (ctx.state as AudioContextState) === 'running'
+}
+
+function resumeAudioContext(ctx: AudioContext): Promise<boolean> {
+  if (resumePromise) return resumePromise
+
+  const pending = resumeContext(ctx)
+  resumePromise = pending
+  void pending.then(() => {
+    if (resumePromise === pending) resumePromise = null
+  })
+  return pending
+}
+
+/**
+ * Attempts to unlock Web Audio from a trusted user interaction.
+ *
+ * This function deliberately owns context creation and resumption. Interval
+ * alarms must not call it because a blocked alarm must never leave audio nodes
+ * queued for a later user gesture.
+ */
+export async function unlockAudio(): Promise<boolean> {
+  const ctx = createAudioContext()
+  if (!ctx) return false
+
+  if (ctx.state === 'running') {
+    audioUnlocked = true
+    return true
+  }
+
+  const ready = await resumeAudioContext(ctx)
+  if (ready) audioUnlocked = true
+  return ready
+}
+
+function getRunningAudioContext(): AudioContext | null {
+  if (!audioUnlocked || !audioContext || audioContext.state !== 'running') {
+    return null
   }
   return audioContext
 }
 
 function playTone(
+  ctx: AudioContext,
   frequency: number,
   duration: number,
   type: OscillatorType,
   volume: number,
   delay: number,
 ): void {
-  const ctx = getAudioContext()
   const osc = ctx.createOscillator()
   const gain = ctx.createGain()
   osc.type = type
@@ -38,13 +94,13 @@ function playTone(
 }
 
 function playSweep(
+  ctx: AudioContext,
   fromHz: number,
   toHz: number,
   duration: number,
   volume: number,
   delay: number = 0,
 ): void {
-  const ctx = getAudioContext()
   const osc = ctx.createOscillator()
   const gain = ctx.createGain()
   osc.type = 'sine'
@@ -73,22 +129,52 @@ export function playAlarm(
   sound: SoundName,
   volume: number,
   repeat: number,
-): void {
-  const def = soundDefinitions[sound]
-  for (let r = 0; r < repeat; r++) {
-    const baseDelay = r * 0.35
-    def.freqs.forEach((freq, i) => {
-      playTone(freq, def.duration, def.type, volume, baseDelay + i * 0.12)
-    })
+): boolean {
+  const ctx = getRunningAudioContext()
+  if (!ctx) return false
+
+  try {
+    const def = soundDefinitions[sound]
+    for (let r = 0; r < repeat; r++) {
+      const baseDelay = r * 0.35
+      def.freqs.forEach((freq, i) => {
+        playTone(
+          ctx,
+          freq,
+          def.duration,
+          def.type,
+          volume,
+          baseDelay + i * 0.12,
+        )
+      })
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function playClickAfterUnlock(
+  fromHz: number,
+  toHz: number,
+): Promise<void> {
+  try {
+    if (!(await unlockAudio())) return
+
+    const ctx = getRunningAudioContext()
+    if (!ctx) return
+    playSweep(ctx, fromHz, toHz, 0.06, 0.15)
+  } catch {
+    // Audio feedback must never reject a user gesture handler.
   }
 }
 
 export function playStartClick(): void {
-  playSweep(800, 1200, 0.06, 0.15)
+  void playClickAfterUnlock(800, 1200)
 }
 
 export function playPauseClick(): void {
-  playSweep(1200, 800, 0.06, 0.15)
+  void playClickAfterUnlock(1200, 800)
 }
 
 export function togglePlayPauseWithClick(): void {

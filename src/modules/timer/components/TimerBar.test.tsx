@@ -2,8 +2,9 @@ import { render, cleanup, fireEvent, screen } from '@testing-library/react'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 import { useGroupStore } from '@/modules/groups'
+import { useTaskStore } from '@/modules/tasks'
 
-import { useTaskStore } from '../../tasks/store'
+import { unlockAudio } from '../alarm'
 import { DEFAULT_TIMER_SETTINGS, useTimerStore } from '../store'
 import { TimerBar } from './TimerBar'
 
@@ -15,6 +16,17 @@ type NotificationMock = typeof Notification & {
 }
 
 const getNotificationMock = () => Notification as unknown as NotificationMock
+
+type AudioContextMockApi = {
+  initialState: AudioContextState
+  oscillatorBehavior: 'create' | 'throw'
+  instances: Array<{
+    state: AudioContextState
+    oscillators: unknown[]
+  }>
+}
+
+const getAudioContextMock = () => AudioContext as unknown as AudioContextMockApi
 
 beforeEach(() => {
   useTimerStore.setState({
@@ -138,6 +150,27 @@ describe('TimerBar', () => {
     expect(focusSpy).toHaveBeenCalledTimes(1)
   })
 
+  it('continues interval completion when audio graph creation throws', async () => {
+    const audio = getAudioContextMock()
+    const notification = getNotificationMock()
+    notification.permission = 'granted'
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'hidden',
+    })
+    await expect(unlockAudio()).resolves.toBe(true)
+    audio.oscillatorBehavior = 'throw'
+    const task = createTask()
+    useTaskStore.setState({ tasks: [task] })
+    fireFocusComplete(task.id)
+
+    render(<TimerBar />)
+
+    expect(useTimerStore.getState().phase).toBe('shortBreak')
+    expect(useTaskStore.getState().tasks[0]?.pomoCompleted).toBe(1)
+    expect(notification.instances).toHaveLength(1)
+  })
+
   describe('clear focus button', () => {
     it('is hidden when focusedTaskId is null', () => {
       render(<TimerBar />)
@@ -192,5 +225,25 @@ describe('TimerBar', () => {
       expect(state.startedAt).toBeGreaterThan(0)
       expect(state.sessionPomoCount).toBe(2)
     })
+  })
+
+  it('does not replay an interval alarm after audio unlocks later', async () => {
+    const audio = getAudioContextMock()
+    await expect(unlockAudio()).resolves.toBe(true)
+    const context = audio.instances[0]
+    expect(context).toBeDefined()
+    context!.state = 'suspended'
+    audio.oscillatorBehavior = 'create'
+    const task = createTask()
+    useTaskStore.setState({ tasks: [task] })
+    fireFocusComplete(task.id)
+
+    render(<TimerBar />)
+
+    expect(useTimerStore.getState().phase).toBe('shortBreak')
+    const oscillatorCount = context?.oscillators.length ?? 0
+
+    await expect(unlockAudio()).resolves.toBe(true)
+    expect(context?.oscillators).toHaveLength(oscillatorCount)
   })
 })

@@ -13,7 +13,11 @@ import {
   type View,
 } from '@/modules/planner'
 import { AddTaskRow } from '@/modules/tasks'
-import { TimerBar, togglePlayPauseWithClick } from '@/modules/timer'
+import {
+  TimerBar,
+  togglePlayPauseWithClick,
+  unlockAudio,
+} from '@/modules/timer'
 import { getAuthStatus } from '@/shared/google-drive/server-auth'
 import { registerShortcuts } from '@/shared/keyboard'
 import { Button, Sheet, SheetContent } from '@/shared/ui'
@@ -31,6 +35,20 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   const defaultDate = defaultDateForView(view, weekStartDay, browseDate)
+
+  useEffect(() => {
+    const handleInteraction = (event: Event) => {
+      if (!event.isTrusted) return
+      void unlockAudio()
+    }
+
+    window.addEventListener('pointerdown', handleInteraction)
+    window.addEventListener('keydown', handleInteraction)
+    return () => {
+      window.removeEventListener('pointerdown', handleInteraction)
+      window.removeEventListener('keydown', handleInteraction)
+    }
+  }, [])
 
   useEffect(() => {
     const cleanup = registerShortcuts({
