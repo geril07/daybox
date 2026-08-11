@@ -3,7 +3,9 @@
 ## Purpose
 
 Defines the shared UI component layer — shadcn v4 wrappers around `@base-ui/react` primitives housed in `src/shared/ui/`. Governs how components are added, styled, themed, and consumed across all features.
+
 ## Requirements
+
 ### Requirement: CLI-originated components
 
 All shared UI components SHALL be added via `npx shadcn@latest add`, not hand-written or copied.
@@ -112,4 +114,3 @@ links.
 - **THEN** the table contains a row whose `Component` is `LinkifiedText`
 - **AND** the row's `Purpose` describes rendering text with auto-detected URLs as
   clickable external links
-

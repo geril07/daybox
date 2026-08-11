@@ -22,6 +22,13 @@ export const TimerStateV1Schema = z.object({
   sessionPomoCount: z.number().int().min(0),
   isRunning: z.boolean(),
   focusedTaskId: z.string().nullable(),
+  intervalDurationMin: z
+    .number()
+    .int()
+    .min(1)
+    .max(180)
+    .nullable()
+    .default(null),
   settings: TimerSettingsV1Schema,
 })
 

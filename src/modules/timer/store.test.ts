@@ -5,6 +5,9 @@ import {
   getNextPhase,
   DEFAULT_TIMER_SETTINGS,
   timerStorage,
+  resolveIntervalDurationMin,
+  minDurationMinForElapsed,
+  isValidIntervalDurationMin,
 } from '@/modules/timer'
 
 beforeEach(() => {
@@ -17,6 +20,7 @@ beforeEach(() => {
     sessionPomoCount: 0,
     isRunning: false,
     focusedTaskId: null,
+    intervalDurationMin: null,
     settings: DEFAULT_TIMER_SETTINGS,
   })
   timerStorage.flush()
@@ -302,6 +306,116 @@ describe('getNextPhase', () => {
 
   it('longBreak -> focus', () => {
     expect(getNextPhase('longBreak', 1, 4)).toBe('focus')
+  })
+})
+
+describe('interval duration override', () => {
+  it('setIntervalDurationMin sets a one-shot override without touching settings', () => {
+    useTimerStore.getState().setIntervalDurationMin(45)
+    const state = useTimerStore.getState()
+    expect(state.intervalDurationMin).toBe(45)
+    expect(state.settings.focusDuration).toBe(
+      DEFAULT_TIMER_SETTINGS.focusDuration,
+    )
+  })
+
+  it('clears to null when set to the phase default', () => {
+    useTimerStore.getState().setIntervalDurationMin(45)
+    useTimerStore.getState().setIntervalDurationMin(25)
+    expect(useTimerStore.getState().intervalDurationMin).toBeNull()
+  })
+
+  it('clears when set to null', () => {
+    useTimerStore.getState().setIntervalDurationMin(40)
+    useTimerStore.getState().setIntervalDurationMin(null)
+    expect(useTimerStore.getState().intervalDurationMin).toBeNull()
+  })
+
+  it('rejects values at or below elapsed', () => {
+    useTimerStore.setState({ elapsed: 10 * 60_000 })
+    useTimerStore.getState().setIntervalDurationMin(10)
+    expect(useTimerStore.getState().intervalDurationMin).toBeNull()
+    useTimerStore.getState().setIntervalDurationMin(5)
+    expect(useTimerStore.getState().intervalDurationMin).toBeNull()
+  })
+
+  it('allows values strictly above elapsed when paused', () => {
+    useTimerStore.setState({ elapsed: 10 * 60_000 })
+    useTimerStore.getState().setIntervalDurationMin(11)
+    expect(useTimerStore.getState().intervalDurationMin).toBe(11)
+  })
+
+  it('rejects out-of-bounds for phase', () => {
+    useTimerStore.setState({ phase: 'shortBreak' })
+    useTimerStore.getState().setIntervalDurationMin(90)
+    expect(useTimerStore.getState().intervalDurationMin).toBeNull()
+  })
+
+  it('clears on advancePhase', () => {
+    useTimerStore.setState({ intervalDurationMin: 40 })
+    useTimerStore.getState().advancePhase({ longBreakInterval: 4 })
+    expect(useTimerStore.getState().intervalDurationMin).toBeNull()
+  })
+
+  it('clears on setPhase', () => {
+    useTimerStore.setState({ intervalDurationMin: 40 })
+    useTimerStore.getState().setPhase('shortBreak')
+    expect(useTimerStore.getState().intervalDurationMin).toBeNull()
+  })
+
+  it('clears on resetSession', () => {
+    useTimerStore.setState({ intervalDurationMin: 40, sessionPomoCount: 2 })
+    useTimerStore.getState().resetSession()
+    expect(useTimerStore.getState().intervalDurationMin).toBeNull()
+  })
+
+  it('keeps override on reset (interval restart)', () => {
+    useTimerStore.setState({
+      intervalDurationMin: 40,
+      elapsed: 5000,
+      isRunning: true,
+      startedAt: Date.now(),
+    })
+    useTimerStore.getState().reset()
+    const state = useTimerStore.getState()
+    expect(state.intervalDurationMin).toBe(40)
+    expect(state.elapsed).toBe(0)
+    expect(state.isRunning).toBe(false)
+  })
+
+  it('resolveIntervalDurationMin uses override or phase default', () => {
+    expect(
+      resolveIntervalDurationMin('focus', DEFAULT_TIMER_SETTINGS, null),
+    ).toBe(25)
+    expect(
+      resolveIntervalDurationMin('focus', DEFAULT_TIMER_SETTINGS, 15),
+    ).toBe(15)
+    expect(
+      resolveIntervalDurationMin('shortBreak', DEFAULT_TIMER_SETTINGS, null),
+    ).toBe(5)
+  })
+
+  it('minDurationMinForElapsed and isValidIntervalDurationMin guard edge cases', () => {
+    expect(minDurationMinForElapsed(0)).toBe(1)
+    expect(minDurationMinForElapsed(10 * 60_000)).toBe(11)
+    expect(minDurationMinForElapsed(10 * 60_000 + 1)).toBe(11)
+    expect(isValidIntervalDurationMin(10, 'focus', 10 * 60_000)).toBe(false)
+    expect(isValidIntervalDurationMin(11, 'focus', 10 * 60_000)).toBe(true)
+    expect(isValidIntervalDurationMin(90, 'shortBreak', 0)).toBe(false)
+  })
+
+  it('persists and rehydrates intervalDurationMin', async () => {
+    useTimerStore.getState().setIntervalDurationMin(40)
+    timerStorage.flush()
+    useTimerStore.setState({ intervalDurationMin: null })
+    await useTimerStore.persist.rehydrate()
+    expect(useTimerStore.getState().intervalDurationMin).toBe(40)
+  })
+
+  it('backfills missing intervalDurationMin on rehydrate', async () => {
+    writePersistedTimerState(DEFAULT_TIMER_SETTINGS)
+    await useTimerStore.persist.rehydrate()
+    expect(useTimerStore.getState().intervalDurationMin).toBeNull()
   })
 })
 

@@ -25,8 +25,10 @@ import {
 import { cn } from '@/shared/utils/cn'
 
 import { playAlarm, togglePlayPauseWithClick } from '../alarm'
+import { resolveIntervalDurationMin } from '../duration'
 import { useTimerStore } from '../store'
 import type { TimerPhase } from '../types'
+import { IntervalDurationPopover } from './IntervalDurationPopover'
 
 export function TimerBar() {
   const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
@@ -41,6 +43,7 @@ export function TimerBar() {
   const startedAt = useTimerStore((s) => s.startedAt)
   const elapsed = useTimerStore((s) => s.elapsed)
   const sessionPomoCount = useTimerStore((s) => s.sessionPomoCount)
+  const intervalDurationMin = useTimerStore((s) => s.intervalDurationMin)
   const setFocusedTaskId = useTimerStore((s) => s.setFocusedTaskId)
   const reset = useTimerStore((s) => s.reset)
   const resetSession = useTimerStore((s) => s.resetSession)
@@ -51,13 +54,11 @@ export function TimerBar() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const alarmPlayedRef = useRef(false)
 
-  const durationMap: Record<string, number> = {
-    focus: settings.focusDuration,
-    shortBreak: settings.shortBreakDuration,
-    longBreak: settings.longBreakDuration,
-  }
-
-  const durationMinutes = durationMap[phase] || settings.focusDuration
+  const durationMinutes = resolveIntervalDurationMin(
+    phase,
+    settings,
+    intervalDurationMin,
+  )
   const durationMs = durationMinutes * 60 * 1000
   const remainingMs = Math.max(0, durationMs - elapsed)
   const remainingSeconds = Math.ceil(remainingMs / 1000)
@@ -66,6 +67,8 @@ export function TimerBar() {
   const progress = 1 - remainingMs / durationMs
 
   const isIdle = !isRunning && startedAt === null && elapsed === 0
+  const isCustomDuration = intervalDurationMin !== null
+  const clockDisplay = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 
   useEffect(() => {
     if (isRunning) {
@@ -239,15 +242,12 @@ export function TimerBar() {
           />
           <div className="grid grid-cols-3">
             <div className="flex items-center gap-3">
-              <span
-                className={cn(
-                  'min-w-20 shrink-0 font-mono text-3xl leading-none font-medium tracking-wide tabular-nums transition-colors duration-300',
-                  isIdle ? 'text-fg-3' : 'text-fg',
-                )}
-              >
-                {String(minutes).padStart(2, '0')}:
-                {String(seconds).padStart(2, '0')}
-              </span>
+              <IntervalDurationPopover
+                display={clockDisplay}
+                isIdle={isIdle}
+                isCustom={isCustomDuration}
+                disabled={isRunning}
+              />
             </div>
             <div className="mx-auto flex items-center gap-1">
               <Button

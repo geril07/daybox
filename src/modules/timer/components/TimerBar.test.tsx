@@ -1,4 +1,5 @@
 import { render, cleanup, fireEvent, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 import { useGroupStore } from '@/modules/groups'
@@ -36,6 +37,7 @@ beforeEach(() => {
     sessionPomoCount: 0,
     isRunning: false,
     focusedTaskId: null,
+    intervalDurationMin: null,
     settings: DEFAULT_TIMER_SETTINGS,
   })
   const notification = getNotificationMock()
@@ -224,6 +226,99 @@ describe('TimerBar', () => {
       expect(state.isRunning).toBe(true)
       expect(state.startedAt).toBeGreaterThan(0)
       expect(state.sessionPomoCount).toBe(2)
+    })
+  })
+
+  describe('interval duration adjuster', () => {
+    async function openAdjuster(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(
+        screen.getByRole('button', { name: 'Adjust interval duration' }),
+      )
+    }
+
+    function durationInput(): HTMLInputElement {
+      const matches = screen
+        .getAllByDisplayValue(
+          String(useTimerStore.getState().settings.focusDuration),
+        )
+        .filter((el) => (el as HTMLInputElement).type !== 'hidden')
+      return matches[0] as HTMLInputElement
+    }
+
+    it('opens when idle and sets duration via NumberInput', async () => {
+      const user = userEvent.setup()
+      render(<TimerBar />)
+      await openAdjuster(user)
+      expect(screen.getByText('This interval only')).toBeTruthy()
+      const input = durationInput()
+      await user.clear(input)
+      await user.type(input, '45')
+      expect(useTimerStore.getState().intervalDurationMin).toBe(45)
+      expect(useTimerStore.getState().settings.focusDuration).toBe(25)
+    })
+
+    it('opens when paused', async () => {
+      const user = userEvent.setup()
+      useTimerStore.setState({
+        elapsed: 60_000,
+        isRunning: false,
+        startedAt: null,
+      })
+      render(<TimerBar />)
+      await openAdjuster(user)
+      expect(screen.getByText('This interval only')).toBeTruthy()
+    })
+
+    it('does not expose adjuster while running', () => {
+      useTimerStore.setState({
+        isRunning: true,
+        startedAt: Date.now(),
+        elapsed: 0,
+      })
+      render(<TimerBar />)
+      expect(
+        screen.queryByRole('button', { name: 'Adjust interval duration' }),
+      ).toBeNull()
+    })
+
+    it('clears override via Reset when custom', async () => {
+      const user = userEvent.setup()
+      useTimerStore.setState({ intervalDurationMin: 45 })
+      render(<TimerBar />)
+      await openAdjuster(user)
+      await user.click(screen.getByRole('button', { name: 'Reset' }))
+      expect(useTimerStore.getState().intervalDurationMin).toBeNull()
+    })
+
+    it('hides Reset when using default', async () => {
+      const user = userEvent.setup()
+      render(<TimerBar />)
+      await openAdjuster(user)
+      expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull()
+      expect(screen.getByText(/Default is 25 min/)).toBeTruthy()
+    })
+
+    it('shows custom cue when override is active', () => {
+      useTimerStore.setState({ intervalDurationMin: 45 })
+      render(<TimerBar />)
+      const clock = screen.getByRole('button', {
+        name: 'Adjust interval duration',
+      })
+      expect(clock.className).toContain('text-accent')
+    })
+
+    it('shows default presentation without custom cue', () => {
+      render(<TimerBar />)
+      const clock = screen.getByRole('button', {
+        name: 'Adjust interval duration',
+      })
+      expect(clock.className).not.toContain('text-accent')
+    })
+
+    it('uses override for displayed remaining time', () => {
+      useTimerStore.setState({ intervalDurationMin: 10, elapsed: 0 })
+      render(<TimerBar />)
+      expect(screen.getByText('10:00')).toBeTruthy()
     })
   })
 

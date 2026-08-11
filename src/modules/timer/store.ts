@@ -4,8 +4,17 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { createDebouncedStringStorage } from '@/shared/utils/debounced-storage'
 import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
+import { defaultDurationForPhase, isValidIntervalDurationMin } from './duration'
 import { TimerStateSchema, TimerSettingsSchema } from './schema'
 import type { TimerPhase, TimerSettings } from './types'
+
+export {
+  defaultDurationForPhase,
+  isValidIntervalDurationMin,
+  minDurationMinForElapsed,
+  PHASE_DURATION_MAX,
+  resolveIntervalDurationMin,
+} from './duration'
 
 export const timerStorage = createDebouncedStringStorage(localStorage, 1000)
 
@@ -29,6 +38,7 @@ const timerInit: TimerState = {
   sessionPomoCount: 0,
   isRunning: false,
   focusedTaskId: null as string | null,
+  intervalDurationMin: null as number | null,
   settings: DEFAULT_TIMER_SETTINGS,
 }
 
@@ -39,6 +49,7 @@ interface TimerState {
   sessionPomoCount: number
   isRunning: boolean
   focusedTaskId: string | null
+  intervalDurationMin: number | null
   settings: TimerSettings
 }
 
@@ -60,6 +71,7 @@ interface TimerActions {
   setFocusedTaskId: (id: string | null) => void
   focusTask: (id: string) => void
   setTimerSettings: (partial: Partial<TimerSettings>) => void
+  setIntervalDurationMin: (minutes: number | null) => void
 }
 
 export type TimerStore = TimerState & TimerActions
@@ -73,6 +85,7 @@ export const useTimerStore = create<TimerStore>()(
       sessionPomoCount: 0,
       isRunning: false,
       focusedTaskId: null,
+      intervalDurationMin: null,
       settings: DEFAULT_TIMER_SETTINGS,
 
       start: () =>
@@ -103,6 +116,7 @@ export const useTimerStore = create<TimerStore>()(
           startedAt: null,
           elapsed: 0,
           isRunning: false,
+          intervalDurationMin: null,
         }),
 
       togglePlayPause: () => {
@@ -139,6 +153,7 @@ export const useTimerStore = create<TimerStore>()(
           elapsed: 0,
           isRunning: autoStart,
           sessionPomoCount: nextSessionCount,
+          intervalDurationMin: null,
         })
       },
 
@@ -152,6 +167,7 @@ export const useTimerStore = create<TimerStore>()(
           startedAt: null,
           elapsed: 0,
           isRunning: false,
+          intervalDurationMin: null,
         }),
 
       tick: () => {
@@ -185,6 +201,29 @@ export const useTimerStore = create<TimerStore>()(
         }
         set({ settings: merged as TimerSettings })
       },
+
+      setIntervalDurationMin: (minutes) => {
+        const state = get()
+        if (minutes === null) {
+          set({ intervalDurationMin: null })
+          return
+        }
+        if (!isValidIntervalDurationMin(minutes, state.phase, state.elapsed)) {
+          console.warn('[daybox] Invalid interval duration rejected', {
+            minutes,
+            phase: state.phase,
+            elapsed: state.elapsed,
+          })
+          return
+        }
+        const phaseDefault = defaultDurationForPhase(
+          state.phase,
+          state.settings,
+        )
+        set({
+          intervalDurationMin: minutes === phaseDefault ? null : minutes,
+        })
+      },
     }),
     {
       name: 'daybox-timer',
@@ -195,6 +234,7 @@ export const useTimerStore = create<TimerStore>()(
         init: timerInit,
         afterValidate: (state) => {
           state.settings.notificationsEnabled ??= true
+          state.intervalDurationMin ??= null
           if (state.isRunning && state.startedAt) {
             const now = Date.now()
             state.elapsed += now - state.startedAt
