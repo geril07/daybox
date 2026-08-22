@@ -4,7 +4,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { View } from '@/modules/planner'
 import { usePlannerStore } from '@/modules/planner'
 import { useTaskStore } from '@/modules/tasks'
-import { formatDate, getWeekDays } from '@/shared/dates'
+import {
+  addDaysToDate,
+  formatDate,
+  getPlannerDate,
+  getWeekDays,
+} from '@/shared/dates'
 
 interface ViewTab {
   label: string
@@ -39,6 +44,7 @@ interface ViewTabsProps {
 export function ViewTabs({ value, onChange }: ViewTabsProps) {
   const tasks = useTaskStore((s) => s.tasks)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
+  const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
   const [indicator, setIndicator] = useState({ left: 0, width: 0 })
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -63,8 +69,9 @@ export function ViewTabs({ value, onChange }: ViewTabsProps) {
   }, [value])
 
   const counts = useMemo(() => {
-    const today = formatDate(new Date())
-    const days = getWeekDays(weekStartDay)
+    const now = new Date()
+    const today = getPlannerDate(now, dayStartMinutes)
+    const days = getWeekDays(weekStartDay, now, dayStartMinutes)
     const weekStart = formatDate(days[0])
     const weekEnd = formatDate(days[6])
     const lastDay = days[6]
@@ -72,9 +79,7 @@ export function ViewTabs({ value, onChange }: ViewTabsProps) {
     firstAfter.setDate(lastDay.getDate() + 1)
     const afterStart = formatDate(firstAfter)
 
-    const [y, m, d] = today.split('-').map(Number)
-    const tomorrowDate = new Date(y, m - 1, d + 1)
-    const tomorrow = formatDate(tomorrowDate)
+    const tomorrow = addDaysToDate(today, 1)
 
     const result = {
       today: 0,
@@ -94,7 +99,7 @@ export function ViewTabs({ value, onChange }: ViewTabsProps) {
     }
 
     return result
-  }, [tasks, weekStartDay])
+  }, [tasks, weekStartDay, dayStartMinutes])
 
   return (
     <div

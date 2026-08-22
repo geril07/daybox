@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { usePlannerStore } from './store'
 
@@ -7,6 +7,7 @@ beforeEach(() => {
   usePlannerStore.setState({
     weekStartDay: 1,
     browseDate: null,
+    dayStartMinutes: 0,
   })
 })
 
@@ -18,6 +19,10 @@ describe('Planner Store', () => {
 
     it('defaults browseDate to null', () => {
       expect(usePlannerStore.getState().browseDate).toBeNull()
+    })
+
+    it('defaults dayStartMinutes to midnight', () => {
+      expect(usePlannerStore.getState().dayStartMinutes).toBe(0)
     })
   })
 
@@ -35,6 +40,21 @@ describe('Planner Store', () => {
     })
   })
 
+  describe('setDayStartMinutes', () => {
+    it('sets a valid minute-of-day value', () => {
+      usePlannerStore.getState().setDayStartMinutes(150)
+      expect(usePlannerStore.getState().dayStartMinutes).toBe(150)
+    })
+
+    it('rejects invalid minute-of-day values', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      usePlannerStore.getState().setDayStartMinutes(1440)
+      expect(usePlannerStore.getState().dayStartMinutes).toBe(0)
+      expect(warn).toHaveBeenCalledOnce()
+      warn.mockRestore()
+    })
+  })
+
   describe('setBrowseDate', () => {
     it('sets the browse date', () => {
       usePlannerStore.getState().setBrowseDate('2026-06-15')
@@ -45,6 +65,23 @@ describe('Planner Store', () => {
       usePlannerStore.setState({ browseDate: '2026-06-15' })
       usePlannerStore.getState().setBrowseDate(null)
       expect(usePlannerStore.getState().browseDate).toBeNull()
+    })
+  })
+
+  describe('rehydration', () => {
+    it('keeps old planner preferences and defaults the missing day start', async () => {
+      localStorage.setItem(
+        'daybox-planner',
+        JSON.stringify({
+          state: { weekStartDay: 0, browseDate: '2026-06-15' },
+        }),
+      )
+
+      await usePlannerStore.persist.rehydrate()
+
+      expect(usePlannerStore.getState().weekStartDay).toBe(0)
+      expect(usePlannerStore.getState().browseDate).toBe('2026-06-15')
+      expect(usePlannerStore.getState().dayStartMinutes).toBe(0)
     })
   })
 
@@ -67,6 +104,17 @@ describe('Planner Store', () => {
       const result = usePlannerStore.getState().browseDate
       expect(result).not.toBeNull()
       expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    })
+
+    it('uses the effective planner date when browseDate is null', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 5, 10, 2, 0))
+      usePlannerStore.setState({ browseDate: null, dayStartMinutes: 150 })
+
+      usePlannerStore.getState().stepBrowseDate(1)
+
+      expect(usePlannerStore.getState().browseDate).toBe('2026-06-10')
+      vi.useRealTimers()
     })
   })
 })

@@ -2,6 +2,7 @@ import { TaskList } from '@/modules/tasks'
 import { EmptyState } from '@/shared/ui'
 
 import { useLaterSections, viewMetaMap, filterByGroup } from '../queries'
+import { usePlannerStore } from '../store'
 import { SectionHeader } from './SectionHeader'
 
 interface LaterViewProps {
@@ -10,6 +11,7 @@ interface LaterViewProps {
 
 export function LaterView({ selectedGroupId = null }: LaterViewProps) {
   const sections = useLaterSections()
+  const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
   const meta = viewMetaMap.later
 
   const filtered = sections
@@ -32,7 +34,11 @@ export function LaterView({ selectedGroupId = null }: LaterViewProps) {
       {filtered.map((section) => (
         <div key={section.key} className="mb-2">
           <SectionHeader label={section.label} />
-          <TaskList tasks={section.tasks} date={section.date} />
+          <TaskList
+            tasks={section.tasks}
+            date={section.date}
+            dayStartMinutes={dayStartMinutes}
+          />
         </div>
       ))}
     </>

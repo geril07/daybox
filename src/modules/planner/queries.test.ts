@@ -37,7 +37,11 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-06-10T12:00:00'))
   useTaskStore.setState({ tasks: [] })
-  usePlannerStore.setState({ weekStartDay: 1, browseDate: null })
+  usePlannerStore.setState({
+    weekStartDay: 1,
+    browseDate: null,
+    dayStartMinutes: 0,
+  })
 })
 
 afterEach(() => {
@@ -152,6 +156,12 @@ describe('defaultDateForView', () => {
 
   it('returns tomorrow for the tomorrow view', () => {
     expect(defaultDateForView('tomorrow', 1)).toBe('2026-06-11')
+  })
+
+  it('uses the effective planner date before a 02:30 boundary', () => {
+    vi.setSystemTime(new Date('2026-06-10T02:00:00'))
+    expect(defaultDateForView('today', 1, null, 150)).toBe('2026-06-09')
+    expect(defaultDateForView('tomorrow', 1, null, 150)).toBe('2026-06-10')
   })
 
   it('returns today for the week view (regardless of weekStartDay)', () => {
@@ -275,6 +285,24 @@ describe('useLaterSections', () => {
     const dates = result.current.map((s) => s.date)
     expect(dates).toEqual(['2026-06-14'])
     expect(dates).not.toContain('2026-06-13')
+  })
+
+  it('uses the effective date for week and later boundaries', () => {
+    vi.setSystemTime(new Date('2026-06-08T02:00:00'))
+    usePlannerStore.setState({ dayStartMinutes: 150 })
+    useTaskStore.setState({
+      tasks: [
+        makeTask({ date: '2026-06-08' }),
+        makeTask({ date: '2026-06-15' }),
+      ],
+    })
+
+    const { result } = renderHook(() => useLaterSections())
+
+    expect(result.current.map((section) => section.date)).toEqual([
+      '2026-06-08',
+      '2026-06-15',
+    ])
   })
 
   it('returns empty array when there are no tasks after the week', () => {

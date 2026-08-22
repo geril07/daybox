@@ -12,7 +12,7 @@ interface DayViewProps {
 }
 
 export function DayView({ view, selectedGroupId = null }: DayViewProps) {
-  const { tasks, overdue, bucketDate } = useFilteredTasks(view)
+  const { tasks, overdue, bucketDate, dayStartMinutes } = useFilteredTasks(view)
   const meta = viewMetaMap[view]
 
   const filteredTasks = filterByGroup(tasks, selectedGroupId)
@@ -31,11 +31,15 @@ export function DayView({ view, selectedGroupId = null }: DayViewProps) {
       {filteredOverdue.length > 0 && (
         <div>
           <SectionHeader label="Overdue" tone="destructive" />
-          <TaskList tasks={filteredOverdue} />
+          <TaskList tasks={filteredOverdue} dayStartMinutes={dayStartMinutes} />
         </div>
       )}
       <SectionHeader label={meta.title} />
-      <TaskList tasks={filteredTasks} date={bucketDate} />
+      <TaskList
+        tasks={filteredTasks}
+        date={bucketDate}
+        dayStartMinutes={dayStartMinutes}
+      />
     </>
   )
 }

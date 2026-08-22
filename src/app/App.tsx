@@ -31,10 +31,16 @@ export function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const browseDate = usePlannerStore((s) => s.browseDate)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
+  const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const defaultDate = defaultDateForView(view, weekStartDay, browseDate)
+  const defaultDate = defaultDateForView(
+    view,
+    weekStartDay,
+    browseDate,
+    dayStartMinutes,
+  )
 
   useEffect(() => {
     const handleInteraction = (event: Event) => {

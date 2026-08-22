@@ -8,7 +8,13 @@ import {
   useTaskStore,
   type Task,
 } from '@/modules/tasks'
-import { formatDate, getWeekDays, getWeekSectionLabel } from '@/shared/dates'
+import {
+  addDaysToDate,
+  formatDate,
+  getPlannerDate,
+  getWeekDays,
+  getWeekSectionLabel,
+} from '@/shared/dates'
 
 import { usePlannerStore } from './store'
 
@@ -73,17 +79,15 @@ export function viewToRange(
   view: View,
   weekStartDay: 0 | 1 | 2 | 3 | 4 | 5 | 6,
   today: string,
+  dayStartMinutes = 0,
 ): TaskRange {
   switch (view) {
     case 'today':
       return { kind: 'date', date: today }
-    case 'tomorrow': {
-      const [y, m, day] = today.split('-').map(Number)
-      const tomorrowDate = new Date(y, m - 1, day + 1)
-      return { kind: 'date', date: formatDate(tomorrowDate) }
-    }
+    case 'tomorrow':
+      return { kind: 'date', date: addDaysToDate(today, 1) }
     case 'week': {
-      const days = getWeekDays(weekStartDay)
+      const days = getWeekDays(weekStartDay, new Date(), dayStartMinutes)
       return {
         kind: 'range',
         start: formatDate(days[0]),
@@ -93,11 +97,8 @@ export function viewToRange(
     case 'unscheduled':
       return { kind: 'undated' }
     case 'later': {
-      const days = getWeekDays(weekStartDay)
-      const lastDay = days[6]
-      const firstAfter = new Date(lastDay)
-      firstAfter.setDate(lastDay.getDate() + 1)
-      return { kind: 'after', start: formatDate(firstAfter) }
+      const days = getWeekDays(weekStartDay, new Date(), dayStartMinutes)
+      return { kind: 'after', start: addDaysToDate(formatDate(days[6]), 1) }
     }
     case 'date':
       return { kind: 'date', date: today }
@@ -107,10 +108,12 @@ export function viewToRange(
 export function useFilteredTasks(view: View) {
   const tasks = useTaskStore((s) => s.tasks)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
+  const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
 
   return useMemo(() => {
-    const today = formatDate(new Date())
-    const range = viewToRange(view, weekStartDay, today)
+    const now = new Date()
+    const today = getPlannerDate(now, dayStartMinutes)
+    const range = viewToRange(view, weekStartDay, today, dayStartMinutes)
 
     let filtered: typeof tasks
     let overdue: typeof tasks = []
@@ -145,19 +148,20 @@ export function useFilteredTasks(view: View) {
       overdue = selectOverdue(tasks, today)
     }
 
-    return { tasks: filtered, overdue, bucketDate }
-  }, [tasks, view, weekStartDay])
+    return { tasks: filtered, overdue, bucketDate, dayStartMinutes }
+  }, [tasks, view, weekStartDay, dayStartMinutes])
 }
 
 export function defaultDateForView(
   view: View,
   weekStartDay: 0 | 1 | 2 | 3 | 4 | 5 | 6,
   browseDate?: string | null,
+  dayStartMinutes = 0,
 ): string | undefined {
   if (view === 'date') return browseDate ?? undefined
 
-  const today = formatDate(new Date())
-  const range = viewToRange(view, weekStartDay, today)
+  const today = getPlannerDate(new Date(), dayStartMinutes)
+  const range = viewToRange(view, weekStartDay, today, dayStartMinutes)
 
   switch (range.kind) {
     case 'date':
@@ -174,9 +178,11 @@ export function defaultDateForView(
 export function useWeekSections(): Section[] {
   const tasks = useTaskStore((s) => s.tasks)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
+  const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
 
   return useMemo(() => {
-    const today = formatDate(new Date())
+    const now = new Date()
+    const today = getPlannerDate(now, dayStartMinutes)
     const sections: Section[] = []
 
     const overdue = selectOverdue(tasks, today)
@@ -189,13 +195,13 @@ export function useWeekSections(): Section[] {
       })
     }
 
-    for (const day of getWeekDays(weekStartDay)) {
+    for (const day of getWeekDays(weekStartDay, now, dayStartMinutes)) {
       const dateStr = formatDate(day)
       if (dateStr < today) continue
 
       sections.push({
         key: dateStr,
-        label: getWeekSectionLabel(day),
+        label: getWeekSectionLabel(day, now, dayStartMinutes),
         tasks: selectForDate(tasks, dateStr),
         emptyHint: 'Nothing planned',
         date: dateStr,
@@ -203,7 +209,7 @@ export function useWeekSections(): Section[] {
     }
 
     return sections
-  }, [tasks, weekStartDay])
+  }, [tasks, weekStartDay, dayStartMinutes])
 }
 
 export function filterByGroup(tasks: Task[], groupId: string | null): Task[] {
@@ -214,13 +220,12 @@ export function filterByGroup(tasks: Task[], groupId: string | null): Task[] {
 export function useLaterSections(): Section[] {
   const tasks = useTaskStore((s) => s.tasks)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
+  const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
 
   return useMemo(() => {
-    const days = getWeekDays(weekStartDay)
-    const lastDay = days[6]
-    const firstAfter = new Date(lastDay)
-    firstAfter.setDate(lastDay.getDate() + 1)
-    const start = formatDate(firstAfter)
+    const now = new Date()
+    const days = getWeekDays(weekStartDay, now, dayStartMinutes)
+    const start = addDaysToDate(formatDate(days[6]), 1)
 
     const byDate = new Map<string, Task[]>()
     for (const task of tasks) {
@@ -234,9 +239,13 @@ export function useLaterSections(): Section[] {
 
     return sortedDates.map((date) => ({
       key: date,
-      label: getWeekSectionLabel(new Date(date + 'T00:00:00')),
+      label: getWeekSectionLabel(
+        new Date(`${date}T12:00:00`),
+        now,
+        dayStartMinutes,
+      ),
       tasks: byDate.get(date)!.sort((a, b) => a.sortOrder - b.sortOrder),
       date,
     }))
-  }, [tasks, weekStartDay])
+  }, [tasks, weekStartDay, dayStartMinutes])
 }

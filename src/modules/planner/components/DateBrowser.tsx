@@ -9,6 +9,7 @@ import { usePlannerStore } from '../store'
 export function DateBrowser() {
   const browseDate = usePlannerStore((s) => s.browseDate)
   const stepBrowseDate = usePlannerStore((s) => s.stepBrowseDate)
+  const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
   const tasks = useTaskStore((s) => s.tasks)
 
   const dateTasks = browseDate ? selectForDate(tasks, browseDate) : []
@@ -48,7 +49,11 @@ export function DateBrowser() {
           <ChevronRight />
         </Button>
       </div>
-      <TaskList tasks={dateTasks} date={browseDate} />
+      <TaskList
+        tasks={dateTasks}
+        date={browseDate}
+        dayStartMinutes={dayStartMinutes}
+      />
     </>
   )
 }
