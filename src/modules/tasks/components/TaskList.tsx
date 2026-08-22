@@ -13,6 +13,7 @@ interface TaskListProps {
   emptyMessage?: string
   date?: string | null
   sortable?: boolean
+  dayStartMinutes?: number
 }
 
 export function TaskList({
@@ -20,6 +21,7 @@ export function TaskList({
   emptyMessage,
   date,
   sortable,
+  dayStartMinutes = 0,
 }: TaskListProps) {
   const reorderTasks = useTaskStore((s) => s.reorderTasks)
 
@@ -60,11 +62,18 @@ export function TaskList({
               task={task}
               index={index}
               groupKey={groupKey}
+              dayStartMinutes={dayStartMinutes}
             />
           ))}
         </DragDropProvider>
       ) : (
-        tasks.map((task) => <StaticTaskRow key={task.id} task={task} />)
+        tasks.map((task) => (
+          <StaticTaskRow
+            key={task.id}
+            task={task}
+            dayStartMinutes={dayStartMinutes}
+          />
+        ))
       )}
     </div>
   )
@@ -74,10 +83,12 @@ function SortableTaskRow({
   task,
   index,
   groupKey,
+  dayStartMinutes,
 }: {
   task: Task
   index: number
   groupKey: string
+  dayStartMinutes: number
 }) {
   const { ref, handleRef, isDragSource } = useSortable({
     id: task.id,
@@ -96,15 +107,22 @@ function SortableTaskRow({
         task={task}
         dragHandleRef={handleRef}
         isDragSource={isDragSource}
+        dayStartMinutes={dayStartMinutes}
       />
     </div>
   )
 }
 
-function StaticTaskRow({ task }: { task: Task }) {
+function StaticTaskRow({
+  task,
+  dayStartMinutes,
+}: {
+  task: Task
+  dayStartMinutes: number
+}) {
   return (
     <div>
-      <TaskRow task={task} />
+      <TaskRow task={task} dayStartMinutes={dayStartMinutes} />
     </div>
   )
 }

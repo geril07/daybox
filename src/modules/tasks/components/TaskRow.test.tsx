@@ -9,7 +9,9 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 import { useGroupStore } from '@/modules/groups'
+import { usePlannerStore } from '@/modules/planner'
 import { useTimerStore } from '@/modules/timer'
+import { addDaysToDate, getPlannerDate } from '@/shared/dates'
 import { installCoarsePointerMatchMediaStub } from '@/test-utils/matchMedia'
 
 import { useTaskStore } from '../store'
@@ -37,6 +39,11 @@ beforeEach(() => {
     sessionPomoCount: 0,
     isRunning: false,
     focusedTaskId: null,
+  })
+  usePlannerStore.setState({
+    weekStartDay: 1,
+    browseDate: null,
+    dayStartMinutes: 0,
   })
 })
 
@@ -94,6 +101,26 @@ describe('TaskRow', () => {
     render(<TaskRow task={createMockTask()} />)
     const titles = screen.getAllByText('Test Task')
     expect(titles.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('uses the effective planner date for Today and Tomorrow presets', async () => {
+    const now = new Date()
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+    const dayStartMinutes =
+      currentMinutes > 30 ? currentMinutes - 30 : currentMinutes + 30
+    const expectedToday = getPlannerDate(now, dayStartMinutes)
+    const expectedTomorrow = addDaysToDate(expectedToday, 1)
+    const user = userEvent.setup()
+    const task = createMockTask({ date: expectedTomorrow })
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} dayStartMinutes={dayStartMinutes} />)
+
+    await user.click(screen.getByTitle('Schedule'))
+    await user.click(screen.getByRole('button', { name: 'Today' }))
+    expect(useTaskStore.getState().tasks[0]?.date).toBe(expectedToday)
+
+    await user.click(screen.getByRole('button', { name: 'Tomorrow' }))
+    expect(useTaskStore.getState().tasks[0]?.date).toBe(expectedTomorrow)
   })
 
   it('toggles completion on checkbox click', async () => {

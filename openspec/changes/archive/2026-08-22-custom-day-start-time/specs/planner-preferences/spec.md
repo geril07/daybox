@@ -1,8 +1,4 @@
-## Purpose
-
-The planner feature owns its own preferences — the first day of the week (used by the Week view) and the currently-browsed date (used by the Date Browser). Both are persisted in the planner's own Zustand store under `daybox-planner`. The sidebar view selector is **not** part of this capability — it lives in the app shell and is not persisted.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Planner preferences are persisted in the planner's own store
 
@@ -40,27 +36,6 @@ The system SHALL read `weekStartDay` from the planner store when computing the w
 - **WHEN** no preference has been set
 - **THEN** the Week view lists the seven days starting with Monday
 
-### Requirement: The planner derives an effective date from the day-start preference
-
-The system SHALL treat the effective planner date as the previous local calendar date before `dayStartMinutes`, and as the current local calendar date at or after `dayStartMinutes`. The comparison SHALL use local wall-clock time and SHALL be inclusive at the configured minute.
-
-#### Scenario: Time before the configured boundary belongs to the previous planner date
-
-- **WHEN** the local date and time is `2026-06-10 02:29`
-- **AND** `dayStartMinutes` is `150` (02:30)
-- **THEN** the effective planner date is `2026-06-09`
-
-#### Scenario: The configured boundary starts the new planner date
-
-- **WHEN** the local date and time is `2026-06-10 02:30`
-- **AND** `dayStartMinutes` is `150` (02:30)
-- **THEN** the effective planner date is `2026-06-10`
-
-#### Scenario: Midnight preserves current behavior
-
-- **WHEN** `dayStartMinutes` is `0`
-- **THEN** the effective planner date equals the local calendar date for every time on that date
-
 ### Requirement: Date Browser reads and writes the browse date in the planner store
 
 The system SHALL read the current `browseDate` from the planner store and write back to the planner store when the user steps forward or back. The Date Browser SHALL NOT read or write this value to any other store. When `browseDate` is `null`, stepping SHALL use the effective planner date defined by `dayStartMinutes` as its base.
@@ -89,3 +64,26 @@ The system SHALL read the current `browseDate` from the planner store and write 
 
 - **WHEN** `browseDate` is `null`
 - **THEN** the Date Browser shows the empty state "Select a date to browse."
+
+## ADDED Requirements
+
+### Requirement: The planner derives an effective date from the day-start preference
+
+The system SHALL treat the effective planner date as the previous local calendar date before `dayStartMinutes`, and as the current local calendar date at or after `dayStartMinutes`. The comparison SHALL use local wall-clock time and SHALL be inclusive at the configured minute.
+
+#### Scenario: Time before the configured boundary belongs to the previous planner date
+
+- **WHEN** the local date and time is `2026-06-10 02:29`
+- **AND** `dayStartMinutes` is `150` (02:30)
+- **THEN** the effective planner date is `2026-06-09`
+
+#### Scenario: The configured boundary starts the new planner date
+
+- **WHEN** the local date and time is `2026-06-10 02:30`
+- **AND** `dayStartMinutes` is `150` (02:30)
+- **THEN** the effective planner date is `2026-06-10`
+
+#### Scenario: Midnight preserves current behavior
+
+- **WHEN** `dayStartMinutes` is `0`
+- **THEN** the effective planner date equals the local calendar date for every time on that date

@@ -10,7 +10,12 @@ import { useState, useRef, useEffect } from 'react'
 
 import { GroupSelect, useGroupStore } from '@/modules/groups'
 import { useTimerStore } from '@/modules/timer'
-import { isOverdue, formatDate, getTomorrow } from '@/shared/dates'
+import {
+  formatDate,
+  getPlannerDate,
+  getTomorrow,
+  isOverdue,
+} from '@/shared/dates'
 import {
   Button,
   LinkifiedText,
@@ -29,9 +34,15 @@ interface TaskRowProps {
   task: Task
   dragHandleRef?: (element: Element | null) => void
   isDragSource?: boolean
+  dayStartMinutes?: number
 }
 
-export function TaskRow({ task, dragHandleRef, isDragSource }: TaskRowProps) {
+export function TaskRow({
+  task,
+  dragHandleRef,
+  isDragSource,
+  dayStartMinutes = 0,
+}: TaskRowProps) {
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [actionSheetOpen, setActionSheetOpen] = useState(false)
@@ -46,7 +57,10 @@ export function TaskRow({ task, dragHandleRef, isDragSource }: TaskRowProps) {
   const group = groups.find((g) => g.id === task.groupId)
   const showGroupUi = groups.length > 1
   const isFocused = focusedTaskId === task.id
-  const overdue = !task.completed && task.date !== null && isOverdue(task.date)
+  const overdue =
+    !task.completed &&
+    task.date !== null &&
+    isOverdue(task.date, new Date(), dayStartMinutes)
 
   useEffect(() => {
     if (editing && editRef.current) {
@@ -160,7 +174,7 @@ export function TaskRow({ task, dragHandleRef, isDragSource }: TaskRowProps) {
       )}
 
       <PomoArea task={task} />
-      <DatePickerButton task={task} />
+      <DatePickerButton task={task} dayStartMinutes={dayStartMinutes} />
 
       <>
         <div className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 group-hover:opacity-100 pointer-coarse:hidden">
@@ -264,7 +278,13 @@ function PomoArea({ task }: { task: Task }) {
   )
 }
 
-function DatePickerButton({ task }: { task: Task }) {
+function DatePickerButton({
+  task,
+  dayStartMinutes,
+}: {
+  task: Task
+  dayStartMinutes: number
+}) {
   const updateTask = useTaskStore((s) => s.updateTask)
 
   return (
@@ -280,10 +300,13 @@ function DatePickerButton({ task }: { task: Task }) {
       <PopoverContent className="z-40 min-w-[190px] p-2">
         <div className="mb-2 flex gap-1">
           {[
-            { label: 'Today', value: formatDate(new Date()) },
+            {
+              label: 'Today',
+              value: getPlannerDate(new Date(), dayStartMinutes),
+            },
             {
               label: 'Tomorrow',
-              value: formatDate(getTomorrow()),
+              value: formatDate(getTomorrow(new Date(), dayStartMinutes)),
             },
             { label: 'Unscheduled', value: null },
           ].map((preset) => (

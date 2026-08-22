@@ -49,7 +49,9 @@ export function SettingsDrawer({
   onClose: () => void
 }) {
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
+  const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
   const setWeekStartDay = usePlannerStore((s) => s.setWeekStartDay)
+  const setDayStartMinutes = usePlannerStore((s) => s.setDayStartMinutes)
   const { settings, presets, availableModes, setMode, setPreset } = useTheme()
 
   const presetItems = presets.map((p) => ({
@@ -154,6 +156,19 @@ export function SettingsDrawer({
                   ))}
                 </SelectContent>
               </Select>
+            </SettingRow>
+            <SettingRow label="Day starts at">
+              <input
+                aria-label="Day starts at"
+                type="time"
+                step={60}
+                value={formatDayStartTime(dayStartMinutes)}
+                onChange={(event) => {
+                  const minutes = parseDayStartTime(event.target.value)
+                  if (minutes !== null) setDayStartMinutes(minutes)
+                }}
+                className="border-border bg-background text-foreground rounded border px-2 py-1.5 text-xs"
+              />
             </SettingRow>
             <SettingRow label="Theme">
               <Select
@@ -290,4 +305,20 @@ function SettingRow({
       {children}
     </div>
   )
+}
+
+function formatDayStartTime(minutes: number): string {
+  const hours = Math.floor(minutes / 60)
+  const minute = minutes % 60
+  return `${String(hours).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
+function parseDayStartTime(value: string): number | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(value)
+  if (!match) return null
+
+  const hours = Number(match[1])
+  const minutes = Number(match[2])
+  if (hours > 23 || minutes > 59) return null
+  return hours * 60 + minutes
 }

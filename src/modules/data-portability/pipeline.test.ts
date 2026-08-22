@@ -46,10 +46,15 @@ function currentSnapshot(
     planner?: {
       weekStartDay: 0 | 1 | 2 | 3 | 4 | 5 | 6
       browseDate: string | null
+      dayStartMinutes: number
     }
   } = {},
 ): CurrentSnapshot {
-  const planner = overrides.planner ?? { weekStartDay: 1, browseDate: null }
+  const planner = overrides.planner ?? {
+    weekStartDay: 1,
+    browseDate: null,
+    dayStartMinutes: 0,
+  }
   return {
     envelopeVersion: CURRENT_SAVE_ENVELOPE_VERSION,
     exportedAt: '2026-06-07T00:00:00.000Z',
@@ -66,7 +71,7 @@ function currentSnapshot(
         version: 1,
         settings: overrides.timerSettings ?? DEFAULT_TIMER_SETTINGS,
       },
-      planner: { version: 1, ...planner },
+      planner: { version: 2, ...planner },
     },
   }
 }
@@ -87,7 +92,11 @@ beforeEach(() => {
     focusedTaskId: null,
     settings: DEFAULT_TIMER_SETTINGS,
   })
-  usePlannerStore.setState({ weekStartDay: 1, browseDate: null })
+  usePlannerStore.setState({
+    weekStartDay: 1,
+    browseDate: null,
+    dayStartMinutes: 0,
+  })
 })
 
 describe('buildSnapshot', () => {
@@ -107,6 +116,7 @@ describe('buildSnapshot', () => {
       settings: { ...DEFAULT_TIMER_SETTINGS, focusDuration: 45 },
     })
     usePlannerStore.getState().setWeekStartDay(0)
+    usePlannerStore.getState().setDayStartMinutes(150)
 
     const result = buildSnapshot()
     expect(result.ok).toBe(true)
@@ -121,6 +131,7 @@ describe('buildSnapshot', () => {
     ])
     expect(snapshot.slices.timerSettings.settings.focusDuration).toBe(45)
     expect(snapshot.slices.planner.weekStartDay).toBe(0)
+    expect(snapshot.slices.planner.dayStartMinutes).toBe(150)
     expect('theme' in snapshot).toBe(false)
     expect('timer' in snapshot).toBe(false)
     expect('phase' in snapshot.slices.timerSettings).toBe(false)
@@ -191,6 +202,7 @@ describe('prepareSnapshotImport', () => {
     const snapshot = currentSnapshot()
     const slices: Record<string, unknown> = { ...snapshot.slices }
     delete slices.timerSettings
+    delete slices.planner
 
     const result = prepareSnapshotImport(
       JSON.stringify({ ...snapshot, slices }),
@@ -201,6 +213,54 @@ describe('prepareSnapshotImport', () => {
     expect(result.snapshot.slices.timerSettings.settings).toEqual(
       DEFAULT_TIMER_SETTINGS,
     )
+    expect(result.snapshot.slices.planner.dayStartMinutes).toBe(0)
+  })
+
+  it('migrates a version-one planner slice to midnight', () => {
+    const snapshot = currentSnapshot()
+    const legacy = {
+      ...snapshot,
+      slices: {
+        ...snapshot.slices,
+        planner: {
+          version: 1,
+          weekStartDay: 0,
+          browseDate: '2026-06-12',
+        },
+      },
+    }
+
+    const result = prepareSnapshotImport(JSON.stringify(legacy))
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.snapshot.slices.planner).toEqual({
+      version: 2,
+      weekStartDay: 0,
+      browseDate: '2026-06-12',
+      dayStartMinutes: 0,
+    })
+  })
+
+  it('rejects invalid planner day-start values without mutation', () => {
+    const snapshot = currentSnapshot()
+    const invalid = {
+      ...snapshot,
+      slices: {
+        ...snapshot.slices,
+        planner: {
+          ...snapshot.slices.planner,
+          dayStartMinutes: 150.5,
+        },
+      },
+    }
+
+    const result = prepareSnapshotImport(JSON.stringify(invalid))
+
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reason).toContain('planner.dayStartMinutes')
+    expect(usePlannerStore.getState().dayStartMinutes).toBe(0)
   })
 
   it('rejects malformed JSON without mutating stores', () => {
@@ -345,7 +405,11 @@ describe('commitSnapshotImport', () => {
             createGroup({ id: DEFAULT_GROUP_ID, name: 'Imported group' }),
           ],
           timerSettings: { ...DEFAULT_TIMER_SETTINGS, focusDuration: 40 },
-          planner: { weekStartDay: 0, browseDate: '2026-06-12' },
+          planner: {
+            weekStartDay: 0,
+            browseDate: '2026-06-12',
+            dayStartMinutes: 150,
+          },
         }),
       ),
     )
@@ -359,6 +423,7 @@ describe('commitSnapshotImport', () => {
     expect(useTimerStore.getState().settings.focusDuration).toBe(40)
     expect(usePlannerStore.getState().weekStartDay).toBe(0)
     expect(usePlannerStore.getState().browseDate).toBe('2026-06-12')
+    expect(usePlannerStore.getState().dayStartMinutes).toBe(150)
   })
 
   it('clears runtime references that are outside the snapshot', () => {

@@ -1,7 +1,9 @@
 export {
+  addDaysToDate,
   formatDate,
   getDayName,
   getFormattedDate,
+  getPlannerDate,
   getTomorrow,
   getWeekDays,
   getWeekRange,
