@@ -12,6 +12,7 @@ import {
   useEffect,
   useLayoutEffect,
   type KeyboardEvent,
+  type MouseEvent,
 } from 'react'
 
 import { GroupSelect, useGroupStore } from '@/modules/groups'
@@ -43,6 +44,51 @@ interface TaskRowProps {
   dayStartMinutes?: number
 }
 
+function getCaretOffsetAtPoint(
+  container: HTMLElement,
+  clientX: number,
+  clientY: number,
+): number | null {
+  const documentWithCaretApi = container.ownerDocument as Document & {
+    caretPositionFromPoint?: (
+      x: number,
+      y: number,
+    ) => { offsetNode: Node; offset: number } | null
+    caretRangeFromPoint?: (x: number, y: number) => Range | null
+  }
+
+  let node: Node | null = null
+  let offset = 0
+  const caretPosition = documentWithCaretApi.caretPositionFromPoint?.(
+    clientX,
+    clientY,
+  )
+  if (caretPosition) {
+    node = caretPosition.offsetNode
+    offset = caretPosition.offset
+  } else {
+    const caretRange = documentWithCaretApi.caretRangeFromPoint?.(
+      clientX,
+      clientY,
+    )
+    if (caretRange) {
+      node = caretRange.startContainer
+      offset = caretRange.startOffset
+    }
+  }
+
+  if (!node || !container.contains(node)) return null
+
+  const range = container.ownerDocument.createRange()
+  range.selectNodeContents(container)
+  try {
+    range.setEnd(node, offset)
+  } catch {
+    return null
+  }
+  return range.toString().length
+}
+
 export function TaskRow({
   task,
   dragHandleRef,
@@ -53,6 +99,7 @@ export function TaskRow({
   const [editTitle, setEditTitle] = useState(task.title)
   const [actionSheetOpen, setActionSheetOpen] = useState(false)
   const editRef = useRef<HTMLTextAreaElement>(null)
+  const pendingCaretOffsetRef = useRef<number | null>(null)
   const cancelledEditRef = useRef(false)
   const toggleTask = useTaskStore((s) => s.toggleTask)
   const updateTask = useTaskStore((s) => s.updateTask)
@@ -71,8 +118,12 @@ export function TaskRow({
 
   useEffect(() => {
     if (editing && editRef.current) {
-      editRef.current.focus()
-      editRef.current.select()
+      const input = editRef.current
+      input.focus()
+      const caretOffset = pendingCaretOffsetRef.current ?? input.value.length
+      const safeCaretOffset = Math.min(caretOffset, input.value.length)
+      input.setSelectionRange(safeCaretOffset, safeCaretOffset)
+      pendingCaretOffsetRef.current = null
     }
   }, [editing])
 
@@ -83,8 +134,13 @@ export function TaskRow({
     input.style.height = `${input.scrollHeight}px`
   }, [editTitle, editing])
 
-  const handleStartEdit = () => {
+  const handleStartEdit = (e: MouseEvent<HTMLSpanElement>) => {
     cancelledEditRef.current = false
+    pendingCaretOffsetRef.current = getCaretOffsetAtPoint(
+      e.currentTarget,
+      e.clientX,
+      e.clientY,
+    )
     setEditTitle(task.title)
     setEditing(true)
   }
@@ -163,7 +219,7 @@ export function TaskRow({
             rows={1}
             aria-label="Edit task title (Shift+Enter for new line)"
             title="Shift+Enter for a new line"
-            className="text-foreground min-h-5 w-full resize-none overflow-hidden border-none bg-transparent text-sm leading-snug font-[450] outline-none"
+            className="text-foreground m-0 block min-h-[1.375em] w-full resize-none overflow-hidden border-none bg-transparent p-0 text-sm leading-snug font-[450] outline-none"
             style={{ caretColor: 'var(--accent)' }}
           />
         ) : (

@@ -6,7 +6,7 @@ import {
   waitFor,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 import { useGroupStore } from '@/modules/groups'
 import { usePlannerStore } from '@/modules/planner'
@@ -172,6 +172,41 @@ describe('TaskRow', () => {
       .getState()
       .tasks.find((t) => t.id === task.id)
     expect(storeTask?.completed).toBe(true)
+  })
+
+  it('places the caret near the clicked text when editing starts', () => {
+    const task = createMockTask()
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+
+    const display = document.querySelector('span.cursor-text')
+    expect(display).not.toBeNull()
+    const textNode = display?.querySelector('span')?.firstChild
+    expect(textNode).toBeInstanceOf(Text)
+
+    const range = document.createRange()
+    range.setStart(textNode!, 5)
+    range.collapse(true)
+    const documentWithCaretApi = document as Document & {
+      caretRangeFromPoint?: () => Range | null
+    }
+    const originalCaretRangeFromPoint = documentWithCaretApi.caretRangeFromPoint
+    documentWithCaretApi.caretRangeFromPoint = vi.fn(() => range)
+
+    try {
+      fireEvent.click(display!, { clientX: 100, clientY: 100 })
+      const input = document.querySelector(
+        'textarea[aria-label^="Edit task title"]',
+      ) as HTMLTextAreaElement
+      expect(input.selectionStart).toBe(5)
+      expect(input.selectionEnd).toBe(5)
+    } finally {
+      if (originalCaretRangeFromPoint) {
+        documentWithCaretApi.caretRangeFromPoint = originalCaretRangeFromPoint
+      } else {
+        Reflect.deleteProperty(documentWithCaretApi, 'caretRangeFromPoint')
+      }
+    }
   })
 
   it('enters and exits edit mode', async () => {
