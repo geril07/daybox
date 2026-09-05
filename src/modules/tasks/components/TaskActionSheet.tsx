@@ -36,7 +36,7 @@ export function TaskActionSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom">
         <SheetHeader>
-          <SheetTitle>
+          <SheetTitle className="break-words whitespace-pre-wrap">
             <LinkifiedText text={task.title} />
           </SheetTitle>
         </SheetHeader>

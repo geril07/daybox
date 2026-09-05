@@ -1,5 +1,11 @@
 import { Plus, ChevronDown } from 'lucide-react'
-import { useState, useRef, type SubmitEvent } from 'react'
+import {
+  useState,
+  useRef,
+  useLayoutEffect,
+  type KeyboardEvent,
+  type SubmitEvent,
+} from 'react'
 
 import { GroupSelect, useGroupStore } from '@/modules/groups'
 import { Button } from '@/shared/ui'
@@ -13,7 +19,14 @@ interface AddTaskRowProps {
 
 export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
   const [title, setTitle] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useLayoutEffect(() => {
+    const input = inputRef.current
+    if (!input) return
+    input.style.height = 'auto'
+    input.style.height = `${input.scrollHeight}px`
+  }, [title])
   const groups = useGroupStore((s) => s.groups)
   const addTask = useTaskStore((s) => s.addTask)
   const addGroup = useGroupStore((s) => s.addGroup)
@@ -33,7 +46,7 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
     let taskTitle = trimmed
     let groupId = defaultGroupId ?? stickyGroupId ?? groups[0].id
 
-    const hashMatch = trimmed.match(/^(.*?)\s+#(\S+)$/)
+    const hashMatch = trimmed.match(/^(.*?)\s+#(\S+)$/s)
     if (hashMatch) {
       taskTitle = hashMatch[1] || trimmed
       const groupName = hashMatch[2]
@@ -48,12 +61,22 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
       }
     }
 
-    addTask(taskTitle, groupId, defaultDate)
-    setTitle('')
-    inputRef.current?.focus()
+    const task = addTask(taskTitle, groupId, defaultDate)
+    if (task) {
+      setTitle('')
+      inputRef.current?.focus()
+    }
   }
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.nativeEvent.isComposing || e.keyCode === 229 || e.shiftKey) return
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      e.currentTarget.form?.requestSubmit()
+    }
+  }
+
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTitle(e.target.value)
   }
 
@@ -63,13 +86,16 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
       onSubmit={handleSubmit}
     >
       <div className="flex items-center gap-2.5">
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
           value={title}
           onChange={handleInput}
+          onKeyDown={handleKeyDown}
+          rows={1}
           placeholder="Add a task…"
-          className="text-foreground flex-1 border-none bg-transparent py-2 text-sm outline-none"
+          aria-label="Add task (Shift+Enter for new line)"
+          title="Shift+Enter for a new line"
+          className="text-foreground min-h-9 flex-1 resize-none overflow-hidden border-none bg-transparent py-2 text-sm leading-5 outline-none"
         />
         {showGroupUi && (
           <GroupSelect

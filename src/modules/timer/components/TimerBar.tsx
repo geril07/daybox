@@ -316,7 +316,7 @@ export function TimerBar() {
           </span>
           <span
             className={cn(
-              'min-w-0 shrink truncate text-xs',
+              'min-w-0 shrink text-xs break-words whitespace-pre-wrap',
               focusedTask ? 'text-fg-2' : 'text-fg-3',
             )}
           >

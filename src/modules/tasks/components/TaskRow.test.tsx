@@ -103,6 +103,42 @@ describe('TaskRow', () => {
     expect(titles.length).toBeGreaterThanOrEqual(1)
   })
 
+  it('preserves multiline title display and clickable links', async () => {
+    const task = createMockTask({
+      title: 'Review proposal\nhttps://example.com/proposal',
+    })
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+
+    const link = screen.getByRole('link', {
+      name: 'https://example.com/proposal',
+    })
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link.closest('span')?.className).toContain('whitespace-pre-wrap')
+    expect(link.closest('span')?.textContent).toContain(
+      'Review proposal\nhttps://example.com/proposal',
+    )
+    await userEvent.setup().click(link)
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  })
+
+  it('preserves multiline text and links in the action sheet', async () => {
+    restoreMatchMedia = installCoarsePointerMatchMediaStub()
+    render(
+      <TaskRow
+        task={createMockTask({ title: 'Review\nhttps://example.com' })}
+      />,
+    )
+    await userEvent.setup().click(screen.getByTitle('More actions'))
+    const heading = await screen.findByRole('heading', { name: /Review/ })
+    expect(heading.textContent).toBe('Review\nhttps://example.com')
+    expect(heading).toHaveClass('whitespace-pre-wrap', 'break-words')
+    expect(heading.querySelector('a')).toHaveAttribute(
+      'href',
+      'https://example.com/',
+    )
+  })
+
   it('uses the effective planner date for Today and Tomorrow presets', async () => {
     const now = new Date()
     const currentMinutes = now.getHours() * 60 + now.getMinutes()
@@ -146,8 +182,8 @@ describe('TaskRow', () => {
     const title = screen.getAllByText('Test Task')[0]
     await user.click(title)
     const input = document.querySelector(
-      'input[type="text"]',
-    ) as HTMLInputElement
+      'textarea[aria-label^="Edit task title"]',
+    ) as HTMLTextAreaElement
     expect(input).not.toBeNull()
     await user.clear(input)
     await user.type(input, 'Edited')
@@ -156,6 +192,88 @@ describe('TaskRow', () => {
       .getState()
       .tasks.find((t) => t.id === task.id)
     expect(storeTask?.title).toBe('Edited')
+  })
+
+  it('edits a task with an explicit line break', async () => {
+    const user = userEvent.setup()
+    const task = createMockTask()
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+    await user.click(screen.getByText('Test Task'))
+    const input = document.querySelector(
+      'textarea[aria-label^="Edit task title"]',
+    ) as HTMLTextAreaElement
+
+    await user.clear(input)
+    await user.type(input, 'Review proposal')
+    await user.keyboard('{Shift>}{Enter}{/Shift}')
+    await user.type(input, 'https://example.com/proposal')
+    expect(useTaskStore.getState().tasks[0]?.title).toBe('Test Task')
+
+    await user.keyboard('{Enter}')
+    expect(useTaskStore.getState().tasks[0]?.title).toBe(
+      'Review proposal\nhttps://example.com/proposal',
+    )
+  })
+
+  it('does not save while IME composition is active', async () => {
+    const user = userEvent.setup()
+    const task = createMockTask()
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+    await user.click(screen.getByText('Test Task'))
+    const input = document.querySelector(
+      'textarea[aria-label^="Edit task title"]',
+    ) as HTMLTextAreaElement
+    await user.clear(input)
+    await user.type(input, '入力')
+    fireEvent.keyDown(input, {
+      key: 'Enter',
+      code: 'Enter',
+      isComposing: true,
+    })
+
+    expect(useTaskStore.getState().tasks[0]?.title).toBe('Test Task')
+    expect(input.value).toBe('入力')
+  })
+
+  it('cancelling a multiline edit does not save on blur', async () => {
+    const user = userEvent.setup()
+    const task = createMockTask()
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+    await user.click(screen.getByText('Test Task'))
+    const input = document.querySelector(
+      'textarea[aria-label^="Edit task title"]',
+    ) as HTMLTextAreaElement
+    await user.clear(input)
+    await user.type(input, 'Changed')
+    await user.keyboard('{Shift>}{Enter}{/Shift}')
+    await user.type(input, 'line')
+    await user.keyboard('{Escape}')
+    fireEvent.blur(input)
+
+    expect(useTaskStore.getState().tasks[0]?.title).toBe('Test Task')
+    expect(screen.getByText('Test Task')).toBeTruthy()
+  })
+
+  it('keeps an invalid multiline edit open for correction', async () => {
+    const user = userEvent.setup()
+    const task = createMockTask()
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+    await user.click(screen.getByText('Test Task'))
+    const input = document.querySelector(
+      'textarea[aria-label^="Edit task title"]',
+    ) as HTMLTextAreaElement
+    await user.clear(input)
+    await user.paste('a'.repeat(281))
+    await user.keyboard('{Enter}')
+
+    expect(
+      document.querySelector('textarea[aria-label^="Edit task title"]'),
+    ).toBeTruthy()
+    expect(useTaskStore.getState().tasks[0]?.title).toBe('Test Task')
   })
 
   it('deletes task on delete button click', async () => {

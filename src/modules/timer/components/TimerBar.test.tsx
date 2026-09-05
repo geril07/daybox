@@ -94,6 +94,22 @@ function fireFocusComplete(taskId: string) {
 }
 
 describe('TimerBar', () => {
+  it('preserves the full multiline focused title and links', () => {
+    const title = 'Review\nhttps://example.com/proposal'
+    const task = createTask({ title })
+    useTaskStore.setState({ tasks: [task] })
+    useTimerStore.setState({ focusedTaskId: task.id })
+    render(<TimerBar />)
+    const link = screen.getByRole('link', {
+      name: 'https://example.com/proposal',
+    })
+    const container = link.parentElement
+    expect(container?.textContent).toBe(title)
+    expect(container).toHaveClass('whitespace-pre-wrap', 'break-words')
+    expect(container).not.toHaveClass('truncate')
+    expect(link).toHaveAttribute('target', '_blank')
+  })
+
   it('increments pomoCompleted past pomoEstimate = 0 on focus complete', () => {
     const task = createTask({ pomoEstimate: 0, pomoCompleted: 0 })
     useTaskStore.setState({ tasks: [task] })
