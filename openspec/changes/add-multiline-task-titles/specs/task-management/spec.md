@@ -23,6 +23,14 @@ Titles SHALL retain internal line breaks in storage, including through persisten
 - **WHEN** the user presses plain Enter or blurs the control with a valid draft
 - **THEN** the complete multiline title is saved
 
+#### Scenario: Inline editing starts at the clicked text position
+
+- **WHEN** the user clicks a non-link position within a task title
+- **THEN** inline editing opens with the caret at the closest corresponding position in the title
+- **AND** the existing title text is not selected
+- **WHEN** the browser cannot resolve the clicked text position
+- **THEN** the caret is placed at the end of the title
+
 #### Scenario: Cancel a multiline edit
 
 - **WHEN** the user changes a title to multiple lines and presses Escape

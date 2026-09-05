@@ -20,6 +20,8 @@ Shift+Enter inserts a newline without submitting or saving. Plain Enter prevents
 
 Retain the mobile Add task button and inline blur saving. Test software-keyboard behavior rather than assuming desktop event behavior is identical.
 
+When inline editing starts from a normal title-text click, use the browser caret-position API to map the click point to a character offset in the rendered title, including text split across linkification spans. Place the textarea caret at that offset after mounting. If the browser cannot resolve a position, place the caret at the end. Link clicks remain excluded from inline editing.
+
 ### Keep one title string and existing validation
 
 Store internal newlines in `title`. Continue trimming outer whitespace and enforcing the 280-character limit, including newline characters. Pasting multiple lines creates one task, not several. No new schema field or migration is needed. Failed validation must not clear the quick-add draft or silently close an invalid edit.
@@ -29,6 +31,8 @@ Store internal newlines in `title`. Continue trimming outer whitespace and enfor
 Apply whitespace-preserving wrapping at task-title containers. Keep the existing URL tokenizer and safe link behavior. Remove conflicting title truncation in the timer bar and allow its layout to grow. Do not change unrelated shared text rendering globally merely to style task titles.
 
 Normal wrapping remains enabled, including long URL wrapping. No line clamp, ellipsis, or collapsed state is added.
+
+Use the same integer `19px` line height for the rendered title and textarea. `scrollHeight` is integer-valued while rendered boxes can be fractional with the previous `19.25px` line height; matching integer line boxes prevents a one-pixel edit-mode shift without a fragile height correction.
 
 ### Preserve trailing group syntax across multiple lines
 
