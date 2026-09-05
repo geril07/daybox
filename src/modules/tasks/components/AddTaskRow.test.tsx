@@ -31,10 +31,10 @@ afterEach(() => {
   cleanup()
 })
 
-function getAddInput(): HTMLInputElement {
+function getAddInput(): HTMLTextAreaElement {
   return document.querySelector(
-    'input[placeholder^="Add a task"]',
-  ) as HTMLInputElement
+    'textarea[placeholder^="Add a task"]',
+  ) as HTMLTextAreaElement
 }
 
 function getAddForm(): HTMLFormElement {
@@ -76,6 +76,66 @@ describe('AddTaskRow', () => {
     const tasks = useTaskStore.getState().tasks
     expect(tasks).toHaveLength(1)
     expect(tasks[0]?.title).toBe('Write report')
+  })
+
+  it('Shift+Enter inserts a line break and Enter submits the multiline task', async () => {
+    const user = userEvent.setup()
+    render(<AddTaskRow />)
+    const input = getAddInput()
+    await user.type(input, 'Review proposal')
+    await user.keyboard('{Shift>}{Enter}{/Shift}')
+    await user.type(input, 'https://example.com/proposal')
+
+    expect(input.value).toBe('Review proposal\nhttps://example.com/proposal')
+    expect(useTaskStore.getState().tasks).toHaveLength(0)
+
+    await user.keyboard('{Enter}')
+
+    expect(useTaskStore.getState().tasks[0]?.title).toBe(
+      'Review proposal\nhttps://example.com/proposal',
+    )
+    expect(input.value).toBe('')
+  })
+
+  it('does not submit while IME composition is active', async () => {
+    const user = userEvent.setup()
+    render(<AddTaskRow />)
+    const input = getAddInput()
+    await user.type(input, '入力')
+    fireEvent.keyDown(input, {
+      key: 'Enter',
+      code: 'Enter',
+      isComposing: true,
+    })
+
+    expect(useTaskStore.getState().tasks).toHaveLength(0)
+    expect(input.value).toBe('入力')
+  })
+
+  it('accepts multiline title content before a trailing #group suffix', async () => {
+    const user = userEvent.setup()
+    render(<AddTaskRow />)
+    const input = getAddInput()
+    await user.type(input, 'Review proposal')
+    await user.keyboard('{Shift>}{Enter}{/Shift}')
+    await user.type(input, 'Check examples #work')
+    await user.keyboard('{Enter}')
+
+    const task = useTaskStore.getState().tasks[0]
+    expect(task?.title).toBe('Review proposal\nCheck examples')
+    expect(task?.groupId).toBe('work')
+  })
+
+  it('keeps an overlong draft after rejected submission', async () => {
+    const user = userEvent.setup()
+    render(<AddTaskRow />)
+    const input = getAddInput()
+    await user.click(input)
+    await user.paste('a'.repeat(281))
+    fireEvent.submit(getAddForm())
+
+    expect(useTaskStore.getState().tasks).toHaveLength(0)
+    expect(input.value).toBe('a'.repeat(281))
   })
 
   it('Enter with #group syntax submits the form', async () => {

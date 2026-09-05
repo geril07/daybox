@@ -6,7 +6,14 @@ import {
   GripVertical,
   MoreHorizontal,
 } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
+import {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  type KeyboardEvent,
+  type MouseEvent,
+} from 'react'
 
 import { GroupSelect, useGroupStore } from '@/modules/groups'
 import { useTimerStore } from '@/modules/timer'
@@ -37,6 +44,51 @@ interface TaskRowProps {
   dayStartMinutes?: number
 }
 
+function getCaretOffsetAtPoint(
+  container: HTMLElement,
+  clientX: number,
+  clientY: number,
+): number | null {
+  const documentWithCaretApi = container.ownerDocument as Document & {
+    caretPositionFromPoint?: (
+      x: number,
+      y: number,
+    ) => { offsetNode: Node; offset: number } | null
+    caretRangeFromPoint?: (x: number, y: number) => Range | null
+  }
+
+  let node: Node | null = null
+  let offset = 0
+  const caretPosition = documentWithCaretApi.caretPositionFromPoint?.(
+    clientX,
+    clientY,
+  )
+  if (caretPosition) {
+    node = caretPosition.offsetNode
+    offset = caretPosition.offset
+  } else {
+    const caretRange = documentWithCaretApi.caretRangeFromPoint?.(
+      clientX,
+      clientY,
+    )
+    if (caretRange) {
+      node = caretRange.startContainer
+      offset = caretRange.startOffset
+    }
+  }
+
+  if (!node || !container.contains(node)) return null
+
+  const range = container.ownerDocument.createRange()
+  range.selectNodeContents(container)
+  try {
+    range.setEnd(node, offset)
+  } catch {
+    return null
+  }
+  return range.toString().length
+}
+
 export function TaskRow({
   task,
   dragHandleRef,
@@ -46,7 +98,9 @@ export function TaskRow({
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [actionSheetOpen, setActionSheetOpen] = useState(false)
-  const editRef = useRef<HTMLInputElement>(null)
+  const editRef = useRef<HTMLTextAreaElement>(null)
+  const pendingCaretOffsetRef = useRef<number | null>(null)
+  const cancelledEditRef = useRef(false)
   const toggleTask = useTaskStore((s) => s.toggleTask)
   const updateTask = useTaskStore((s) => s.updateTask)
   const deleteTask = useTaskStore((s) => s.deleteTask)
@@ -64,33 +118,56 @@ export function TaskRow({
 
   useEffect(() => {
     if (editing && editRef.current) {
-      editRef.current.focus()
-      editRef.current.select()
+      const input = editRef.current
+      input.focus()
+      const caretOffset = pendingCaretOffsetRef.current ?? input.value.length
+      const safeCaretOffset = Math.min(caretOffset, input.value.length)
+      input.setSelectionRange(safeCaretOffset, safeCaretOffset)
+      pendingCaretOffsetRef.current = null
     }
   }, [editing])
 
-  const handleStartEdit = () => {
+  useLayoutEffect(() => {
+    const input = editRef.current
+    if (!input) return
+    input.style.height = 'auto'
+    input.style.height = `${input.scrollHeight}px`
+  }, [editTitle, editing])
+
+  const handleStartEdit = (e: MouseEvent<HTMLSpanElement>) => {
+    cancelledEditRef.current = false
+    pendingCaretOffsetRef.current = getCaretOffsetAtPoint(
+      e.currentTarget,
+      e.clientX,
+      e.clientY,
+    )
     setEditTitle(task.title)
     setEditing(true)
   }
 
   const handleSaveEdit = () => {
+    if (cancelledEditRef.current) return
     const trimmed = editTitle.trim()
-    if (trimmed && trimmed !== task.title) {
+    if (!trimmed || trimmed.length > 280) return
+    if (trimmed !== task.title) {
       updateTask(task.id, { title: trimmed })
     }
     setEditing(false)
   }
 
   const handleCancelEdit = () => {
+    cancelledEditRef.current = true
     setEditTitle(task.title)
     setEditing(false)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
       handleSaveEdit()
     } else if (e.key === 'Escape') {
+      e.preventDefault()
       handleCancelEdit()
     }
   }
@@ -133,20 +210,22 @@ export function TaskRow({
 
       <div className="min-w-0 flex-1">
         {editing ? (
-          <input
+          <textarea
             ref={editRef}
-            type="text"
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
             onBlur={handleSaveEdit}
             onKeyDown={handleKeyDown}
-            className="text-foreground w-full border-none bg-transparent text-sm font-[450] outline-none"
+            rows={1}
+            aria-label="Edit task title (Shift+Enter for new line)"
+            title="Shift+Enter for a new line"
+            className="text-foreground m-0 block min-h-[19px] w-full resize-none overflow-hidden border-none bg-transparent p-0 text-sm leading-[19px] font-[450] outline-none"
             style={{ caretColor: 'var(--accent)' }}
           />
         ) : (
           <span
             className={cn(
-              'block cursor-text text-sm leading-snug font-[450]',
+              'block cursor-text text-sm leading-[19px] font-[450] break-words whitespace-pre-wrap',
               task.completed ? 'text-fg-3 line-through' : 'text-fg',
             )}
             onClick={handleStartEdit}

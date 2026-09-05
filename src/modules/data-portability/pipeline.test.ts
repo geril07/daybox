@@ -99,6 +99,31 @@ beforeEach(() => {
   })
 })
 
+describe('multiline task title round trips', () => {
+  it('preserves internal newlines through persistence and JSON export/import', async () => {
+    const title = 'Review proposal\n\nhttps://example.com/proposal'
+    useTaskStore.setState({ tasks: [createTask({ id: 'multiline', title })] })
+    const built = buildSnapshot()
+    if (!built.ok) throw new Error(built.reason)
+    const exported = JSON.stringify(built.value)
+
+    // Change memory without overwriting the persisted task slice.
+    const stored = localStorage.getItem('daybox-tasks')
+    expect(stored).not.toBeNull()
+    useTaskStore.setState({ tasks: [] })
+    localStorage.setItem('daybox-tasks', stored!)
+    await useTaskStore.persist.rehydrate()
+    expect(useTaskStore.getState().tasks[0]?.title).toBe(title)
+
+    useTaskStore.setState({ tasks: [] })
+    const prepared = prepareSnapshotImport(exported)
+    expect(prepared.ok).toBe(true)
+    if (!prepared.ok) throw new Error('Exported snapshot was rejected')
+    commitSnapshotImport(prepared.snapshot)
+    expect(useTaskStore.getState().tasks[0]?.title).toBe(title)
+  })
+})
+
 describe('buildSnapshot', () => {
   it('builds a typed current envelope with nested slices and excludes local-only state', () => {
     const task = createTask({ id: 'task-1', title: 'Hello' })
