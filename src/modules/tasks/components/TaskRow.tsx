@@ -219,13 +219,13 @@ export function TaskRow({
             rows={1}
             aria-label="Edit task title (Shift+Enter for new line)"
             title="Shift+Enter for a new line"
-            className="text-foreground m-0 block min-h-[1.375em] w-full resize-none overflow-hidden border-none bg-transparent p-0 text-sm leading-snug font-[450] outline-none"
+            className="text-foreground m-0 block min-h-[19px] w-full resize-none overflow-hidden border-none bg-transparent p-0 text-sm leading-[19px] font-[450] outline-none"
             style={{ caretColor: 'var(--accent)' }}
           />
         ) : (
           <span
             className={cn(
-              'block cursor-text text-sm leading-snug font-[450] break-words whitespace-pre-wrap',
+              'block cursor-text text-sm leading-[19px] font-[450] break-words whitespace-pre-wrap',
               task.completed ? 'text-fg-3 line-through' : 'text-fg',
             )}
             onClick={handleStartEdit}
