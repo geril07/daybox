@@ -24,7 +24,7 @@ import { cn } from '@/shared/utils/cn'
 import { playAlarm, togglePlayPauseWithClick } from '../alarm'
 import { resolveIntervalDurationMin } from '../duration'
 import { notifyIntervalEnd } from '../notifications'
-import { getNextPhase, useTimerStore } from '../store'
+import { useTimerStore } from '../store'
 import type { TimerPhase } from '../types'
 import { IntervalDurationPopover } from './IntervalDurationPopover'
 
@@ -211,16 +211,11 @@ export function TimerBar() {
       ? undefined
       : `color-mix(in oklch, ${phaseColor} 8%, var(--card))`
 
-  const sessionProgressLabel =
-    sessionPomoCount > settings.longBreakInterval
-      ? `${sessionPomoCount} completed`
-      : `${sessionPomoCount} of ${settings.longBreakInterval}`
   const cycleLabel =
     phase === 'longBreak'
       ? 'long break'
-      : sessionProgressLabel +
-        (getNextPhase('focus', sessionPomoCount, settings.longBreakInterval) ===
-        'longBreak'
+      : `${sessionPomoCount} of ${settings.longBreakInterval}` +
+        (sessionPomoCount + 1 >= settings.longBreakInterval
           ? ' · long next'
           : '')
 

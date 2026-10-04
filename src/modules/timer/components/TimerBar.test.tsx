@@ -104,13 +104,13 @@ describe('TimerBar', () => {
       ['focus', 3, '3 of 4 · long next'],
       ['shortBreak', 3, '3 of 4 · long next'],
       ['focus', 4, '4 of 4 · long next'],
-      ['focus', 5, '5 completed · long next'],
-      ['focus', 7, '7 completed · long next'],
-      ['shortBreak', 7, '7 completed · long next'],
+      ['focus', 5, '5 of 4 · long next'],
+      ['focus', 7, '7 of 4 · long next'],
+      ['shortBreak', 7, '7 of 4 · long next'],
       ['longBreak', 4, 'long break'],
       ['longBreak', 7, 'long break'],
     ] as const)(
-      'shows truthful progress in %s at count %i',
+      'keeps the existing cycle text in %s at count %i',
       (phase, count, label) => {
         useTimerStore.setState({ phase, sessionPomoCount: count })
         render(<TimerBar />)
@@ -123,7 +123,7 @@ describe('TimerBar', () => {
       (action) => {
         useTimerStore.setState({ sessionPomoCount: 5 })
         render(<TimerBar />)
-        expect(screen.getByText('5 completed · long next')).toBeTruthy()
+        expect(screen.getByText('5 of 4 · long next')).toBeTruthy()
 
         if (action === 'skip') {
           fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
@@ -162,8 +162,7 @@ describe('TimerBar', () => {
 
       expect(useTimerStore.getState().phase).toBe('focus')
       expect(useTimerStore.getState().sessionPomoCount).toBe(5)
-      expect(screen.getByText('5 completed · long next')).toBeTruthy()
-      expect(screen.queryByText('5 of 4 · long next')).toBeNull()
+      expect(screen.getByText('5 of 4 · long next')).toBeTruthy()
     })
   })
 
