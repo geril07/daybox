@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { requestNotificationPermission } from '@/shared/notifications'
@@ -11,6 +12,9 @@ import {
   SelectContent,
   SelectItem,
   Slider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@/shared/ui'
 
 import { useTimerStore } from '../store'
@@ -193,10 +197,29 @@ export function TimerSettingsPanel() {
             {permissionButtonLabel}
           </Button>
         </SettingRow>
-        <SettingRow label="Keep reminders visible">
+        <SettingRow
+          label={
+            <span className="inline-flex items-center gap-1">
+              Keep reminders visible
+              <Tooltip>
+                <TooltipTrigger
+                  render={<Button variant="ghost" size="icon-xs" />}
+                  aria-label="About keeping reminders visible"
+                  className="text-muted-foreground"
+                >
+                  <Info aria-hidden="true" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Requests that reminders stay visible until dismissed. Some
+                  browsers do not support this, and desktop notification
+                  settings can override it.
+                </TooltipContent>
+              </Tooltip>
+            </span>
+          }
+        >
           <Switch
             aria-label="Keep reminders visible"
-            aria-describedby="keep-reminders-visible-description"
             checked={settings.keepNotificationsVisible}
             disabled={!settings.notificationsEnabled}
             onCheckedChange={(v) =>
@@ -204,13 +227,6 @@ export function TimerSettingsPanel() {
             }
           />
         </SettingRow>
-        <p
-          id="keep-reminders-visible-description"
-          className="text-muted-foreground text-xs"
-        >
-          Ask your desktop to keep stage-end notifications visible until clicked
-          or dismissed. Browser and desktop settings may affect this.
-        </p>
         {notificationPermission === 'default' ? (
           <p className="text-muted-foreground text-xs">
             Enable browser permission to receive OS notifications while DayBox
@@ -237,7 +253,7 @@ function SettingRow({
   label,
   children,
 }: {
-  label: string
+  label: React.ReactNode
   children: React.ReactNode
 }) {
   return (

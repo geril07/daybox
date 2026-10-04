@@ -76,3 +76,10 @@ export type { NumberInputProps } from './number-input'
 export { EmptyState } from './EmptyState'
 
 export { LinkifiedText } from './LinkifiedText'
+
+export {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from './tooltip'
