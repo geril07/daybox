@@ -38,6 +38,16 @@ Open the local URL printed by Vite.
 - `npm run test` runs Vitest.
 - `npm run preview` previews the production build.
 
+## App Updates
+
+Production builds publish a unique build ID in both the app bundle and `/version.json`. Open tabs check on startup, every five minutes while visible, and when focus, visibility, or connectivity returns, with a one-minute cooldown between checks. Failed requests are ignored and retried on a later check. Development uses Vite HMR instead.
+
+When the deployed build differs, a persistent bottom-right toast above the timer bar offers **Reload** and **Later**. Its position follows the timer bar's actual height on desktop and mobile. Reload is always explicit and flushes pending timer storage before refreshing the current page. Later dismisses that build for the tab session; a different deployment can show another notice. Rollbacks are detected by ID difference, not version ordering.
+
+Vercel serves the version file directly and disables caching for it and SPA HTML routes. Hashed assets keep their normal caching. Other hosts must also serve fresh metadata and HTML. Checks follow the current origin, so a pinned deployment URL does not discover updates on another deployment URL.
+
+Unsubmitted drafts can be lost on reload. Unsaved-work exit protection is tracked separately in [issue #6](https://github.com/geril07/daybox/issues/6).
+
 ## Google Drive Backup
 
 Drive backup uses a stateless Hono backend on Vercel. The backend performs the OAuth Authorization Code + PKCE exchange and stores an encrypted refresh token in an `HttpOnly` cookie. The SPA never sees the refresh token.
