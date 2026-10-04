@@ -1,3 +1,12 @@
 {
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+  "headers": [
+    {
+      "source": "/((?!api/|assets/).*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    }
+  ],
+  "rewrites": [
+    { "source": "/version.json", "destination": "/version.json" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }

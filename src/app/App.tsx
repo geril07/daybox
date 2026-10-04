@@ -24,6 +24,7 @@ import { Button, Sheet, SheetContent } from '@/shared/ui'
 
 import { Sidebar } from './Sidebar'
 import { ViewTabs } from './ViewTabs'
+import { AppUpdateNotice } from './updates/AppUpdateNotice'
 
 export function App() {
   const [view, setView] = useState<View>('today')
@@ -201,7 +202,7 @@ export function App() {
           {sidebarNav}
         </aside>
 
-        <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <main className="flex-1 scrollbar-gutter-stable overflow-y-auto">
             <div className="container mx-auto w-full max-w-[680px] px-4 md:px-7">
               <ViewTabs value={view} onChange={setView} />
@@ -215,6 +216,7 @@ export function App() {
             </div>
           </main>
 
+          <AppUpdateNotice />
           <TimerBar />
         </div>
       </div>
