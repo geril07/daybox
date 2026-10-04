@@ -270,7 +270,7 @@ export function getNextPhase(
   longBreakInterval: number,
 ): TimerPhase {
   if (current === 'focus') {
-    if ((sessionPomoCount + 1) % longBreakInterval === 0) {
+    if (sessionPomoCount + 1 >= longBreakInterval) {
       return 'longBreak'
     }
     return 'shortBreak'

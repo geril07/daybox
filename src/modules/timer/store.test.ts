@@ -169,6 +169,55 @@ describe('Timer Store', () => {
       expect(useTimerStore.getState().phase).toBe('focus')
       expect(useTimerStore.getState().sessionPomoCount).toBe(0)
     })
+
+    it('keeps a long break due after the user manually bypasses it', () => {
+      for (let i = 0; i < 7; i++) useTimerStore.getState().skip(4)
+      expect(useTimerStore.getState().phase).toBe('longBreak')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(4)
+
+      useTimerStore.getState().setPhase('focus')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(4)
+
+      useTimerStore.getState().skip(4)
+      expect(useTimerStore.getState().phase).toBe('longBreak')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(5)
+
+      useTimerStore.getState().skip(4)
+      expect(useTimerStore.getState().phase).toBe('focus')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(0)
+    })
+
+    it('schedules a long break after the interval is reduced below progress', () => {
+      useTimerStore.getState().setTimerSettings({ longBreakInterval: 8 })
+      for (let i = 0; i < 10; i++) useTimerStore.getState().skip(8)
+      expect(useTimerStore.getState().phase).toBe('focus')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(5)
+
+      useTimerStore.getState().setTimerSettings({ longBreakInterval: 4 })
+      expect(useTimerStore.getState().phase).toBe('focus')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(5)
+
+      useTimerStore.getState().advancePhase({ longBreakInterval: 4 })
+      expect(useTimerStore.getState().phase).toBe('longBreak')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(6)
+    })
+
+    it('preserves a persisted excess count and recovers through a long break', async () => {
+      useTimerStore.setState({ sessionPomoCount: 5 })
+      timerStorage.flush()
+      useTimerStore.getState().resetSession()
+      await useTimerStore.persist.rehydrate()
+      expect(useTimerStore.getState().phase).toBe('focus')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(5)
+
+      useTimerStore.getState().skip(4)
+      expect(useTimerStore.getState().phase).toBe('longBreak')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(6)
+
+      useTimerStore.getState().skip(4)
+      expect(useTimerStore.getState().phase).toBe('focus')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(0)
+    })
   })
 
   describe('resetSession', () => {
