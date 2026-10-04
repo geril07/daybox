@@ -96,6 +96,73 @@ function fireFocusComplete(taskId: string) {
 }
 
 describe('TimerBar', () => {
+  describe('document title', () => {
+    it.each([
+      ['focus', 'Focus', '24:00'],
+      ['shortBreak', 'Short break', '04:00'],
+      ['longBreak', 'Long break', '14:00'],
+    ] as const)(
+      'follows start, pause, and reset for %s',
+      (phase, label, clock) => {
+        useTimerStore.getState().setPhase(phase)
+        render(<TimerBar />)
+        expect(document.title).toBe(`${label} ready — DayBox`)
+
+        act(() => {
+          useTimerStore.setState({ elapsed: 60_000 })
+          useTimerStore.getState().start()
+        })
+        expect(document.title).toBe(`${clock} · ${label} — DayBox`)
+
+        act(() => useTimerStore.getState().pause())
+        expect(document.title).toBe(`Paused · ${label} — DayBox`)
+
+        act(() => useTimerStore.getState().reset())
+        expect(document.title).toBe(`${label} ready — DayBox`)
+      },
+    )
+
+    it.each([
+      ['focus', 0, false, 'Short break ready — DayBox'],
+      ['focus', 3, false, 'Long break ready — DayBox'],
+      ['shortBreak', 1, false, 'Focus ready — DayBox'],
+      ['longBreak', 4, false, 'Focus ready — DayBox'],
+      ['focus', 0, true, '05:00 · Short break — DayBox'],
+      ['focus', 3, true, '15:00 · Long break — DayBox'],
+      ['shortBreak', 1, true, '25:00 · Focus — DayBox'],
+      ['longBreak', 4, true, '25:00 · Focus — DayBox'],
+    ] as const)(
+      'updates after %s completes (count %i, auto-start %s)',
+      (phase, sessionPomoCount, autoStart, title) => {
+        useTimerStore.setState({
+          phase,
+          sessionPomoCount,
+          elapsed: 180 * 60_000,
+          startedAt: Date.now(),
+          isRunning: true,
+          settings: {
+            ...DEFAULT_TIMER_SETTINGS,
+            autoStartBreaks: autoStart,
+            autoStartPomodoros: autoStart,
+          },
+        })
+        render(<TimerBar />)
+        expect(document.title).toBe(title)
+      },
+    )
+
+    it('shows focus ready for a fresh session and after resetting the session', () => {
+      render(<TimerBar />)
+      expect(document.title).toBe('Focus ready — DayBox')
+
+      act(() => useTimerStore.getState().setPhase('longBreak'))
+      expect(document.title).toBe('Long break ready — DayBox')
+
+      act(() => useTimerStore.getState().resetSession())
+      expect(document.title).toBe('Focus ready — DayBox')
+    })
+  })
+
   it('preserves the full multiline focused title and links', () => {
     const title = 'Review\nhttps://example.com/proposal'
     const task = createTask({ title })

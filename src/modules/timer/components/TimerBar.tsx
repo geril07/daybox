@@ -130,12 +130,20 @@ export function TimerBar() {
   ])
 
   useEffect(() => {
+    const label =
+      phase === 'focus'
+        ? 'Focus'
+        : phase === 'shortBreak'
+          ? 'Short break'
+          : 'Long break'
     if (isRunning) {
-      document.title = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} — DayBox`
+      document.title = `${clockDisplay} · ${label} — DayBox`
+    } else if (elapsed > 0) {
+      document.title = `Paused · ${label} — DayBox`
     } else {
-      document.title = 'DayBox'
+      document.title = `${label} ready — DayBox`
     }
-  }, [isRunning, minutes, seconds])
+  }, [isRunning, clockDisplay, phase, elapsed])
 
   const intervalDirty = isRunning || elapsed > 0
   const cycleDirty = sessionPomoCount > 0 || phase !== 'focus'
