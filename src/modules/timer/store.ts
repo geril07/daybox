@@ -5,6 +5,7 @@ import { createDebouncedStringStorage } from '@/shared/utils/debounced-storage'
 import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
 import { defaultDurationForPhase, isValidIntervalDurationMin } from './duration'
+import { clearIntervalNotification } from './notifications'
 import { TimerStateSchema, TimerSettingsSchema } from './schema'
 import type { TimerPhase, TimerSettings } from './types'
 
@@ -26,6 +27,7 @@ export const DEFAULT_TIMER_SETTINGS: TimerSettings = {
   autoStartBreaks: false,
   autoStartPomodoros: false,
   notificationsEnabled: true,
+  keepNotificationsVisible: false,
   alarmSound: 'bell',
   alarmVolume: 0.5,
   alarmRepeat: 3,
@@ -88,11 +90,13 @@ export const useTimerStore = create<TimerStore>()(
       intervalDurationMin: null,
       settings: DEFAULT_TIMER_SETTINGS,
 
-      start: () =>
+      start: () => {
+        clearIntervalNotification()
         set({
           isRunning: true,
           startedAt: Date.now(),
-        }),
+        })
+      },
 
       pause: () =>
         set((state) => ({
@@ -102,14 +106,17 @@ export const useTimerStore = create<TimerStore>()(
           startedAt: null,
         })),
 
-      reset: () =>
+      reset: () => {
+        clearIntervalNotification()
         set({
           isRunning: false,
           startedAt: null,
           elapsed: 0,
-        }),
+        })
+      },
 
-      resetSession: () =>
+      resetSession: () => {
+        clearIntervalNotification()
         set({
           phase: 'focus',
           sessionPomoCount: 0,
@@ -117,7 +124,8 @@ export const useTimerStore = create<TimerStore>()(
           elapsed: 0,
           isRunning: false,
           intervalDurationMin: null,
-        }),
+        })
+      },
 
       togglePlayPause: () => {
         const state = get()
@@ -158,17 +166,20 @@ export const useTimerStore = create<TimerStore>()(
       },
 
       skip: (longBreakInterval) => {
+        clearIntervalNotification()
         get().advancePhase({ autoStart: false, longBreakInterval })
       },
 
-      setPhase: (phase) =>
+      setPhase: (phase) => {
+        clearIntervalNotification()
         set({
           phase,
           startedAt: null,
           elapsed: 0,
           isRunning: false,
           intervalDurationMin: null,
-        }),
+        })
+      },
 
       tick: () => {
         const state = get()
@@ -198,6 +209,12 @@ export const useTimerStore = create<TimerStore>()(
         if (!result.success) {
           console.warn('[daybox] Invalid timer settings rejected', result.error)
           return
+        }
+        if (
+          partial.notificationsEnabled === false ||
+          partial.keepNotificationsVisible === false
+        ) {
+          clearIntervalNotification()
         }
         set({ settings: merged as TimerSettings })
       },
@@ -234,6 +251,7 @@ export const useTimerStore = create<TimerStore>()(
         init: timerInit,
         afterValidate: (state) => {
           state.settings.notificationsEnabled ??= true
+          state.settings.keepNotificationsVisible ??= false
           state.intervalDurationMin ??= null
           if (state.isRunning && state.startedAt) {
             const now = Date.now()

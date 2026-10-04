@@ -22,6 +22,7 @@ class NotificationMock {
   onclick: ((this: Notification, ev: Event) => unknown) | null = null
   title: string
   options?: NotificationOptions
+  close = vi.fn()
 
   constructor(title: string, options?: NotificationOptions) {
     this.title = title

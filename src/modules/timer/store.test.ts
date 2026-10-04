@@ -470,6 +470,21 @@ describe('Timer settings slice', () => {
     await useTimerStore.persist.rehydrate()
 
     expect(useTimerStore.getState().settings.notificationsEnabled).toBe(true)
+    expect(useTimerStore.getState().settings.keepNotificationsVisible).toBe(
+      false,
+    )
+  })
+
+  it('persists and restores the persistent-reminder preference', async () => {
+    useTimerStore
+      .getState()
+      .setTimerSettings({ keepNotificationsVisible: true })
+    timerStorage.flush()
+    useTimerStore.setState({ settings: DEFAULT_TIMER_SETTINGS })
+    await useTimerStore.persist.rehydrate()
+    expect(useTimerStore.getState().settings.keepNotificationsVisible).toBe(
+      true,
+    )
   })
 
   it('preserves notificationsEnabled=false when rehydrating persisted settings', async () => {

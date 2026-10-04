@@ -1,4 +1,4 @@
-import { render, cleanup, fireEvent, screen } from '@testing-library/react'
+import { render, cleanup, fireEvent, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
@@ -6,6 +6,7 @@ import { useGroupStore } from '@/modules/groups'
 import { useTaskStore } from '@/modules/tasks'
 
 import { unlockAudio } from '../alarm'
+import { clearIntervalNotification } from '../notifications'
 import { DEFAULT_TIMER_SETTINGS, useTimerStore } from '../store'
 import { TimerBar } from './TimerBar'
 
@@ -62,6 +63,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  clearIntervalNotification()
   cleanup()
   vi.restoreAllMocks()
 })
@@ -159,6 +161,7 @@ describe('TimerBar', () => {
 
     expect(notification.instances).toHaveLength(1)
     expect(notification.instances[0].title).toBe('Focus complete!')
+    expect(notification.instances[0].options?.requireInteraction).toBe(false)
     expect(notification.instances[0].onclick).toEqual(expect.any(Function))
 
     notification.instances[0].onclick?.call(
@@ -166,6 +169,98 @@ describe('TimerBar', () => {
       new Event('click'),
     )
     expect(focusSpy).toHaveBeenCalledTimes(1)
+    expect(notification.instances[0].close).toHaveBeenCalledTimes(1)
+  })
+
+  describe('persistent reminders', () => {
+    beforeEach(() => {
+      getNotificationMock().permission = 'granted'
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        value: 'hidden',
+      })
+      useTimerStore
+        .getState()
+        .setTimerSettings({ keepNotificationsVisible: true })
+    })
+
+    it.each(['focus', 'shortBreak', 'longBreak'] as const)(
+      'keeps the %s completion reminder while waiting for the next stage',
+      (phase) => {
+        useTimerStore.setState({
+          phase,
+          startedAt: Date.now(),
+          elapsed: 180 * 60_000,
+          isRunning: true,
+        })
+        render(<TimerBar />)
+
+        const notification = getNotificationMock().instances[0]
+        expect(notification.options?.requireInteraction).toBe(true)
+        expect(notification.close).not.toHaveBeenCalled()
+        expect(useTimerStore.getState().isRunning).toBe(false)
+      },
+    )
+
+    it.each([
+      ['start', () => useTimerStore.getState().start()],
+      ['reset', () => useTimerStore.getState().reset()],
+      ['reset session', () => useTimerStore.getState().resetSession()],
+      ['skip', () => useTimerStore.getState().skip(4)],
+      ['change phase', () => useTimerStore.getState().setPhase('focus')],
+      [
+        'disable reminders',
+        () =>
+          useTimerStore
+            .getState()
+            .setTimerSettings({ keepNotificationsVisible: false }),
+      ],
+      [
+        'disable notifications',
+        () =>
+          useTimerStore
+            .getState()
+            .setTimerSettings({ notificationsEnabled: false }),
+      ],
+    ] as const)('clears a pending reminder on %s', (_name, action) => {
+      fireFocusComplete('missing-task')
+      render(<TimerBar />)
+      const notification = getNotificationMock().instances[0]
+
+      act(action)
+
+      expect(notification.close).toHaveBeenCalledTimes(1)
+    })
+
+    it('replaces the previous stage reminder instead of stacking', () => {
+      fireFocusComplete('missing-task')
+      render(<TimerBar />)
+      const first = getNotificationMock().instances[0]
+
+      act(() => {
+        useTimerStore.setState({
+          startedAt: Date.now(),
+          elapsed: 5 * 60_000,
+          isRunning: true,
+        })
+      })
+
+      const second = getNotificationMock().instances[1]
+      expect(first.close).toHaveBeenCalledTimes(1)
+      expect(second.title).toBe('Short break complete!')
+      expect(second.options?.tag).toBe(first.options?.tag)
+    })
+
+    it('uses a temporary notification when the next stage auto-starts', () => {
+      useTimerStore.getState().setTimerSettings({ autoStartBreaks: true })
+      fireFocusComplete('missing-task')
+      render(<TimerBar />)
+
+      expect(
+        getNotificationMock().instances[0].options?.requireInteraction,
+      ).toBe(false)
+      expect(useTimerStore.getState().isRunning).toBe(true)
+    })
   })
 
   it('continues interval completion when audio graph creation throws', async () => {

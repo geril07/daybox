@@ -193,6 +193,24 @@ export function TimerSettingsPanel() {
             {permissionButtonLabel}
           </Button>
         </SettingRow>
+        <SettingRow label="Keep reminders visible">
+          <Switch
+            aria-label="Keep reminders visible"
+            aria-describedby="keep-reminders-visible-description"
+            checked={settings.keepNotificationsVisible}
+            disabled={!settings.notificationsEnabled}
+            onCheckedChange={(v) =>
+              updateTimerSettings({ keepNotificationsVisible: v })
+            }
+          />
+        </SettingRow>
+        <p
+          id="keep-reminders-visible-description"
+          className="text-muted-foreground text-xs"
+        >
+          Ask your desktop to keep stage-end notifications visible until clicked
+          or dismissed. Browser and desktop settings may affect this.
+        </p>
         {notificationPermission === 'default' ? (
           <p className="text-muted-foreground text-xs">
             Enable browser permission to receive OS notifications while DayBox
