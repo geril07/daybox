@@ -11,10 +11,12 @@ export function sendNotification(
   title: string,
   body?: string,
   onClick?: () => void,
-): void {
+  options?: NotificationOptions,
+): Notification | undefined {
   if (!('Notification' in window)) return
   if (Notification.permission !== 'granted') return
 
-  const notification = new Notification(title, { body })
+  const notification = new Notification(title, { ...options, body })
   if (onClick) notification.onclick = onClick
+  return notification
 }

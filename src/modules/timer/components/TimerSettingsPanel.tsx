@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { requestNotificationPermission } from '@/shared/notifications'
@@ -11,6 +12,9 @@ import {
   SelectContent,
   SelectItem,
   Slider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from '@/shared/ui'
 
 import { useTimerStore } from '../store'
@@ -193,6 +197,36 @@ export function TimerSettingsPanel() {
             {permissionButtonLabel}
           </Button>
         </SettingRow>
+        <SettingRow
+          label={
+            <span className="inline-flex items-center gap-1">
+              Keep reminders visible
+              <Tooltip>
+                <TooltipTrigger
+                  render={<Button variant="ghost" size="icon-xs" />}
+                  aria-label="About keeping reminders visible"
+                  className="text-muted-foreground"
+                >
+                  <Info aria-hidden="true" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Requests that reminders stay visible until dismissed. Some
+                  browsers do not support this, and desktop notification
+                  settings can override it.
+                </TooltipContent>
+              </Tooltip>
+            </span>
+          }
+        >
+          <Switch
+            aria-label="Keep reminders visible"
+            checked={settings.keepNotificationsVisible}
+            disabled={!settings.notificationsEnabled}
+            onCheckedChange={(v) =>
+              updateTimerSettings({ keepNotificationsVisible: v })
+            }
+          />
+        </SettingRow>
         {notificationPermission === 'default' ? (
           <p className="text-muted-foreground text-xs">
             Enable browser permission to receive OS notifications while DayBox
@@ -219,7 +253,7 @@ function SettingRow({
   label,
   children,
 }: {
-  label: string
+  label: React.ReactNode
   children: React.ReactNode
 }) {
   return (

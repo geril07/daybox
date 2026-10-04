@@ -9,10 +9,7 @@ import {
 import { useEffect, useRef } from 'react'
 
 import { useTaskStore } from '@/modules/tasks'
-import {
-  sendNotification,
-  shouldFireIntervalEndNotification,
-} from '@/shared/notifications'
+import { shouldFireIntervalEndNotification } from '@/shared/notifications'
 import {
   Button,
   LinkifiedText,
@@ -26,6 +23,7 @@ import { cn } from '@/shared/utils/cn'
 
 import { playAlarm, togglePlayPauseWithClick } from '../alarm'
 import { resolveIntervalDurationMin } from '../duration'
+import { notifyIntervalEnd } from '../notifications'
 import { useTimerStore } from '../store'
 import type { TimerPhase } from '../types'
 import { IntervalDurationPopover } from './IntervalDurationPopover'
@@ -92,6 +90,9 @@ export function TimerBar() {
     alarmPlayedRef.current = true
 
     playAlarm(settings.alarmSound, settings.alarmVolume, settings.alarmRepeat)
+    const autoStart =
+      (phase === 'focus' && settings.autoStartBreaks) ||
+      (phase !== 'focus' && settings.autoStartPomodoros)
     if (
       shouldFireIntervalEndNotification({
         documentVisible: document.visibilityState === 'visible',
@@ -99,12 +100,12 @@ export function TimerBar() {
         enabled: settings.notificationsEnabled,
       })
     ) {
-      sendNotification(
+      notifyIntervalEnd(
         phase === 'focus'
           ? 'Focus complete!'
           : `${phase === 'shortBreak' ? 'Short break' : 'Long break'} complete!`,
         focusedTask ? `Task: ${focusedTask.title}` : undefined,
-        () => window.focus(),
+        settings.keepNotificationsVisible && !autoStart,
       )
     }
 
@@ -113,10 +114,6 @@ export function TimerBar() {
         pomoCompleted: focusedTask.pomoCompleted + 1,
       })
     }
-
-    const autoStart =
-      (phase === 'focus' && settings.autoStartBreaks) ||
-      (phase !== 'focus' && settings.autoStartPomodoros)
 
     advancePhase({
       autoStart,
