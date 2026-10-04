@@ -23,6 +23,7 @@ import {
   getTomorrow,
   isOverdue,
 } from '@/shared/dates'
+import { useUnsavedChanges } from '@/shared/hooks/useUnsavedChanges'
 import {
   Button,
   LinkifiedText,
@@ -97,6 +98,7 @@ export function TaskRow({
 }: TaskRowProps) {
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
+  useUnsavedChanges(editing && editTitle.trim() !== task.title)
   const [actionSheetOpen, setActionSheetOpen] = useState(false)
   const editRef = useRef<HTMLTextAreaElement>(null)
   const pendingCaretOffsetRef = useRef<number | null>(null)

@@ -2,6 +2,7 @@ import { Check, X } from 'lucide-react'
 import { useLayoutEffect, useRef, useState } from 'react'
 
 import { useGroupStore } from '@/modules/groups'
+import { useUnsavedChanges } from '@/shared/hooks/useUnsavedChanges'
 import { Button } from '@/shared/ui'
 
 interface SidebarAddGroupInputProps {
@@ -15,6 +16,7 @@ export function SidebarAddGroupInput({
 }: SidebarAddGroupInputProps) {
   const addGroup = useGroupStore((s) => s.addGroup)
   const [name, setName] = useState('')
+  useUnsavedChanges(open && name.trim().length > 0)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useLayoutEffect(() => {

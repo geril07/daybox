@@ -8,6 +8,7 @@ import {
 } from 'react'
 
 import { GroupSelect, useGroupStore } from '@/modules/groups'
+import { useUnsavedChanges } from '@/shared/hooks/useUnsavedChanges'
 import { Button } from '@/shared/ui'
 
 import { useTaskStore } from '../store'
@@ -19,6 +20,7 @@ interface AddTaskRowProps {
 
 export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
   const [title, setTitle] = useState('')
+  useUnsavedChanges(title.trim().length > 0)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useLayoutEffect(() => {

@@ -46,8 +46,6 @@ When the deployed build differs, a persistent bottom-right toast above the timer
 
 Vercel serves the version file directly and disables caching for it and SPA HTML routes. Hashed assets keep their normal caching. Other hosts must also serve fresh metadata and HTML. Checks follow the current origin, so a pinned deployment URL does not discover updates on another deployment URL.
 
-Unsubmitted drafts can be lost on reload. Unsaved-work exit protection is tracked separately in [issue #6](https://github.com/geril07/daybox/issues/6).
-
 ## Google Drive Backup
 
 Drive backup uses a stateless Hono backend on Vercel. The backend performs the OAuth Authorization Code + PKCE exchange and stores an encrypted refresh token in an `HttpOnly` cookie. The SPA never sees the refresh token.

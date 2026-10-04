@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { useGroupStore } from '@/modules/groups'
 import { useTaskStore } from '@/modules/tasks'
 import { AddTaskRow } from '@/modules/tasks/components/AddTaskRow'
+import { requestsUnloadConfirmation } from '@/test-utils/beforeUnload'
 
 beforeEach(() => {
   useTaskStore.setState({ tasks: [] })
@@ -46,6 +47,24 @@ function getAddButton(): HTMLButtonElement {
 }
 
 describe('AddTaskRow', () => {
+  it('protects an unsubmitted draft until cleared or successfully submitted', () => {
+    render(<AddTaskRow />)
+    const input = getAddInput()
+    expect(requestsUnloadConfirmation()).toBe(false)
+    fireEvent.change(input, { target: { value: '  \n ' } })
+    expect(requestsUnloadConfirmation()).toBe(false)
+    fireEvent.change(input, { target: { value: 'Draft task' } })
+    expect(requestsUnloadConfirmation()).toBe(true)
+    fireEvent.change(input, { target: { value: '' } })
+    expect(requestsUnloadConfirmation()).toBe(false)
+    fireEvent.change(input, { target: { value: 'x'.repeat(281) } })
+    fireEvent.submit(getAddForm())
+    expect(requestsUnloadConfirmation()).toBe(true)
+    fireEvent.change(input, { target: { value: 'Valid task' } })
+    fireEvent.submit(getAddForm())
+    expect(requestsUnloadConfirmation()).toBe(false)
+  })
+
   it('native form submit creates a task', async () => {
     const user = userEvent.setup()
     render(<AddTaskRow />)
