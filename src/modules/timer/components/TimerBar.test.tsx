@@ -96,6 +96,77 @@ function fireFocusComplete(taskId: string) {
 }
 
 describe('TimerBar', () => {
+  describe('session progress', () => {
+    it.each([
+      ['focus', 0, '0 of 4'],
+      ['focus', 2, '2 of 4'],
+      ['shortBreak', 2, '2 of 4'],
+      ['focus', 3, '3 of 4 · long next'],
+      ['shortBreak', 3, '3 of 4 · long next'],
+      ['focus', 4, '4 of 4 · long next'],
+      ['focus', 5, '5 completed · long next'],
+      ['focus', 7, '7 completed · long next'],
+      ['shortBreak', 7, '7 completed · long next'],
+      ['longBreak', 4, 'long break'],
+      ['longBreak', 7, 'long break'],
+    ] as const)(
+      'shows truthful progress in %s at count %i',
+      (phase, count, label) => {
+        useTimerStore.setState({ phase, sessionPomoCount: count })
+        render(<TimerBar />)
+        expect(screen.getByText(label, { exact: true })).toBeTruthy()
+      },
+    )
+
+    it.each(['skip', 'completion'] as const)(
+      'takes the promised long break on focus %s with an excess count',
+      (action) => {
+        useTimerStore.setState({ sessionPomoCount: 5 })
+        render(<TimerBar />)
+        expect(screen.getByText('5 completed · long next')).toBeTruthy()
+
+        if (action === 'skip') {
+          fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+        } else {
+          act(() => {
+            useTimerStore.setState({
+              elapsed: DEFAULT_TIMER_SETTINGS.focusDuration * 60_000,
+              startedAt: Date.now(),
+              isRunning: true,
+            })
+          })
+        }
+
+        expect(useTimerStore.getState().phase).toBe('longBreak')
+        expect(useTimerStore.getState().sessionPomoCount).toBe(6)
+        expect(screen.getByText('long break', { exact: true })).toBeTruthy()
+
+        fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+        expect(useTimerStore.getState().phase).toBe('focus')
+        expect(useTimerStore.getState().sessionPomoCount).toBe(0)
+        expect(screen.getByText('0 of 4', { exact: true })).toBeTruthy()
+      },
+    )
+
+    it('updates progress without losing completions when the interval is reduced', () => {
+      useTimerStore.setState({
+        sessionPomoCount: 5,
+        settings: { ...DEFAULT_TIMER_SETTINGS, longBreakInterval: 8 },
+      })
+      render(<TimerBar />)
+      expect(screen.getByText('5 of 8', { exact: true })).toBeTruthy()
+
+      act(() => {
+        useTimerStore.getState().setTimerSettings({ longBreakInterval: 4 })
+      })
+
+      expect(useTimerStore.getState().phase).toBe('focus')
+      expect(useTimerStore.getState().sessionPomoCount).toBe(5)
+      expect(screen.getByText('5 completed · long next')).toBeTruthy()
+      expect(screen.queryByText('5 of 4 · long next')).toBeNull()
+    })
+  })
+
   describe('document title', () => {
     it.each([
       ['focus', 'Focus', '24:00'],
