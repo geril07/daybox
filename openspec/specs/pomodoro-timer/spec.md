@@ -4,6 +4,40 @@ A persistent Pomodoro timer docked at the bottom with full focus/break cycle, co
 
 ## Requirements
 
+### Requirement: Document title reflects the current timer phase and state
+
+The document title SHALL use the current timer state without recording how the phase was entered. Phase labels SHALL be `Focus`, `Short break`, and `Long break`.
+
+| Timer state                                 | Document title              |
+| ------------------------------------------- | --------------------------- |
+| Running                                     | `MM:SS · <phase> — DayBox`  |
+| Stopped with elapsed time greater than zero | `Paused · <phase> — DayBox` |
+| Stopped with zero elapsed time              | `<phase> ready — DayBox`    |
+
+The countdown SHALL use the current interval duration, including any interval override. Ready titles SHALL apply equally after completion without auto-start, manual phase selection, and interval reset. Fresh sessions and full session resets SHALL show `Focus ready — DayBox` once the timer UI mounts.
+
+#### Scenario: Focus completes without auto-start
+
+- **WHEN** focus completes and the next break does not auto-start
+- **THEN** the title shows `Short break ready — DayBox` or `Long break ready — DayBox`, matching the next phase
+
+#### Scenario: A break completes without auto-start
+
+- **WHEN** either break phase completes and focus does not auto-start
+- **THEN** the title shows `Focus ready — DayBox`, including after a long break resets the session count
+
+#### Scenario: The next phase auto-starts
+
+- **WHEN** an interval completes and the next phase auto-starts
+- **THEN** the title shows the next phase's countdown and label
+
+#### Scenario: Pause and reset
+
+- **WHEN** a phase is paused with elapsed time greater than zero
+- **THEN** the title shows `Paused · <phase> — DayBox`
+- **WHEN** that interval is reset
+- **THEN** the title shows `<phase> ready — DayBox`
+
 ### Requirement: Timer displays remaining time
 
 The system SHALL display the remaining time in MM:SS format for the current focus or break phase.
