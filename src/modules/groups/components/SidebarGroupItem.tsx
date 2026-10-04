@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 
 import { DEFAULT_GROUP_ID, GROUP_COLORS, type Group } from '@/modules/groups'
 import { useTaskStore } from '@/modules/tasks'
+import { useUnsavedChanges } from '@/shared/hooks/useUnsavedChanges'
 import {
   Button,
   Menu,
@@ -42,6 +43,7 @@ export function SidebarGroupItem({
 }: SidebarGroupItemProps) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(group.name)
+  useUnsavedChanges(editing && name.trim() !== group.name)
   const [menuOpen, setMenuOpen] = useState(false)
   const [colorPopoverOpen, setColorPopoverOpen] = useState(false)
   const [resolvePopoverOpen, setResolvePopoverOpen] = useState(false)

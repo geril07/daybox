@@ -12,6 +12,7 @@ import { useGroupStore } from '@/modules/groups'
 import { usePlannerStore } from '@/modules/planner'
 import { useTimerStore } from '@/modules/timer'
 import { addDaysToDate, getPlannerDate } from '@/shared/dates'
+import { requestsUnloadConfirmation } from '@/test-utils/beforeUnload'
 import { installCoarsePointerMatchMediaStub } from '@/test-utils/matchMedia'
 
 import { useTaskStore } from '../store'
@@ -97,6 +98,35 @@ function coarsePointerActions(): HTMLElement {
 }
 
 describe('TaskRow', () => {
+  it('protects changed and invalid titles, but not reverted, saved, or cancelled edits', async () => {
+    const user = userEvent.setup()
+    const task = createMockTask()
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+    await user.click(screen.getByText(task.title))
+    const input = screen.getByDisplayValue(task.title)
+    expect(requestsUnloadConfirmation()).toBe(false)
+    fireEvent.change(input, { target: { value: 'Changed title' } })
+    expect(requestsUnloadConfirmation()).toBe(true)
+    fireEvent.change(input, { target: { value: task.title } })
+    expect(requestsUnloadConfirmation()).toBe(false)
+    fireEvent.change(input, { target: { value: '' } })
+    fireEvent.blur(input)
+    expect(requestsUnloadConfirmation()).toBe(true)
+    fireEvent.change(input, { target: { value: 'x'.repeat(281) } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(requestsUnloadConfirmation()).toBe(true)
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(requestsUnloadConfirmation()).toBe(false)
+
+    await user.click(screen.getByText(task.title))
+    const reopened = screen.getByDisplayValue(task.title)
+    fireEvent.change(reopened, { target: { value: 'Saved title' } })
+    fireEvent.blur(reopened)
+    expect(useTaskStore.getState().tasks[0].title).toBe('Saved title')
+    expect(requestsUnloadConfirmation()).toBe(false)
+  })
+
   it('renders task title', () => {
     render(<TaskRow task={createMockTask()} />)
     const titles = screen.getAllByText('Test Task')
