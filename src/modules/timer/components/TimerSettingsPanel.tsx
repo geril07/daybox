@@ -200,6 +200,34 @@ export function TimerSettingsPanel() {
         <SettingRow
           label={
             <span className="inline-flex items-center gap-1">
+              Notify while visible
+              <Tooltip>
+                <TooltipTrigger
+                  render={<Button variant="ghost" size="icon-xs" />}
+                  aria-label="About notifying while visible"
+                  className="text-muted-foreground"
+                >
+                  <Info aria-hidden="true" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Also notify when DayBox is open on screen.
+                </TooltipContent>
+              </Tooltip>
+            </span>
+          }
+        >
+          <Switch
+            aria-label="Notify while visible"
+            checked={settings.notifyWhileVisible}
+            disabled={!settings.notificationsEnabled}
+            onCheckedChange={(v) =>
+              updateTimerSettings({ notifyWhileVisible: v })
+            }
+          />
+        </SettingRow>
+        <SettingRow
+          label={
+            <span className="inline-flex items-center gap-1">
               Keep reminders visible
               <Tooltip>
                 <TooltipTrigger
@@ -229,8 +257,7 @@ export function TimerSettingsPanel() {
         </SettingRow>
         {notificationPermission === 'default' ? (
           <p className="text-muted-foreground text-xs">
-            Enable browser permission to receive OS notifications while DayBox
-            is in the background.
+            Enable browser permission to receive OS notifications.
           </p>
         ) : null}
         {notificationPermission === 'denied' ? (

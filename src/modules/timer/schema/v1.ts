@@ -10,6 +10,7 @@ export const TimerSettingsV1Schema = z.object({
   autoStartBreaks: z.boolean(),
   autoStartPomodoros: z.boolean(),
   notificationsEnabled: z.boolean().default(true),
+  notifyWhileVisible: z.boolean().default(false),
   keepNotificationsVisible: z.boolean().default(false),
   alarmSound: z.enum(['bell', 'digital', 'gentle', 'ping']),
   alarmVolume: z.number().min(0).max(1),
