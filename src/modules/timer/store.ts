@@ -65,6 +65,7 @@ interface TimerActions {
   pause: () => void
   reset: () => void
   resetSession: () => void
+  setSessionPomoCount: (count: number) => void
   togglePlayPause: () => void
   skip: (longBreakInterval: number) => void
   advancePhase: (opts: AdvancePhaseOpts) => void
@@ -137,6 +138,30 @@ export const useTimerStore = create<TimerStore>()(
           state.reset()
           state.start()
         }
+      },
+
+      setSessionPomoCount: (count) => {
+        const state = get()
+        if (
+          !Number.isInteger(count) ||
+          count < 0 ||
+          (count > state.settings.longBreakInterval &&
+            count >= state.sessionPomoCount) ||
+          count === state.sessionPomoCount
+        ) {
+          return
+        }
+        clearIntervalNotification()
+        set({
+          sessionPomoCount: count,
+          isRunning: false,
+          startedAt: null,
+          elapsed:
+            state.elapsed +
+            (state.isRunning && state.startedAt !== null
+              ? Date.now() - state.startedAt
+              : 0),
+        })
       },
 
       advancePhase: ({ autoStart = false, longBreakInterval }) => {

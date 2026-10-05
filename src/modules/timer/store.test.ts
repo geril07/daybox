@@ -44,6 +44,62 @@ function writePersistedTimerState(settings: object) {
 }
 
 describe('Timer Store', () => {
+  describe('manual cycle progress', () => {
+    it.each(['focus', 'shortBreak', 'longBreak'] as const)(
+      'pauses %s without losing elapsed time or changing the interval',
+      (phase) => {
+        useTimerStore.setState({
+          phase,
+          sessionPomoCount: 2,
+          elapsed: 60_000,
+          startedAt: Date.now() - 5000,
+          isRunning: true,
+          intervalDurationMin: 10,
+          focusedTaskId: 'task-1',
+        })
+        useTimerStore.getState().setSessionPomoCount(3)
+        expect(useTimerStore.getState()).toMatchObject({
+          phase,
+          sessionPomoCount: 3,
+          startedAt: null,
+          isRunning: false,
+          intervalDurationMin: 10,
+          focusedTaskId: 'task-1',
+        })
+        expect(useTimerStore.getState().elapsed).toBeGreaterThanOrEqual(65_000)
+        timerStorage.flush()
+        const saved = JSON.parse(localStorage.getItem('daybox-timer')!)
+        expect(saved.state.sessionPomoCount).toBe(3)
+        expect(saved.state.isRunning).toBe(false)
+      },
+    )
+
+    it.each([-1, 1.5, NaN, Infinity, 5])(
+      'rejects invalid count %s',
+      (count) => {
+        useTimerStore.getState().setSessionPomoCount(count)
+        expect(useTimerStore.getState().sessionPomoCount).toBe(0)
+      },
+    )
+
+    it('allows excess progress to be reduced one step at a time', () => {
+      useTimerStore.setState({ sessionPomoCount: 7 })
+      useTimerStore.getState().setSessionPomoCount(6)
+      expect(useTimerStore.getState().sessionPomoCount).toBe(6)
+      useTimerStore.getState().setSessionPomoCount(7)
+      expect(useTimerStore.getState().sessionPomoCount).toBe(6)
+    })
+
+    it('preserves paused elapsed time and does not pause on an unchanged count', () => {
+      useTimerStore.setState({ elapsed: 60_000 })
+      useTimerStore.getState().setSessionPomoCount(2)
+      expect(useTimerStore.getState().elapsed).toBe(60_000)
+      useTimerStore.getState().start()
+      useTimerStore.getState().setSessionPomoCount(2)
+      expect(useTimerStore.getState().isRunning).toBe(true)
+    })
+  })
+
   it('starts and pauses', () => {
     const store = useTimerStore.getState()
     store.start()

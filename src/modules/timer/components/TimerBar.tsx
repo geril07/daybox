@@ -26,6 +26,7 @@ import { resolveIntervalDurationMin } from '../duration'
 import { notifyIntervalEnd } from '../notifications'
 import { useTimerStore } from '../store'
 import type { TimerPhase } from '../types'
+import { CycleProgressPopover } from './CycleProgressPopover'
 import { IntervalDurationPopover } from './IntervalDurationPopover'
 
 export function TimerBar() {
@@ -199,11 +200,6 @@ export function TimerBar() {
         ? 'SHORT BREAK'
         : 'LONG BREAK'
 
-  const sessionDots = Array.from(
-    { length: settings.longBreakInterval },
-    (_, i) => i,
-  )
-
   // Ambient phase tint: focus stays neutral (bg-card), breaks get a faint
   // wash of their phase color so the mode reads at a glance.
   const tintBg =
@@ -296,23 +292,7 @@ export function TimerBar() {
                 <SkipForward size={14} />
               </Button>
             </div>
-            <div className="ms-auto flex min-w-0 shrink items-center gap-2">
-              <div className="flex shrink-0 items-center gap-[3px]">
-                {sessionDots.map((i) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      'size-1.5 rounded-full',
-                      i < sessionPomoCount ? 'opacity-100' : 'opacity-50',
-                    )}
-                    style={{ background: phaseColor }}
-                  />
-                ))}
-              </div>
-              <span className="text-muted-foreground hidden truncate text-xs tabular-nums sm:block">
-                {cycleLabel}
-              </span>
-            </div>
+            <CycleProgressPopover label={cycleLabel} color={phaseColor} />
           </div>
         </div>
         <div className="flex min-h-[20px] min-w-0 items-center gap-1.5">
