@@ -575,6 +575,7 @@ describe('Timer settings slice', () => {
     await useTimerStore.persist.rehydrate()
 
     expect(useTimerStore.getState().settings.notificationsEnabled).toBe(true)
+    expect(useTimerStore.getState().settings.notifyWhileVisible).toBe(false)
     expect(useTimerStore.getState().settings.keepNotificationsVisible).toBe(
       false,
     )
@@ -590,6 +591,14 @@ describe('Timer settings slice', () => {
     expect(useTimerStore.getState().settings.keepNotificationsVisible).toBe(
       true,
     )
+  })
+
+  it('persists and restores the visible-tab notification preference', async () => {
+    useTimerStore.getState().setTimerSettings({ notifyWhileVisible: true })
+    timerStorage.flush()
+    useTimerStore.setState({ settings: DEFAULT_TIMER_SETTINGS })
+    await useTimerStore.persist.rehydrate()
+    expect(useTimerStore.getState().settings.notifyWhileVisible).toBe(true)
   })
 
   it('preserves notificationsEnabled=false when rehydrating persisted settings', async () => {

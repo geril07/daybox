@@ -353,6 +353,19 @@ describe('TimerBar', () => {
     expect(useTaskStore.getState().tasks[0]?.pomoCompleted).toBe(1)
   })
 
+  it('sends a notification when the tab is visible and the user opts in', () => {
+    const notification = getNotificationMock()
+    notification.permission = 'granted'
+    useTimerStore.getState().setTimerSettings({ notifyWhileVisible: true })
+    fireFocusComplete('missing-task')
+
+    render(<TimerBar />)
+
+    expect(notification.instances).toHaveLength(1)
+    expect(notification.instances[0].title).toBe('Focus complete!')
+    expect(useTimerStore.getState().phase).toBe('shortBreak')
+  })
+
   it('sends a notification when the tab is hidden and focuses the window on click', () => {
     const notification = getNotificationMock()
     const focusSpy = vi.spyOn(window, 'focus').mockImplementation(() => {})

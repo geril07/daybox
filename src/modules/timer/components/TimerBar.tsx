@@ -99,6 +99,7 @@ export function TimerBar() {
         documentVisible: document.visibilityState === 'visible',
         permission: getNotificationPermission(),
         enabled: settings.notificationsEnabled,
+        notifyWhileVisible: settings.notifyWhileVisible,
       })
     ) {
       notifyIntervalEnd(

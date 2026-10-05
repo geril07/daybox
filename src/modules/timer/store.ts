@@ -27,6 +27,7 @@ export const DEFAULT_TIMER_SETTINGS: TimerSettings = {
   autoStartBreaks: false,
   autoStartPomodoros: false,
   notificationsEnabled: true,
+  notifyWhileVisible: false,
   keepNotificationsVisible: false,
   alarmSound: 'bell',
   alarmVolume: 0.5,
@@ -276,6 +277,7 @@ export const useTimerStore = create<TimerStore>()(
         init: timerInit,
         afterValidate: (state) => {
           state.settings.notificationsEnabled ??= true
+          state.settings.notifyWhileVisible ??= false
           state.settings.keepNotificationsVisible ??= false
           state.intervalDurationMin ??= null
           if (state.isRunning && state.startedAt) {

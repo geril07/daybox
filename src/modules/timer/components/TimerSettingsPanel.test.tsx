@@ -41,6 +41,21 @@ function notificationSwitch(): HTMLElement {
 }
 
 describe('TimerSettingsPanel notifications', () => {
+  it('opts into visible-tab notifications and disables the control with notifications', async () => {
+    const user = userEvent.setup()
+    render(<TimerSettingsPanel />)
+    const toggle = screen.getByRole('switch', { name: 'Notify while visible' })
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+
+    await user.click(toggle)
+    expect(useTimerStore.getState().settings.notifyWhileVisible).toBe(true)
+
+    await user.click(notificationSwitch())
+    expect(toggle).toHaveAttribute('aria-disabled', 'true')
+    await user.click(toggle)
+    expect(useTimerStore.getState().settings.notifyWhileVisible).toBe(true)
+  })
+
   it('opts into persistent reminders and disables the control with notifications', async () => {
     const user = userEvent.setup()
     render(<TimerSettingsPanel />)
