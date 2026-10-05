@@ -48,7 +48,7 @@ export function CycleProgressPopover({
             />
           ))}
         </span>
-        <span className="text-muted-foreground hidden truncate text-xs tabular-nums sm:block">
+        <span className="text-muted-foreground hidden truncate font-mono text-xs tabular-nums sm:block">
           {label}
         </span>
       </PopoverTrigger>
@@ -69,12 +69,12 @@ export function CycleProgressPopover({
           <Button
             variant="outline"
             size="none"
-            className="size-11 shrink-0"
+            className="size-9 shrink-0"
             aria-label="Decrease cycle progress"
             disabled={count === 0}
             onClick={() => setCount(count - 1)}
           >
-            <Minus size={18} />
+            <Minus size={16} />
           </Button>
           <span
             className="text-base font-medium tabular-nums"
@@ -86,12 +86,12 @@ export function CycleProgressPopover({
           <Button
             variant="outline"
             size="none"
-            className="size-11 shrink-0"
+            className="size-9 shrink-0"
             aria-label="Increase cycle progress"
             disabled={count >= target}
             onClick={() => setCount(count + 1)}
           >
-            <Plus size={18} />
+            <Plus size={16} />
           </Button>
         </div>
       </PopoverContent>
