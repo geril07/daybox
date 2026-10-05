@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 import { useGroupStore } from '@/modules/groups'
 import { useTaskStore } from '@/modules/tasks'
+import { registerShortcuts } from '@/shared/keyboard'
 
 import { unlockAudio } from '../alarm'
 import { clearIntervalNotification } from '../notifications'
@@ -97,6 +98,66 @@ function fireFocusComplete(taskId: string) {
 
 describe('TimerBar', () => {
   describe('session progress', () => {
+    it('uses Space to open and edit progress instead of the timer shortcut', async () => {
+      const user = userEvent.setup()
+      const toggle = vi.fn()
+      const unregister = registerShortcuts({ ' ': toggle })
+      try {
+        useTimerStore.setState({ sessionPomoCount: 2 })
+        render(<TimerBar />)
+        screen.getByRole('button', { name: /Adjust cycle progress/ }).focus()
+        await user.keyboard(' ')
+        expect(screen.getByRole('dialog')).toBeTruthy()
+        screen.getByRole('button', { name: 'Decrease cycle progress' }).focus()
+        await user.keyboard(' ')
+        expect(useTimerStore.getState().sessionPomoCount).toBe(1)
+        expect(toggle).not.toHaveBeenCalled()
+      } finally {
+        unregister()
+      }
+    })
+
+    it('restores progress after reset without changing task totals', async () => {
+      const user = userEvent.setup()
+      const task = createTask({ pomoCompleted: 3 })
+      useTaskStore.setState({ tasks: [task] })
+      useTimerStore.setState({ sessionPomoCount: 3, focusedTaskId: task.id })
+      render(<TimerBar />)
+
+      await user.click(screen.getByRole('button', { name: 'Reset session' }))
+      await user.click(
+        screen.getByRole('button', { name: /Adjust cycle progress/ }),
+      )
+      expect(
+        screen.getByRole('button', { name: 'Decrease cycle progress' }),
+      ).toBeDisabled()
+      const increase = screen.getByRole('button', {
+        name: 'Increase cycle progress',
+      })
+      await user.click(increase)
+      await user.click(increase)
+      await user.click(increase)
+      expect(useTimerStore.getState().sessionPomoCount).toBe(3)
+      expect(
+        screen.getByRole('button', { name: /Adjust cycle progress/ }),
+      ).toHaveTextContent('3 of 4 · long next')
+      expect(useTaskStore.getState().tasks[0]?.pomoCompleted).toBe(3)
+
+      await user.click(increase)
+      expect(increase).toBeDisabled()
+      await user.click(
+        screen.getByRole('button', { name: 'Decrease cycle progress' }),
+      )
+      expect(useTimerStore.getState().sessionPomoCount).toBe(3)
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(
+        screen.getByRole('button', { name: /Adjust cycle progress/ }),
+      ).toHaveFocus()
+      await user.click(screen.getByRole('button', { name: 'Skip' }))
+      expect(useTimerStore.getState().phase).toBe('longBreak')
+    })
+
     it.each([
       ['focus', 0, '0 of 4'],
       ['focus', 2, '2 of 4'],
@@ -114,7 +175,9 @@ describe('TimerBar', () => {
       (phase, count, label) => {
         useTimerStore.setState({ phase, sessionPomoCount: count })
         render(<TimerBar />)
-        expect(screen.getByText(label, { exact: true })).toBeTruthy()
+        expect(
+          screen.getByRole('button', { name: /Adjust cycle progress/ }),
+        ).toHaveTextContent(label)
       },
     )
 
@@ -123,7 +186,9 @@ describe('TimerBar', () => {
       (action) => {
         useTimerStore.setState({ sessionPomoCount: 5 })
         render(<TimerBar />)
-        expect(screen.getByText('5 of 4 · long next')).toBeTruthy()
+        expect(
+          screen.getByRole('button', { name: /Adjust cycle progress/ }),
+        ).toHaveTextContent('5 of 4 · long next')
 
         if (action === 'skip') {
           fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
@@ -144,7 +209,9 @@ describe('TimerBar', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
         expect(useTimerStore.getState().phase).toBe('focus')
         expect(useTimerStore.getState().sessionPomoCount).toBe(0)
-        expect(screen.getByText('0 of 4', { exact: true })).toBeTruthy()
+        expect(
+          screen.getByRole('button', { name: /Adjust cycle progress/ }),
+        ).toHaveTextContent('0 of 4')
       },
     )
 
@@ -154,7 +221,9 @@ describe('TimerBar', () => {
         settings: { ...DEFAULT_TIMER_SETTINGS, longBreakInterval: 8 },
       })
       render(<TimerBar />)
-      expect(screen.getByText('5 of 8', { exact: true })).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Adjust cycle progress/ }),
+      ).toHaveTextContent('5 of 8')
 
       act(() => {
         useTimerStore.getState().setTimerSettings({ longBreakInterval: 4 })
@@ -162,7 +231,9 @@ describe('TimerBar', () => {
 
       expect(useTimerStore.getState().phase).toBe('focus')
       expect(useTimerStore.getState().sessionPomoCount).toBe(5)
-      expect(screen.getByText('5 of 4 · long next')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Adjust cycle progress/ }),
+      ).toHaveTextContent('5 of 4 · long next')
     })
   })
 
@@ -343,6 +414,10 @@ describe('TimerBar', () => {
       ['start', () => useTimerStore.getState().start()],
       ['reset', () => useTimerStore.getState().reset()],
       ['reset session', () => useTimerStore.getState().resetSession()],
+      [
+        'edit cycle progress',
+        () => useTimerStore.getState().setSessionPomoCount(2),
+      ],
       ['skip', () => useTimerStore.getState().skip(4)],
       ['change phase', () => useTimerStore.getState().setPhase('focus')],
       [

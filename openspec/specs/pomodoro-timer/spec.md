@@ -154,7 +154,7 @@ The system SHALL provide play/pause, skip, and a single progressive reset contro
 
 ### Requirement: Session dots show progress
 
-The system SHALL show fixed, read-only session dots indicating how many focus intervals have completed since the last long break, one dot per focus interval in the cycle (count equal to the long-break interval). The dots SHALL NOT be interactive. Outside the long-break phase, the system SHALL show the existing `N of M` text, where N is the completed count and M is the configured long-break target, including when N exceeds M. Excess counts SHALL NOT be clamped. The label SHALL append ` · long next` exactly when completing the next focus interval reaches or exceeds the long-break target. During a long break, the text SHALL remain `long break`.
+The system SHALL show session dots indicating how many focus intervals have completed since the last long break, one dot per focus interval in the cycle (count equal to the long-break interval). The entire dots and label area SHALL open a Cycle progress popover. Outside the long-break phase, the system SHALL show the existing `N of M` text, where N is the completed count and M is the configured long-break target, including when N exceeds M. Excess counts SHALL NOT be clamped. The label SHALL append ` · long next` exactly when completing the next focus interval reaches or exceeds the long-break target. During a long break, the text SHALL remain `long break`.
 
 #### Scenario: Session progress dots
 
@@ -178,10 +178,17 @@ The system SHALL show fixed, read-only session dots indicating how many focus in
 - **WHEN** the phase is long break, including with an excess completed count
 - **THEN** the text label is `long break`
 
-#### Scenario: Dots are display-only
+#### Scenario: Adjust cycle progress
 
-- **WHEN** the user clicks a session dot
-- **THEN** nothing happens (the dots do not switch phase or alter timer state)
+- **WHEN** the user activates the dots or their label on desktop or mobile
+- **THEN** a popover shows the completed count and large decrease/increase buttons
+- **AND** decrease is disabled at zero and increase is disabled at or above the long-break target
+- **WHEN** the user changes the count
+- **THEN** the timer pauses, preserving elapsed time, phase, focused task, and interval duration override
+- **AND** task completion totals remain unchanged
+- **AND** the edited count persists and determines subsequent long-break scheduling
+- **AND** existing excess counts can be reduced one step at a time
+- **AND** the existing progressive reset control remains unchanged, with no Undo control added
 
 ### Requirement: Phase identity is shown on the timer
 
