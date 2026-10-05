@@ -48,8 +48,16 @@ export function CycleProgressPopover({
             />
           ))}
         </span>
-        <span className="text-muted-foreground hidden truncate font-mono text-xs tabular-nums sm:block">
-          {label}
+        <span className="text-muted-foreground hidden truncate text-xs sm:block">
+          {label.split(/(\d+)/).map((part, i) =>
+            i % 2 === 1 ? (
+              <span key={i} className="font-mono tabular-nums">
+                {part}
+              </span>
+            ) : (
+              part
+            ),
+          )}
         </span>
       </PopoverTrigger>
       <PopoverContent
