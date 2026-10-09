@@ -9,10 +9,14 @@ interface NumberInputProps {
   min: number
   max: number
   className?: string
+  'aria-label'?: string
 }
 
 const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(
-  ({ value, onValueChange, min, max, className }, ref) => {
+  (
+    { value, onValueChange, min, max, className, 'aria-label': ariaLabel },
+    ref,
+  ) => {
     return (
       <NumberField.Root
         ref={ref}
@@ -25,7 +29,10 @@ const NumberInput = forwardRef<HTMLDivElement, NumberInputProps>(
           <NumberField.Decrement className="text-fg-2 border-border flex h-7 w-7 cursor-pointer items-center justify-center rounded-l border text-sm data-disabled:cursor-not-allowed data-disabled:opacity-40">
             −
           </NumberField.Decrement>
-          <NumberField.Input className="border-border text-foreground bg-background h-7 w-11 border-y text-center text-xs outline-none" />
+          <NumberField.Input
+            aria-label={ariaLabel}
+            className="border-border text-foreground bg-background h-7 w-11 border-y text-center text-xs outline-none"
+          />
           <NumberField.Increment className="text-fg-2 border-border flex h-7 w-7 cursor-pointer items-center justify-center rounded-r border text-sm data-disabled:cursor-not-allowed data-disabled:opacity-40">
             +
           </NumberField.Increment>

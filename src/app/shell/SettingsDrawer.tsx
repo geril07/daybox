@@ -10,6 +10,7 @@ import {
 } from '@/modules/data-portability'
 import { GoogleDrivePanel } from '@/modules/google-drive'
 import { usePlannerStore } from '@/modules/planner'
+import { RecurringSettingsPanel } from '@/modules/tasks'
 import { TimerSettingsPanel } from '@/modules/timer'
 import {
   Sheet,
@@ -132,6 +133,13 @@ export function SettingsDrawer({
         </SheetHeader>
         <div className="flex flex-1 flex-col gap-7 overflow-y-auto p-5">
           <TimerSettingsPanel />
+
+          <div className="flex flex-col gap-3">
+            <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
+              Recurring
+            </div>
+            <RecurringSettingsPanel />
+          </div>
 
           <div className="flex flex-col gap-3">
             <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">

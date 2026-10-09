@@ -17,6 +17,8 @@ function makeTask(overrides: Partial<Task>): Task {
     date: null,
     pomoEstimate: 0,
     pomoCompleted: 0,
+    seriesId: null,
+    occurrenceDate: null,
     sortOrder: 0,
     completed: false,
     completedAt: null,
@@ -26,7 +28,7 @@ function makeTask(overrides: Partial<Task>): Task {
 }
 
 beforeEach(() => {
-  useTaskStore.setState({ tasks: [] })
+  useTaskStore.setState({ tasks: [], series: [] })
   useTimerStore.setState({
     phase: 'focus',
     startedAt: null,

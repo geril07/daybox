@@ -13,6 +13,7 @@ import {
   formatDate,
   getPlannerDate,
   getWeekDays,
+  getWeekEndDate,
   getWeekSectionLabel,
 } from '@/shared/dates'
 
@@ -109,10 +110,9 @@ export function useFilteredTasks(view: View) {
   const tasks = useTaskStore((s) => s.tasks)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
   const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
+  const today = getPlannerDate(new Date(), dayStartMinutes)
 
   return useMemo(() => {
-    const now = new Date()
-    const today = getPlannerDate(now, dayStartMinutes)
     const range = viewToRange(view, weekStartDay, today, dayStartMinutes)
 
     let filtered: typeof tasks
@@ -149,7 +149,7 @@ export function useFilteredTasks(view: View) {
     }
 
     return { tasks: filtered, overdue, bucketDate, dayStartMinutes }
-  }, [tasks, view, weekStartDay, dayStartMinutes])
+  }, [tasks, view, weekStartDay, dayStartMinutes, today])
 }
 
 export function defaultDateForView(
@@ -179,10 +179,11 @@ export function useWeekSections(): Section[] {
   const tasks = useTaskStore((s) => s.tasks)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
   const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
+  const effectiveDate = getPlannerDate(new Date(), dayStartMinutes)
 
   return useMemo(() => {
     const now = new Date()
-    const today = getPlannerDate(now, dayStartMinutes)
+    const today = effectiveDate
     const sections: Section[] = []
 
     const overdue = selectOverdue(tasks, today)
@@ -209,7 +210,7 @@ export function useWeekSections(): Section[] {
     }
 
     return sections
-  }, [tasks, weekStartDay, dayStartMinutes])
+  }, [tasks, weekStartDay, dayStartMinutes, effectiveDate])
 }
 
 export function filterByGroup(tasks: Task[], groupId: string | null): Task[] {
@@ -221,11 +222,11 @@ export function useLaterSections(): Section[] {
   const tasks = useTaskStore((s) => s.tasks)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
   const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
+  const effectiveDate = getPlannerDate(new Date(), dayStartMinutes)
 
   return useMemo(() => {
     const now = new Date()
-    const days = getWeekDays(weekStartDay, now, dayStartMinutes)
-    const start = addDaysToDate(formatDate(days[6]), 1)
+    const start = addDaysToDate(getWeekEndDate(effectiveDate, weekStartDay), 1)
 
     const byDate = new Map<string, Task[]>()
     for (const task of tasks) {
@@ -247,5 +248,5 @@ export function useLaterSections(): Section[] {
       tasks: byDate.get(date)!.sort((a, b) => a.sortOrder - b.sortOrder),
       date,
     }))
-  }, [tasks, weekStartDay, dayStartMinutes])
+  }, [tasks, weekStartDay, dayStartMinutes, effectiveDate])
 }

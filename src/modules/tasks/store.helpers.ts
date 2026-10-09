@@ -1,4 +1,48 @@
-import type { Task } from './types'
+import { parseDate } from '@/shared/dates'
+
+import type { Task, Series } from './types'
+
+export const PINNED_SORT_ORDER_BASE = 1_000_000
+
+export function seriesMatchesDate(series: Series, date: string): boolean {
+  return (
+    series.weekdays.includes(parseDate(date).getDay()) &&
+    !series.skipDates.includes(date)
+  )
+}
+
+export function planOccurrences(
+  series: Series[],
+  tasks: Task[],
+  horizon: string[],
+): Omit<Task, 'id' | 'createdAt'>[] {
+  const existing = new Set(
+    tasks.map((task) => JSON.stringify([task.seriesId, task.occurrenceDate])),
+  )
+  const planned: Omit<Task, 'id' | 'createdAt'>[] = []
+  const ordered = [...series].sort((a, b) => a.sortOrder - b.sortOrder)
+  for (const date of horizon) {
+    for (const item of ordered) {
+      const key = JSON.stringify([item.id, date])
+      if (!item.active || !seriesMatchesDate(item, date) || existing.has(key))
+        continue
+      existing.add(key)
+      planned.push({
+        title: item.title,
+        groupId: item.groupId,
+        pomoEstimate: item.pomoEstimate,
+        date,
+        occurrenceDate: date,
+        seriesId: item.id,
+        pomoCompleted: 0,
+        completed: false,
+        completedAt: null,
+        sortOrder: PINNED_SORT_ORDER_BASE + planned.length,
+      })
+    }
+  }
+  return planned
+}
 
 export function compactBucket(tasks: Task[], date: string | null): Task[] {
   const bucket: Task[] = []

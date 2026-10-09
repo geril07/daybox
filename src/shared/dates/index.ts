@@ -1,4 +1,8 @@
 export {
+  parseDate,
+  getDateRange,
+  getWeekEndDate,
+  type WeekStartDay,
   addDaysToDate,
   formatDate,
   getDayName,

@@ -5,8 +5,7 @@ import {
   selectForDate,
   selectInRange,
   selectUndated,
-} from '@/modules/tasks'
-
+} from './queries'
 import type { Task } from './types'
 
 function createTask(overrides: Partial<Task> & { id: string }): Task {
@@ -16,6 +15,8 @@ function createTask(overrides: Partial<Task> & { id: string }): Task {
     date: null,
     pomoEstimate: 0,
     pomoCompleted: 0,
+    seriesId: null,
+    occurrenceDate: null,
     sortOrder: 0,
     completed: false,
     completedAt: null,

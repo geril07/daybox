@@ -5,6 +5,7 @@ import {
   Calendar,
   GripVertical,
   MoreHorizontal,
+  Repeat,
 } from 'lucide-react'
 import {
   useState,
@@ -31,6 +32,12 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
 } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
@@ -100,12 +107,17 @@ export function TaskRow({
   const [editTitle, setEditTitle] = useState(task.title)
   useUnsavedChanges(editing && editTitle.trim() !== task.title)
   const [actionSheetOpen, setActionSheetOpen] = useState(false)
+  const [deleteChoiceOpen, setDeleteChoiceOpen] = useState(false)
   const editRef = useRef<HTMLTextAreaElement>(null)
   const pendingCaretOffsetRef = useRef<number | null>(null)
   const cancelledEditRef = useRef(false)
   const toggleTask = useTaskStore((s) => s.toggleTask)
   const updateTask = useTaskStore((s) => s.updateTask)
   const deleteTask = useTaskStore((s) => s.deleteTask)
+  const handleDelete = () => {
+    if (task.seriesId) setDeleteChoiceOpen(true)
+    else deleteTask(task.id)
+  }
   const groups = useGroupStore((s) => s.groups)
   const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
   const focusTask = useTimerStore((s) => s.focusTask)
@@ -115,6 +127,7 @@ export function TaskRow({
   const isFocused = focusedTaskId === task.id
   const overdue =
     !task.completed &&
+    task.seriesId === null &&
     task.date !== null &&
     isOverdue(task.date, new Date(), dayStartMinutes)
 
@@ -254,6 +267,13 @@ export function TaskRow({
         </GroupSelect>
       )}
 
+      {task.seriesId && (
+        <Repeat
+          size={14}
+          className="text-muted-foreground shrink-0"
+          aria-label="Recurring task"
+        />
+      )}
       <PomoArea task={task} />
       <DatePickerButton task={task} dayStartMinutes={dayStartMinutes} />
 
@@ -270,7 +290,7 @@ export function TaskRow({
           <Button
             variant="ghostDestructive"
             size="icon-sm"
-            onClick={() => deleteTask(task.id)}
+            onClick={handleDelete}
             title="Delete"
           >
             <Trash2 />
@@ -289,9 +309,33 @@ export function TaskRow({
             task={task}
             open={actionSheetOpen}
             onOpenChange={setActionSheetOpen}
+            onDelete={handleDelete}
           />
         </div>
       </>
+      <AlertDialog open={deleteChoiceOpen} onOpenChange={setDeleteChoiceOpen}>
+        <AlertDialogContent>
+          <AlertDialogTitle>Delete recurring task?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Skip this occurrence, or delete the series and all its occurrences.
+            This cannot be undone.
+          </AlertDialogDescription>
+          <AlertDialogAction
+            onClick={() => useTaskStore.getState().skipOccurrence(task.id)}
+          >
+            Skip this occurrence
+          </AlertDialogAction>
+          <AlertDialogAction
+            onClick={() => {
+              if (task.seriesId)
+                useTaskStore.getState().deleteSeries(task.seriesId)
+            }}
+          >
+            Delete whole series
+          </AlertDialogAction>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -2,7 +2,10 @@ import type { Task } from './types'
 
 export function selectOverdue(tasks: Task[], asOf: string): Task[] {
   return tasks
-    .filter((t) => !t.completed && t.date !== null && t.date < asOf)
+    .filter(
+      (t) =>
+        !t.completed && t.seriesId === null && t.date !== null && t.date < asOf,
+    )
     .sort((a, b) => {
       if (a.date! < b.date!) return -1
       if (a.date! > b.date!) return 1

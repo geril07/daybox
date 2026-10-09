@@ -4,7 +4,7 @@ export function formatDate(date: Date): string {
   return date.toLocaleDateString('en-CA')
 }
 
-function parseDate(dateStr: string): Date {
+export function parseDate(dateStr: string): Date {
   const [year, month, day] = dateStr.split('-').map(Number)
   return new Date(year, month - 1, day, 12)
 }
@@ -13,6 +13,22 @@ export function addDaysToDate(dateStr: string, delta: number): string {
   const date = parseDate(dateStr)
   date.setDate(date.getDate() + delta)
   return formatDate(date)
+}
+
+export function getWeekEndDate(
+  today: string,
+  weekStartDay: WeekStartDay,
+): string {
+  const elapsed = (parseDate(today).getDay() - weekStartDay + 7) % 7
+  return addDaysToDate(today, 6 - elapsed)
+}
+
+export function getDateRange(start: string, end: string): string[] {
+  const dates: string[] = []
+  for (let date = start; date <= end; date = addDaysToDate(date, 1)) {
+    dates.push(date)
+  }
+  return dates
 }
 
 export function getPlannerDate(
