@@ -328,6 +328,12 @@ The system SHALL display a task's pomodoro progress as an `X/Y` text label (wher
 - **THEN** the pomo trigger on the task row displays text reflecting `1` and `1.5`
 - **AND** a progress bar is rendered below the number whose width corresponds to `1/1.5`
 
+#### Scenario: Counter stays centered beside row icons
+
+- **WHEN** a task row displays its pomodoro counter
+- **THEN** the `X/Y` text is vertically centered beside the row icons
+- **AND** the progress bar below the text does not affect its vertical alignment, including when the estimate is zero
+
 #### Scenario: Open pomodoro editor
 
 - **WHEN** user clicks the pomo trigger on a task row

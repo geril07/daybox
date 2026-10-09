@@ -360,18 +360,14 @@ function PomoArea({ task }: { task: Task }) {
 
   return (
     <Popover>
-      <PopoverTrigger>
-        <span className="relative flex min-w-8 shrink-0 cursor-pointer items-center">
-          <span className="flex flex-col items-start gap-px">
-            <span className="text-fg-2 text-xs leading-none tabular-nums">
-              {task.pomoCompleted}/{task.pomoEstimate}
-            </span>
-            <span className="relative block h-[1.5px] w-full">
-              <span
-                className="bg-accent absolute top-0 left-0 block h-full transition-[width] duration-200 ease-out"
-                style={{ width: `${progressPct}%` }}
-              />
-            </span>
+      <PopoverTrigger className="flex h-7 min-w-8 shrink-0 items-center">
+        <span className="text-fg-2 relative text-xs leading-none tabular-nums">
+          {task.pomoCompleted}/{task.pomoEstimate}
+          <span className="absolute top-full left-0 mt-px block h-[1.5px] w-full">
+            <span
+              className="bg-accent absolute top-0 left-0 block h-full transition-[width] duration-200 ease-out"
+              style={{ width: `${progressPct}%` }}
+            />
           </span>
         </span>
       </PopoverTrigger>
