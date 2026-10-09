@@ -26,6 +26,13 @@ export {
 
 export { Switch } from './switch'
 
+export {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from './accordion'
+
 export { Slider } from './slider'
 
 export {
