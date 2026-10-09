@@ -243,7 +243,7 @@ The weekday selector SHALL render the seven days beginning with the planner's co
 
 - **WHEN** the user enters a title and a weekday selection in the Recurring panel and confirms
 - **THEN** a new active series is stored with that title and those weekdays
-- **AND** no task is created immediately; occurrences appear on the next generation run
+- **AND** missing matching occurrences in the current horizon are generated without reload or waiting for a timer tick
 
 #### Scenario: Toggle a series off from Settings
 
@@ -262,3 +262,25 @@ The weekday selector SHALL render the seven days beginning with the planner's co
 
 - **WHEN** the user deletes the series "Приседания" in the Recurring panel
 - **THEN** the series and all of its occurrences are removed from the store
+
+### Requirement: Series changes trigger generation without reload
+
+While the app is mounted, changes to series definitions SHALL trigger occurrence generation for the effective planner date through the end of the configured week without waiting for a minute tick, focus event, Settings close, or reload. Generation SHALL remain idempotent and SHALL NOT rewrite existing occurrences.
+
+#### Scenario: Create a matching series while the app is open
+
+- **WHEN** the user creates an active series matching today in Settings
+- **THEN** today's task and other missing matching occurrences in the horizon are generated without reload or a timer tick
+- **AND** today's task is visible when Settings closes
+
+#### Scenario: Reactivate a series
+
+- **WHEN** the user activates a series with missing matching occurrences in the horizon
+- **THEN** those occurrences are generated without reload
+- **AND** existing occurrences are unchanged and not duplicated
+
+#### Scenario: Add a weekday to a series
+
+- **WHEN** the user adds a matching weekday with a missing occurrence in the horizon
+- **THEN** the missing occurrence is generated without reload
+- **AND** existing tasks retain their stored title, group, and estimate

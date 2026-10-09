@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -62,6 +63,76 @@ afterEach(() => {
 })
 
 describe('App shell boot hydration', () => {
+  it('shows a series created in Settings without reload or a timer tick', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 9, 12))
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    fireEvent.change(screen.getByLabelText('New recurring task'), {
+      target: { value: 'Daily exercise' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add series' }))
+    expect(
+      useTaskStore.getState().tasks.map((task) => task.occurrenceDate),
+    ).toEqual(['2026-10-09', '2026-10-10', '2026-10-11'])
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(
+      within(screen.getByRole('main')).getByText('Daily exercise'),
+    ).toBeTruthy()
+  })
+
+  it('generates missing occurrences on reactivation without duplicating existing tasks', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 9, 12))
+    const series = useTaskStore.getState().addSeries({
+      title: 'Exercise',
+      weekdays: [5, 6],
+    })!
+    useTaskStore.getState().setSeriesActive(series.id, false)
+    render(<App />)
+    expect(useTaskStore.getState().tasks).toEqual([])
+    act(() => useTaskStore.getState().setSeriesActive(series.id, true))
+    expect(
+      useTaskStore.getState().tasks.map((task) => task.occurrenceDate),
+    ).toEqual(['2026-10-09', '2026-10-10'])
+    const existing = useTaskStore.getState().tasks
+    act(() => useTaskStore.getState().setSeriesActive(series.id, false))
+    act(() => useTaskStore.getState().setSeriesActive(series.id, true))
+    expect(useTaskStore.getState().tasks).toEqual(existing)
+  })
+
+  it('generates newly selected weekdays while preserving existing occurrences', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 9, 12))
+    const series = useTaskStore.getState().addSeries({
+      title: 'Exercise',
+      weekdays: [5],
+      pomoEstimate: 2,
+    })!
+    render(<App />)
+    const friday = useTaskStore.getState().tasks[0]
+    act(() =>
+      useTaskStore.getState().updateSeries(series.id, {
+        title: 'Stretching',
+        weekdays: [5, 6],
+        pomoEstimate: 3,
+      }),
+    )
+    expect(useTaskStore.getState().tasks).toEqual([
+      friday,
+      expect.objectContaining({
+        title: 'Stretching',
+        occurrenceDate: '2026-10-10',
+        pomoEstimate: 3,
+      }),
+    ])
+    act(() =>
+      useTaskStore.getState().updateSeries(series.id, { weekdays: [6] }),
+    )
+    expect(useTaskStore.getState().tasks[0]).toEqual(friday)
+    expect(useTaskStore.getState().tasks).toHaveLength(2)
+  })
+
   it('generates the new week at the planner boundary without reload', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 9, 12, 2, 29))
