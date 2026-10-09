@@ -109,16 +109,32 @@ The system SHALL allow users to mark a task as complete by clicking its checkbox
 
 The system SHALL allow users to delete a task permanently.
 
-#### Scenario: Delete a task
+When the task carries a `seriesId`, the system SHALL NOT delete it in one step. Instead the user SHALL be offered a choice between skipping that occurrence and deleting the whole series, as defined by the `recurring-tasks` capability. Skipping SHALL append the task's `occurrenceDate` to the series' `skipDates` and SHALL remove the task. Deleting the series SHALL remove the series and every task carrying that `seriesId`. Tasks without a `seriesId` SHALL be deleted in one step with no series state modified.
 
-- **WHEN** user clicks the delete button on a task row
+#### Scenario: Delete an ordinary task
+
+- **WHEN** user clicks the delete button on a task row whose `seriesId` is `null`
 - **THEN** the task is removed from the store
+- **AND** no series state is modified
+
+#### Scenario: Delete offers a choice for an occurrence
+
+- **WHEN** user activates the delete control on a task row whose `seriesId` is set
+- **THEN** the user is asked whether to skip this occurrence or delete the whole series
+- **AND** the task is not removed until the user chooses
+
+#### Scenario: Skipping removes only that occurrence
+
+- **WHEN** the user chooses to skip the occurrence
+- **THEN** that task is removed from the store
+- **AND** the task's `occurrenceDate` is appended to that series' `skipDates`
+- **AND** other occurrences of the same series remain in the store
 
 ### Requirement: TaskRow exposes Focus and Delete on coarse pointers
 
 On a device whose primary pointer is coarse (touch), the task row SHALL render a `⋯` (more) button that opens a bottom-side sheet containing a header with the task's title and two action rows: `Focus this task` and `Delete`. On a device whose primary pointer is fine (mouse, trackpad, pen), the row SHALL NOT render the `⋯` button; the existing hover-revealed `Focus` and `Delete` icons SHALL continue to be the only path to those actions.
 
-The sheet's `Focus this task` row SHALL call `useTimerStore.focusTask(task.id)` and then close the sheet. The sheet's `Delete` row SHALL call `useTaskStore.deleteTask(task.id)` and then close the sheet. Both rows SHALL be plain buttons; neither SHALL require a confirmation step. The sheet is the existing `Sheet` primitive at `shared/ui/sheet.tsx` with `side="bottom"`.
+The sheet's `Focus this task` row SHALL call `useTimerStore.focusTask(task.id)` and then close the sheet. For an ordinary task, the sheet's `Delete` row SHALL call `useTaskStore.deleteTask(task.id)` and then close the sheet without confirmation. For an occurrence, it SHALL close the sheet and open the skip-or-delete-series choice. Both rows SHALL be plain buttons. The sheet is the existing `Sheet` primitive at `shared/ui/sheet.tsx` with `side="bottom"`.
 
 The `⋯` button itself SHALL carry `title="More actions"`. The sheet header SHALL be a non-interactive element displaying the task's title; it SHALL NOT be a button.
 
@@ -149,10 +165,16 @@ The `⋯` button itself SHALL carry `title="More actions"`. The sheet header SHA
 
 #### Scenario: Sheet Delete row removes the task
 
-- **WHEN** the sheet is open on a task row and the user taps `Delete`
+- **WHEN** the sheet is open on an ordinary task row and the user taps `Delete`
 - **THEN** `useTaskStore.deleteTask(task.id)` is called
 - **AND** the sheet closes
 - **AND** the row is removed from the list immediately with no animation
+
+#### Scenario: Sheet Delete row offers recurrence choices
+
+- **WHEN** the sheet is open on an occurrence and the user taps `Delete`
+- **THEN** the sheet closes and the skip-or-delete-series choice opens
+- **AND** the task remains until the user chooses
 
 #### Scenario: Sheet dismisses on Escape
 
@@ -638,6 +660,8 @@ The actions that trigger the cascade are:
 
 - `deleteTask(id)` — cascade if `id === useTimerStore.focusedTaskId`
 - `deleteTasksByGroupId(groupId)` — cascade if the focused task's `groupId` equals `groupId` _before_ the deletion
+- Skipping a generated occurrence — cascade if the skipped task's id is the focused task
+- Deleting a series — cascade if any removed occurrence is the focused task
 
 Reassigning a task to a different group is **not** a cascade trigger. A reassigned task still exists with the same `id` and remains a valid focus target. Specifically:
 
@@ -686,6 +710,69 @@ The cascade SHALL use `useTimerStore.getState().setFocusedTaskId(null)`. The act
 - **AND** `useTaskStore.reorderTasks('<today>', ['t-1', 't-2'])` is called
 - **THEN** the tasks are reordered within the today bucket
 - **AND** `useTimerStore.focusedTaskId` remains `'t-1'`
+
+#### Scenario: Skipping the focused occurrence clears focus
+
+- **WHEN** `useTimerStore.focusedTaskId` is `'t-1'` and task `'t-1'` is a generated occurrence
+- **AND** the user skips that occurrence
+- **THEN** task `'t-1'` is removed from the store
+- **AND** `useTimerStore.focusedTaskId` becomes `null`
+
+#### Scenario: Deleting the focused task's series clears focus
+
+- **WHEN** `useTimerStore.focusedTaskId` is `'t-1'` and task `'t-1'` carries a `seriesId`
+- **AND** the user deletes that whole series
+- **THEN** task `'t-1'` is removed from the store
+- **AND** `useTimerStore.focusedTaskId` becomes `null`
+
+### Requirement: A task carries its recurrence identity
+
+The `Task` schema SHALL include `seriesId` and `occurrenceDate`, both nullable `YYYY-MM-DD`-compatible strings — `seriesId` a generated identifier, `occurrenceDate` a `YYYY-MM-DD` date. Both fields SHALL be present together or absent together; a task with exactly one of them SHALL fail validation.
+
+These fields identify which recurrence produced a task. They SHALL NOT change any existing task behaviour: the group lens, drag reorder, inline title edit, date reschedule, pomodoro estimate and completed-count editing, completion toggle, and focus binding SHALL treat a generated occurrence exactly as they treat any other task. The recurring marker SHALL be the only user-visible difference.
+
+#### Scenario: A task created by the user carries no recurrence identity
+
+- **WHEN** a task is added through the quick-add row
+- **THEN** its `seriesId` is `null` and its `occurrenceDate` is `null`
+
+#### Scenario: An occurrence validates
+
+- **WHEN** a task with `seriesId: 's1'` and `occurrenceDate: '2026-10-06'` is validated with `TaskSchema`
+- **THEN** validation succeeds
+
+#### Scenario: A half-populated identity is rejected
+
+- **WHEN** a task with `seriesId: 's1'` and `occurrenceDate: null` is validated with `TaskSchema`
+- **THEN** validation fails
+
+#### Scenario: An occurrence supports the normal task affordances
+
+- **WHEN** a generated occurrence is rendered as a task row
+- **THEN** it shows a checkbox, an editable title, its group tag, its pomodoro progress, a date control, and the existing focus and delete controls
+- **AND** it participates in drag reorder inside its date bucket
+
+#### Scenario: An occurrence can be focused
+
+- **WHEN** the user clicks the focus control on a generated occurrence
+- **THEN** `useTimerStore.focusedTaskId` is set to that task's id
+- **AND** completing a pomodoro increments that task's `pomoCompleted`
+
+### Requirement: The group lens filters occurrences like any other task
+
+The group lens SHALL filter generated occurrences by their `groupId` exactly as it filters ordinary tasks. A series whose `groupId` is outside the active lens SHALL have all of its occurrences hidden by that lens, and the view's empty state SHALL be evaluated after this filtering.
+
+#### Scenario: A lens hides a series' occurrences
+
+- **WHEN** the group lens is `Work`
+- **AND** a series with `groupId` `Personal` has an occurrence on today
+- **THEN** that occurrence is not visible in Today
+
+#### Scenario: A lens shows a matching series' occurrences
+
+- **WHEN** the group lens is `Work`
+- **AND** a series with `groupId` `Work` has an occurrence on today
+- **THEN** that occurrence is visible in Today and is drag-sortable
 
 ### Requirement: sortOrder is unique within a date bucket
 

@@ -1,1 +1,5 @@
-export { TaskV1Schema as TaskSchema, type TaskV1 } from './schema/v1'
+export {
+  TaskV2Schema as TaskSchema,
+  SeriesSchema,
+  TaskStateSchema,
+} from './schema/v2'

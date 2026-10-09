@@ -21,6 +21,8 @@ function createTask(overrides: Partial<Task> & { id: string }): Task {
     date: null,
     pomoEstimate: 0,
     pomoCompleted: 0,
+    seriesId: null,
+    occurrenceDate: null,
     sortOrder: 0,
     completed: false,
     completedAt: null,
@@ -64,7 +66,8 @@ function currentSnapshot(
         groups: overrides.groups ?? [createGroup({ id: DEFAULT_GROUP_ID })],
       },
       tasks: {
-        version: 1,
+        version: 2,
+        series: [],
         tasks: overrides.tasks ?? [createTask({ id: 'task-1' })],
       },
       timerSettings: {
@@ -78,7 +81,7 @@ function currentSnapshot(
 
 beforeEach(() => {
   localStorage.clear()
-  useTaskStore.setState({ tasks: [] })
+  useTaskStore.setState({ tasks: [], series: [] })
   useGroupStore.setState({
     groups: [createGroup({ id: DEFAULT_GROUP_ID })],
     stickyGroupId: null,
@@ -121,6 +124,96 @@ describe('multiline task title round trips', () => {
     if (!prepared.ok) throw new Error('Exported snapshot was rejected')
     commitSnapshotImport(prepared.snapshot)
     expect(useTaskStore.getState().tasks[0]?.title).toBe(title)
+  })
+})
+
+describe('recurring tasks save pipeline', () => {
+  function recurringSnapshot() {
+    const series = useTaskStore.getState().addSeries({
+      title: 'Work',
+      weekdays: [1, 2, 3, 4, 5],
+      pomoEstimate: 1.5,
+    })!
+    useTaskStore.getState().ensureOccurrences('2026-10-06', 1)
+    useTaskStore.getState().skipOccurrence(useTaskStore.getState().tasks[0].id)
+    const built = buildSnapshot()
+    if (!built.ok) throw new Error(built.reason)
+    return { snapshot: built.value, series }
+  }
+
+  it('exports v2 and restores series, occurrences and skips together', () => {
+    const { snapshot } = recurringSnapshot()
+    expect(snapshot.envelopeVersion).toBe(1)
+    expect(snapshot.slices.tasks.version).toBe(2)
+    expect(snapshot.slices.tasks.series[0].skipDates).toEqual(['2026-10-06'])
+    const expected = snapshot.slices.tasks
+    useTaskStore.setState({ tasks: [], series: [] })
+    const prepared = prepareSnapshotImport(JSON.stringify(snapshot))
+    if (!prepared.ok) throw new Error(prepared.reason)
+    commitSnapshotImport(prepared.snapshot)
+    expect(useTaskStore.getState().tasks).toEqual(expected.tasks)
+    expect(useTaskStore.getState().series).toEqual(expected.series)
+  })
+
+  it('migrates a frozen v1 tasks slice without changing other task fields', () => {
+    const snapshot = currentSnapshot()
+    const legacyTask: Partial<Task> = { ...createTask({ id: 'legacy' }) }
+    delete legacyTask.seriesId
+    delete legacyTask.occurrenceDate
+    const legacy = {
+      ...snapshot,
+      slices: {
+        ...snapshot.slices,
+        tasks: { version: 1, tasks: [legacyTask] },
+      },
+    }
+    const prepared = prepareSnapshotImport(JSON.stringify(legacy))
+    if (!prepared.ok) throw new Error(prepared.reason)
+    expect(prepared.snapshot.slices.tasks).toEqual({
+      version: 2,
+      series: [],
+      tasks: [{ ...legacyTask, seriesId: null, occurrenceDate: null }],
+    })
+  })
+
+  it.each([
+    { weekdays: [] },
+    { weekdays: [1, 1] },
+    { skipDates: ['next tuesday'] },
+    { skipDates: ['2026-10-06', '2026-10-06'] },
+  ])('rejects invalid series input %j without mutation', (invalid) => {
+    const { snapshot } = recurringSnapshot()
+    const existing = useTaskStore.getState().series
+    snapshot.slices.tasks.series[0] = {
+      ...snapshot.slices.tasks.series[0],
+      ...invalid,
+    }
+    expect(prepareSnapshotImport(JSON.stringify(snapshot)).ok).toBe(false)
+    expect(useTaskStore.getState().series).toBe(existing)
+  })
+
+  it('rejects duplicate and half-populated occurrence identities', () => {
+    const { snapshot } = recurringSnapshot()
+    const task = snapshot.slices.tasks.tasks[0]
+    snapshot.slices.tasks.tasks.push({ ...task, id: 'duplicate' })
+    expect(prepareSnapshotImport(JSON.stringify(snapshot)).ok).toBe(false)
+    snapshot.slices.tasks.tasks.pop()
+    snapshot.slices.tasks.tasks[0] = { ...task, occurrenceDate: null }
+    expect(prepareSnapshotImport(JSON.stringify(snapshot)).ok).toBe(false)
+  })
+
+  it('repairs dangling series groups with a warning per series', () => {
+    const { snapshot } = recurringSnapshot()
+    snapshot.slices.tasks.series = snapshot.slices.tasks.series.map(
+      (series) => ({ ...series, groupId: 'missing-series-group' }),
+    )
+    const prepared = prepareSnapshotImport(JSON.stringify(snapshot))
+    if (!prepared.ok) throw new Error(prepared.reason)
+    expect(prepared.snapshot.slices.tasks.series[0].groupId).toBe(
+      DEFAULT_GROUP_ID,
+    )
+    expect(prepared.warnings).toHaveLength(1)
+    expect(prepared.warnings?.[0]).toContain('missing-series-group')
   })
 })
 
@@ -317,7 +410,11 @@ describe('prepareSnapshotImport', () => {
   it('rejects invalid current feature payloads without partial mutation', () => {
     useTaskStore.setState({ tasks: [createTask({ id: 'existing' })] })
     const invalid = currentSnapshot()
-    invalid.slices.tasks = { version: 1, tasks: [{ id: 'broken' } as Task] }
+    invalid.slices.tasks = {
+      version: 2,
+      series: [],
+      tasks: [{ id: 'broken' } as Task],
+    }
 
     const result = prepareSnapshotImport(JSON.stringify(invalid))
 

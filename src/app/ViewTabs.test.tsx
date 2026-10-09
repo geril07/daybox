@@ -14,6 +14,8 @@ function makeTask(id: string, date: string): Task {
     date,
     pomoEstimate: 0,
     pomoCompleted: 0,
+    seriesId: null,
+    occurrenceDate: null,
     sortOrder: 0,
     completed: false,
     completedAt: null,

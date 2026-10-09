@@ -23,6 +23,8 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     date: null,
     pomoEstimate: 0,
     pomoCompleted: 0,
+    seriesId: null,
+    occurrenceDate: null,
     sortOrder: idCounter,
     completed: false,
     completedAt: null,

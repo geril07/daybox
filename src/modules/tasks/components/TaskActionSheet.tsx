@@ -8,19 +8,20 @@ import {
   SheetTitle,
 } from '@/shared/ui'
 
-import { useTaskStore } from '../store'
 import type { Task } from '../types'
 
 interface TaskActionSheetProps {
   task: Task
   open: boolean
   onOpenChange: (open: boolean) => void
+  onDelete: () => void
 }
 
 export function TaskActionSheet({
   task,
   open,
   onOpenChange,
+  onDelete,
 }: TaskActionSheetProps) {
   const handleFocus = () => {
     useTimerStore.getState().focusTask(task.id)
@@ -28,8 +29,8 @@ export function TaskActionSheet({
   }
 
   const handleDelete = () => {
-    useTaskStore.getState().deleteTask(task.id)
     onOpenChange(false)
+    onDelete()
   }
 
   return (

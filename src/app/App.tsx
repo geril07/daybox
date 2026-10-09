@@ -12,12 +12,13 @@ import {
   defaultDateForView,
   type View,
 } from '@/modules/planner'
-import { AddTaskRow } from '@/modules/tasks'
+import { AddTaskRow, useTaskStore } from '@/modules/tasks'
 import {
   TimerBar,
   togglePlayPauseWithClick,
   unlockAudio,
 } from '@/modules/timer'
+import { getPlannerDate } from '@/shared/dates'
 import { getAuthStatus } from '@/shared/google-drive/server-auth'
 import { registerShortcuts } from '@/shared/keyboard'
 import { Button, Sheet, SheetContent } from '@/shared/ui'
@@ -33,6 +34,29 @@ export function App() {
   const browseDate = usePlannerStore((s) => s.browseDate)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
   const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
+  const [, setEffectiveDate] = useState(() =>
+    getPlannerDate(new Date(), dayStartMinutes),
+  )
+
+  useEffect(() => {
+    const refresh = () => {
+      const today = getPlannerDate(new Date(), dayStartMinutes)
+      setEffectiveDate(today)
+      useTaskStore.getState().ensureOccurrences(today, weekStartDay)
+    }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    refresh()
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', onVisible)
+    const interval = window.setInterval(refresh, 60_000)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.clearInterval(interval)
+    }
+  }, [dayStartMinutes, weekStartDay])
 
   const [settingsOpen, setSettingsOpen] = useState(false)
 

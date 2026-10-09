@@ -21,7 +21,7 @@ import { TaskRow } from './TaskRow'
 let restoreMatchMedia: (() => void) | null = null
 
 beforeEach(() => {
-  useTaskStore.setState({ tasks: [] })
+  useTaskStore.setState({ tasks: [], series: [] })
   useGroupStore.setState({
     groups: [
       {
@@ -62,6 +62,8 @@ function createMockTask(overrides = {}) {
     date: null,
     pomoEstimate: 3,
     pomoCompleted: 1,
+    seriesId: null,
+    occurrenceDate: null,
     sortOrder: 0,
     completed: false,
     completedAt: null,
@@ -98,6 +100,49 @@ function coarsePointerActions(): HTMLElement {
 }
 
 describe('TaskRow', () => {
+  it('marks occurrences and skips only the chosen occurrence', async () => {
+    const user = userEvent.setup()
+    const series = useTaskStore
+      .getState()
+      .addSeries({ title: 'Work', weekdays: [1, 2, 3, 4, 5] })!
+    useTaskStore.getState().ensureOccurrences('2026-10-06', 1)
+    const task = useTaskStore.getState().tasks[0]
+    render(<TaskRow task={task} />)
+    expect(screen.getByLabelText('Recurring task')).toBeTruthy()
+    await user.click(screen.getByTitle('Delete'))
+    expect(useTaskStore.getState().tasks).toHaveLength(4)
+    await user.click(
+      screen.getByRole('button', { name: 'Skip this occurrence' }),
+    )
+    expect(useTaskStore.getState().tasks).toHaveLength(3)
+    expect(
+      useTaskStore.getState().series.find((item) => item.id === series.id)
+        ?.skipDates,
+    ).toEqual(['2026-10-06'])
+  })
+
+  it('deletes the whole series through the coarse-pointer action sheet', async () => {
+    const user = userEvent.setup()
+    restoreMatchMedia = installCoarsePointerMatchMediaStub()
+    useTaskStore
+      .getState()
+      .addSeries({ title: 'Work', weekdays: [1, 2, 3, 4, 5] })
+    useTaskStore.getState().ensureOccurrences('2026-10-06', 1)
+    render(<TaskRow task={useTaskStore.getState().tasks[0]} />)
+    await user.click(screen.getByTitle('More actions'))
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    expect(useTaskStore.getState().tasks).toHaveLength(4)
+    await user.click(
+      screen.getByRole('button', { name: 'Delete whole series' }),
+    )
+    expect(useTaskStore.getState().tasks).toEqual([])
+    expect(useTaskStore.getState().series).toEqual([])
+  })
+
+  it('does not mark an ordinary task', () => {
+    render(<TaskRow task={createMockTask()} />)
+    expect(screen.queryByLabelText('Recurring task')).toBeNull()
+  })
   it('protects changed and invalid titles, but not reverted, saved, or cancelled edits', async () => {
     const user = userEvent.setup()
     const task = createMockTask()
