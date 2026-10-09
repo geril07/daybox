@@ -38,6 +38,21 @@ Each component SHALL follow shadcn conventions: `forwardRef`, `cn()` for classNa
 - **WHEN** a component needs hover/focus/active styling
 - **THEN** it SHALL use Tailwind variant classes (e.g., `hover:bg-accent`) not inline `onMouseEnter`/`onMouseLeave` style mutation
 
+### Requirement: Select popup animation preserves trigger separation
+
+The shared Select popup SHALL retain non-overlapping positioning by default and Base UI's focus and pointer-highlight behavior. Its opening and closing animation SHALL use a 100 ms fade and subtle scale between `0.98` and `1`, without sliding toward or across the trigger. When item-aligned positioning is active (`data-side="none"`), the popup SHALL not animate.
+
+#### Scenario: Open a Select near the bottom edge of its trigger
+
+- **WHEN** a user opens a Select with the pointer at the trigger's bottom edge
+- **THEN** the popup animation does not slide its items over the trigger
+- **AND** keyboard navigation and pointer highlighting remain available
+
+#### Scenario: Item-aligned positioning falls back
+
+- **WHEN** item-aligned positioning cannot be used and Base UI places the popup beside the trigger
+- **THEN** the popup uses the non-sliding fade and scale animation
+
 ### Requirement: Theme via CSS variables
 
 The design system SHALL use shadcn's CSS variable approach: colors defined as `--color-*` in Tailwind `@theme`, mapped to semantic `--*` variables in `:root`, and consumed via Tailwind utility classes (e.g., `bg-background`, `text-foreground`).
