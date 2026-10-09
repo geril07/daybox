@@ -7,11 +7,11 @@
 ## 2. Collapsible editors
 
 - [x] 2.1 Generate and export the shared accordion with reduced-motion support.
-- [x] 2.2 Add compact series summaries and controlled expansion keyed by id.
-- [x] 2.3 Test default collapse, automatic expansion, multiple open rows, reorder stability, and saved edits.
-- [x] 2.4 Verify pointer, keyboard, height animation, and reduced motion in Playwright.
+- [x] 2.2 Collapse the entire Recurring section under one header; keep individual editors unchanged.
+- [x] 2.3 Test whole-block collapse, keyboard expansion, creation, and saved edits.
+- [x] 2.4 Verify whole-block pointer/keyboard expansion, height animation, and reduced motion in Playwright.
 
 ## 3. Delivery
 
 - [x] 3.1 Run format, typecheck, lint, and all tests.
-- [x] 3.2 Publish atomic commits and open a pull request against main with verification evidence.
+- [x] 3.2 Update the pull request with an atomic correction commit and current verification evidence.

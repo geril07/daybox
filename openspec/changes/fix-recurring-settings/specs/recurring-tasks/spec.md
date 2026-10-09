@@ -22,30 +22,30 @@ While the app is mounted, changes to series definitions SHALL trigger occurrence
 - **THEN** the missing occurrence is generated without reload
 - **AND** existing tasks retain their stored title, group, and estimate
 
-### Requirement: Series editors are independently collapsible
+### Requirement: Recurring Settings section is collapsible
 
-The Recurring panel SHALL render an accordion row per series. Existing rows SHALL start collapsed on panel mount. Each trigger SHALL show the title, weekday summary, inactive status when applicable, and a chevron. The expanded panel SHALL contain the existing editing, reordering, and deletion controls. Multiple rows SHALL be able to remain open. A newly created series SHALL expand automatically. Expansion SHALL be runtime UI state keyed by series id and SHALL NOT change stored series data.
+The Settings drawer SHALL provide one accordion trigger labelled Recurring with a chevron. The section SHALL start collapsed on drawer mount. Expanding it SHALL expose the entire series list and the add-series form together. Individual series SHALL NOT have separate accordion triggers. Creating a series SHALL leave the section open. Expansion SHALL be runtime UI state and SHALL NOT change stored series data.
 
-Panel height and chevron rotation SHALL animate, except when reduced motion is requested. Closed controls SHALL NOT remain in the keyboard tab order. Collapsing a row SHALL preserve saved edits, including a title committed on blur.
+Panel height and chevron rotation SHALL animate, except when reduced motion is requested. Closed controls SHALL NOT remain in the keyboard tab order. Collapsing the section SHALL preserve saved edits, including a title committed on blur.
 
-#### Scenario: Expand and collapse an existing series
+#### Scenario: Recurring section starts collapsed
 
 - **WHEN** the user opens Settings with existing series
-- **THEN** each editor is collapsed with its summary visible
-- **AND** activating its trigger exposes its editing controls
-- **AND** activating the trigger again hides those controls
+- **THEN** the Recurring header and chevron are visible
+- **AND** the series list and add-series form are hidden
+- **AND** other Settings sections remain visible
 
-#### Scenario: Keep multiple editors open
+#### Scenario: Expand and collapse the whole block
 
-- **WHEN** the user expands two series rows
-- **THEN** both editors remain open
-- **AND** reordering retains expansion for the same series ids
+- **WHEN** the user activates the Recurring trigger
+- **THEN** every series editor and the add-series form appear together
+- **AND** activating the trigger again hides the entire block
 
 #### Scenario: Create a series
 
 - **WHEN** a new series is successfully created
-- **THEN** its editor is expanded automatically
-- **AND** previously expanded rows remain expanded
+- **THEN** the new editor is visible in the open Recurring section
+- **AND** collapsing and reopening the section retains saved series data
 
 #### Scenario: Keyboard and reduced motion
 

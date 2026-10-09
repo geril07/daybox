@@ -5,8 +5,8 @@ New recurring series do not generate tasks until a lifecycle refresh or the next
 ## What Changes
 
 - Generate missing occurrences when series definitions change, without rewriting existing tasks.
-- Show series in independently expandable accordion rows with compact summaries.
-- Start existing rows collapsed and open newly created rows automatically.
+- Collapse the entire Recurring Settings section, including the series list and add form, under one header.
+- Start the section collapsed; show all series editors together when expanded.
 - Animate panel height and chevrons while respecting reduced motion.
 
 ## Capabilities
@@ -17,7 +17,7 @@ None.
 
 ### Modified Capabilities
 
-- `recurring-tasks`: Immediate generation after series changes and collapsible Settings editors.
+- `recurring-tasks`: Immediate generation after series changes and a collapsible Recurring Settings section.
 - `shared-ui`: Add the shadcn Base UI accordion primitive.
 
 ## Impact
