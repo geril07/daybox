@@ -29,6 +29,10 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogCancel,
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
 } from '@/shared/ui'
 import { downloadAsFile } from '@/shared/utils/download'
 
@@ -134,12 +138,16 @@ export function SettingsDrawer({
         <div className="flex flex-1 flex-col gap-7 overflow-y-auto p-5">
           <TimerSettingsPanel />
 
-          <div className="flex flex-col gap-3">
-            <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-              Recurring
-            </div>
-            <RecurringSettingsPanel />
-          </div>
+          <Accordion aria-label="Recurring settings">
+            <AccordionItem value="recurring">
+              <AccordionTrigger className="text-muted-foreground items-center rounded-none py-0 text-xs font-semibold tracking-widest uppercase hover:no-underline">
+                Recurring
+              </AccordionTrigger>
+              <AccordionContent className="pt-3 pb-0">
+                <RecurringSettingsPanel />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           <div className="flex flex-col gap-3">
             <div className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">

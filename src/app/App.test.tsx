@@ -68,6 +68,7 @@ describe('App shell boot hydration', () => {
     vi.setSystemTime(new Date(2026, 9, 9, 12))
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Recurring' }))
     fireEvent.change(screen.getByLabelText('New recurring task'), {
       target: { value: 'Daily exercise' },
     })
