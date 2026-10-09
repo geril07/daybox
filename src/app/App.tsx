@@ -34,6 +34,7 @@ export function App() {
   const browseDate = usePlannerStore((s) => s.browseDate)
   const weekStartDay = usePlannerStore((s) => s.weekStartDay)
   const dayStartMinutes = usePlannerStore((s) => s.dayStartMinutes)
+  const series = useTaskStore((s) => s.series)
   const [, setEffectiveDate] = useState(() =>
     getPlannerDate(new Date(), dayStartMinutes),
   )
@@ -56,7 +57,7 @@ export function App() {
       document.removeEventListener('visibilitychange', onVisible)
       window.clearInterval(interval)
     }
-  }, [dayStartMinutes, weekStartDay])
+  }, [dayStartMinutes, weekStartDay, series])
 
   const [settingsOpen, setSettingsOpen] = useState(false)
 
