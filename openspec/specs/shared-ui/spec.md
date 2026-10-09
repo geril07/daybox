@@ -78,6 +78,7 @@ The following shadcn-derived components SHALL be available in `src/shared/ui/` a
 | Component     | Purpose                                                          |
 | ------------- | ---------------------------------------------------------------- |
 | Button        | Styled button with variant prop                                  |
+| Accordion     | Accessible expandable panels with reduced-motion support         |
 | Select        | Dropdown selection (compound)                                    |
 | Sheet         | Slide-in panel (compound)                                        |
 | Switch        | Toggle switch                                                    |
@@ -129,3 +130,13 @@ links.
 - **THEN** the table contains a row whose `Component` is `LinkifiedText`
 - **AND** the row's `Purpose` describes rendering text with auto-detected URLs as
   clickable external links
+
+### Requirement: Shared accordion primitive
+
+The system SHALL provide a shadcn-generated Base UI Accordion in `src/shared/ui/`, re-exported from `@/shared/ui`. It SHALL provide accessible triggers, independently expandable panels, animated panel height and chevron rotation, and reduced-motion overrides.
+
+#### Scenario: Feature uses an accordion
+
+- **WHEN** a feature imports Accordion, AccordionItem, AccordionTrigger, and AccordionContent from `@/shared/ui`
+- **THEN** those exports resolve to the shared shadcn Base UI wrapper
+- **AND** reduced-motion users receive expansion without animation

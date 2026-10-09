@@ -284,3 +284,34 @@ While the app is mounted, changes to series definitions SHALL trigger occurrence
 - **WHEN** the user adds a matching weekday with a missing occurrence in the horizon
 - **THEN** the missing occurrence is generated without reload
 - **AND** existing tasks retain their stored title, group, and estimate
+
+### Requirement: Series editors are independently collapsible
+
+The Recurring panel SHALL render an accordion row per series. Existing rows SHALL start collapsed on panel mount. Each trigger SHALL show the title, weekday summary, inactive status when applicable, and a chevron. The expanded panel SHALL contain the existing editing, reordering, and deletion controls. Multiple rows SHALL be able to remain open. A newly created series SHALL expand automatically. Expansion SHALL be runtime UI state keyed by series id and SHALL NOT change stored series data.
+
+Panel height and chevron rotation SHALL animate, except when reduced motion is requested. Closed controls SHALL NOT remain in the keyboard tab order. Collapsing a row SHALL preserve saved edits, including a title committed on blur.
+
+#### Scenario: Expand and collapse an existing series
+
+- **WHEN** the user opens Settings with existing series
+- **THEN** each editor is collapsed with its summary visible
+- **AND** activating its trigger exposes its editing controls
+- **AND** activating the trigger again hides those controls
+
+#### Scenario: Keep multiple editors open
+
+- **WHEN** the user expands two series rows
+- **THEN** both editors remain open
+- **AND** reordering retains expansion for the same series ids
+
+#### Scenario: Create a series
+
+- **WHEN** a new series is successfully created
+- **THEN** its editor is expanded automatically
+- **AND** previously expanded rows remain expanded
+
+#### Scenario: Keyboard and reduced motion
+
+- **WHEN** the user activates a trigger with the keyboard and requests reduced motion
+- **THEN** expansion state is exposed accessibly and editing controls are reachable only while open
+- **AND** height and chevron changes do not animate
