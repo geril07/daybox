@@ -65,7 +65,7 @@ Panel height and chevron rotation SHALL animate, except when reduced motion is r
 
 ### Requirement: Recurring task controls have clear labels and help
 
-Each editor SHALL show Group and Estimated pomodoros labels above the corresponding controls, the selected group's color dot, and the existing Active switch. A help icon beside the section trigger SHALL explain selected weekdays and matching upcoming-task rename behavior without toggling the accordion. Move up, Move down, and Delete recurring task actions SHALL have accessible names and tooltips. These tooltips and the section help SHALL open on hover or keyboard focus and SHALL NOT remain open when the pointer leaves the trigger to hover their content.
+Each editor SHALL show Group and Estimated pomodoros labels above the corresponding controls, the selected group's color dot, and the existing Active switch. A help icon immediately after the section label SHALL explain selected weekdays and matching upcoming-task rename behavior without toggling the accordion. The help button SHALL be a sibling of the accordion button, with no nested buttons; the accordion chevron SHALL remain at the end of the header. Move up, Move down, and Delete recurring task actions SHALL have accessible names and tooltips. These tooltips and the section help SHALL open on hover or keyboard focus and SHALL NOT remain open when the pointer leaves the trigger to hover their content.
 
 #### Scenario: Understand editor controls
 

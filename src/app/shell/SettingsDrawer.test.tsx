@@ -117,6 +117,23 @@ describe('SettingsDrawer recurring section', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('keeps the trailing help independently keyboard reachable', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDrawer open onClose={vi.fn()} />)
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus())
+    const trigger = screen.getByRole('button', { name: 'Recurring tasks' })
+    const help = screen.getByRole('button', { name: 'About recurring tasks' })
+    trigger.focus()
+    await user.tab()
+    expect(help).toHaveFocus()
+    await user.keyboard('{Enter}')
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await user.tab({ shift: true })
+    expect(trigger).toHaveFocus()
+    await user.keyboard('{Enter}')
+    expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  })
+
   it('saves edits on collapse and keeps newly created series visible on reopen', async () => {
     const user = userEvent.setup()
     useTaskStore.getState().addSeries({ title: 'Work', weekdays: [1] })
