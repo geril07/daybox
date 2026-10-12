@@ -2,8 +2,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import { DEFAULT_GROUP_ID } from '@/modules/groups'
+import { usePlannerStore } from '@/modules/planner'
 import { useTimerStore } from '@/modules/timer'
-import { getDateRange, getWeekEndDate, type WeekStartDay } from '@/shared/dates'
+import {
+  getDateRange,
+  getPlannerDate,
+  getWeekEndDate,
+  type WeekStartDay,
+} from '@/shared/dates'
 import { generateId } from '@/shared/id'
 import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
@@ -116,10 +122,26 @@ export const useTaskStore = create<TaskStore>()(
             console.warn('[daybox] Invalid series update', result.error)
             return
           }
+          const titleChanged = result.data.title !== existing.title
+          const today = getPlannerDate(
+            new Date(),
+            usePlannerStore.getState().dayStartMinutes,
+          )
           set({
             series: get().series.map((item) =>
               item.id === id ? result.data : item,
             ),
+            tasks: titleChanged
+              ? get().tasks.map((task) =>
+                  task.seriesId === id &&
+                  task.title === existing.title &&
+                  !task.completed &&
+                  task.date !== null &&
+                  task.date >= today
+                    ? { ...task, title: result.data.title }
+                    : task,
+                )
+              : get().tasks,
           })
         },
 
