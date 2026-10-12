@@ -6,4 +6,4 @@
 ## 2. Verification
 
 - [x] 2.1 Run formatting, typecheck, lint and tests.
-- [ ] 2.2 Exercise real browser mouse dragging and keyboard replacement; record and attach evidence to a pull request.
+- [x] 2.2 Exercise real browser mouse dragging and keyboard replacement; record and attach evidence to a pull request.
