@@ -304,6 +304,54 @@ describe('TaskRow', () => {
     expect(storeTask?.title).toBe('Edited')
   })
 
+  it.each(['forward', 'backward'] as const)(
+    'transfers a %s selection across newlines and link nodes on release outside the title',
+    (direction) => {
+      const task = createMockTask({
+        title: 'Review\nhttps://example.com today',
+      })
+      render(<TaskRow task={task} />)
+      const display = document.querySelector('span.cursor-text')!
+      const first = display.querySelector('span')!.firstChild!
+      const link = display.querySelector('a')!.firstChild!
+      const selection = document.getSelection()!
+      fireEvent.mouseDown(display, { button: 0 })
+      if (direction === 'forward') selection.setBaseAndExtent(first, 3, link, 8)
+      else selection.setBaseAndExtent(link, 8, first, 3)
+      fireEvent.mouseUp(document.body, { button: 0 })
+      const input = screen.getByRole('textbox') as HTMLTextAreaElement
+      expect(input.value.slice(input.selectionStart, input.selectionEnd)).toBe(
+        'iew\nhttps://',
+      )
+      expect(input.selectionDirection).toBe(direction)
+      expect(input).toHaveFocus()
+      selection.removeAllRanges()
+    },
+  )
+
+  it('does not enter editing for a selection extending outside the title', () => {
+    render(
+      <>
+        <TaskRow task={createMockTask()} />
+        <span data-testid="outside">Outside</span>
+      </>,
+    )
+    const display = document.querySelector('span.cursor-text')!
+    const selection = document.getSelection()!
+    fireEvent.mouseDown(display, { button: 0 })
+    selection.setBaseAndExtent(
+      display.querySelector('span')!.firstChild!,
+      2,
+      screen.getByTestId('outside').firstChild!,
+      3,
+    )
+    fireEvent.mouseUp(document.body, { button: 0 })
+    fireEvent.click(display)
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(selection.isCollapsed).toBe(false)
+    selection.removeAllRanges()
+  })
+
   it('edits a task with an explicit line break', async () => {
     const user = userEvent.setup()
     const task = createMockTask()

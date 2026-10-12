@@ -52,6 +52,39 @@ interface TaskRowProps {
   dayStartMinutes?: number
 }
 
+interface TitleSelection {
+  start: number
+  end: number
+  direction: 'forward' | 'backward'
+}
+
+function getTitleSelection(container: HTMLElement): TitleSelection | null {
+  const selection = container.ownerDocument.getSelection()
+  if (
+    !selection ||
+    selection.isCollapsed ||
+    !selection.anchorNode ||
+    !selection.focusNode ||
+    !container.contains(selection.anchorNode) ||
+    !container.contains(selection.focusNode)
+  )
+    return null
+
+  const offsetOf = (node: Node, offset: number) => {
+    const range = container.ownerDocument.createRange()
+    range.selectNodeContents(container)
+    range.setEnd(node, offset)
+    return range.toString().length
+  }
+  const anchor = offsetOf(selection.anchorNode, selection.anchorOffset)
+  const focus = offsetOf(selection.focusNode, selection.focusOffset)
+  return {
+    start: Math.min(anchor, focus),
+    end: Math.max(anchor, focus),
+    direction: anchor > focus ? 'backward' : 'forward',
+  }
+}
+
 function getCaretOffsetAtPoint(
   container: HTMLElement,
   clientX: number,
@@ -110,6 +143,8 @@ export function TaskRow({
   const [deleteChoiceOpen, setDeleteChoiceOpen] = useState(false)
   const editRef = useRef<HTMLTextAreaElement>(null)
   const pendingCaretOffsetRef = useRef<number | null>(null)
+  const pendingSelectionRef = useRef<TitleSelection | null>(null)
+  const selectionGestureRef = useRef<HTMLSpanElement | null>(null)
   const cancelledEditRef = useRef(false)
   const toggleTask = useTaskStore((s) => s.toggleTask)
   const updateTask = useTaskStore((s) => s.updateTask)
@@ -131,16 +166,38 @@ export function TaskRow({
     task.date !== null &&
     isOverdue(task.date, new Date(), dayStartMinutes)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (editing && editRef.current) {
       const input = editRef.current
       input.focus()
       const caretOffset = pendingCaretOffsetRef.current ?? input.value.length
       const safeCaretOffset = Math.min(caretOffset, input.value.length)
-      input.setSelectionRange(safeCaretOffset, safeCaretOffset)
+      const selection = pendingSelectionRef.current
+      input.setSelectionRange(
+        selection?.start ?? safeCaretOffset,
+        selection?.end ?? safeCaretOffset,
+        selection?.direction,
+      )
       pendingCaretOffsetRef.current = null
+      pendingSelectionRef.current = null
     }
   }, [editing])
+
+  useEffect(() => {
+    const handleMouseUp = (event: globalThis.MouseEvent) => {
+      const container = selectionGestureRef.current
+      selectionGestureRef.current = null
+      if (event.button !== 0 || !container?.isConnected) return
+      const selection = getTitleSelection(container)
+      if (!selection) return
+      pendingSelectionRef.current = selection
+      cancelledEditRef.current = false
+      setEditTitle(task.title)
+      setEditing(true)
+    }
+    document.addEventListener('mouseup', handleMouseUp)
+    return () => document.removeEventListener('mouseup', handleMouseUp)
+  }, [task.title])
 
   useLayoutEffect(() => {
     const input = editRef.current
@@ -150,6 +207,12 @@ export function TaskRow({
   }, [editTitle, editing])
 
   const handleStartEdit = (e: MouseEvent<HTMLSpanElement>) => {
+    const selection = e.currentTarget.ownerDocument.getSelection()
+    if (selection && !selection.isCollapsed) {
+      const titleSelection = getTitleSelection(e.currentTarget)
+      if (!titleSelection) return
+      pendingSelectionRef.current = titleSelection
+    }
     cancelledEditRef.current = false
     pendingCaretOffsetRef.current = getCaretOffsetAtPoint(
       e.currentTarget,
@@ -244,6 +307,9 @@ export function TaskRow({
               task.completed ? 'text-fg-3 line-through' : 'text-fg',
             )}
             onClick={handleStartEdit}
+            onMouseDown={(e) => {
+              if (e.button === 0) selectionGestureRef.current = e.currentTarget
+            }}
           >
             <LinkifiedText text={task.title} />
           </span>
