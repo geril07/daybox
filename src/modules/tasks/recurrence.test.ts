@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { usePlannerStore } from '@/modules/planner'
 import { useTimerStore } from '@/modules/timer'
 import { getDateRange, getWeekEndDate } from '@/shared/dates'
 
@@ -23,9 +24,14 @@ const template: Series = {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 9, 6, 12))
+  usePlannerStore.setState({ dayStartMinutes: 0 })
   useTaskStore.setState({ tasks: [], series: [] })
   useTimerStore.getState().setFocusedTaskId(null)
 })
+
+afterEach(() => vi.useRealTimers())
 
 describe('occurrence planning', () => {
   it('respects both week boundaries and includes only the horizon', () => {
@@ -94,7 +100,7 @@ describe('recurrence store', () => {
     ).toBe(false)
     expect(useTimerStore.getState().focusedTaskId).toBeNull()
   })
-  it('series edits only affect future generation; deleting removes all occurrences', () => {
+  it('renames existing titles but keeps other series edits generation-only; deleting removes all occurrences', () => {
     useTaskStore.setState({ series: [template] })
     const store = useTaskStore.getState()
     store.ensureOccurrences(today, 1)
@@ -104,7 +110,10 @@ describe('recurrence store', () => {
       pomoEstimate: 3,
       weekdays: [1],
     })
-    expect(useTaskStore.getState().tasks[0]).toBe(original)
+    expect(useTaskStore.getState().tasks[0]).toEqual({
+      ...original,
+      title: 'Changed',
+    })
     store.ensureOccurrences('2026-10-12', 1)
     expect(useTaskStore.getState().tasks.at(-1)?.title).toBe('Changed')
     store.setSeriesActive(template.id, false)
@@ -115,6 +124,94 @@ describe('recurrence store', () => {
     expect(useTaskStore.getState().tasks).toEqual([])
     expect(useTaskStore.getState().series).toEqual([])
     expect(useTimerStore.getState().focusedTaskId).toBeNull()
+  })
+  it('renames matching upcoming unfinished tasks and preserves exceptions', () => {
+    useTaskStore.setState({ series: [template] })
+    const store = useTaskStore.getState()
+    store.ensureOccurrences(today, 1)
+    const generated = useTaskStore.getState().tasks[0]
+    const tasks = [
+      { ...generated, id: 'today' },
+      { ...generated, id: 'future', date: '2026-10-20', pomoCompleted: 2 },
+      { ...generated, id: 'past', date: '2026-10-05' },
+      { ...generated, id: 'completed', completed: true },
+      {
+        ...generated,
+        id: 'completed-future',
+        date: '2026-10-20',
+        completed: true,
+      },
+      { ...generated, id: 'custom', title: 'Work with Alex' },
+      { ...generated, id: 'stale', title: 'Older title' },
+      { ...generated, id: 'later', date: null },
+      { ...generated, id: 'other-series', seriesId: 's2' },
+      { ...generated, id: 'ordinary', seriesId: null, occurrenceDate: null },
+    ]
+    useTaskStore.setState({ tasks })
+
+    store.updateSeries(template.id, { title: '  Job  ' })
+
+    expect(useTaskStore.getState().series[0].title).toBe('Job')
+    expect(useTaskStore.getState().tasks).toEqual([
+      { ...tasks[0], title: 'Job' },
+      { ...tasks[1], title: 'Job' },
+      ...tasks.slice(2),
+    ])
+    store.updateSeries(template.id, { title: 'Career' })
+    expect(useTaskStore.getState().tasks).toEqual([
+      { ...tasks[0], title: 'Career' },
+      { ...tasks[1], title: 'Career' },
+      ...tasks.slice(2),
+    ])
+  })
+  it('uses current scheduled dates and the configured planner day boundary', () => {
+    vi.setSystemTime(new Date(2026, 9, 7, 2))
+    usePlannerStore.setState({ dayStartMinutes: 180 })
+    useTaskStore.setState({ series: [template] })
+    const store = useTaskStore.getState()
+    store.ensureOccurrences(today, 1)
+    const generated = useTaskStore.getState().tasks[0]
+    const movedPast = { ...generated, id: 'moved-past', date: '2026-10-05' }
+    const movedFuture = {
+      ...generated,
+      id: 'moved-future',
+      occurrenceDate: '2026-10-05',
+      date: '2026-10-08',
+    }
+    useTaskStore.setState({ tasks: [generated, movedPast, movedFuture] })
+
+    store.updateSeries(template.id, { title: 'Job' })
+
+    expect(useTaskStore.getState().tasks).toEqual([
+      { ...generated, title: 'Job' },
+      movedPast,
+      { ...movedFuture, title: 'Job' },
+    ])
+
+    vi.setSystemTime(new Date(2026, 9, 7, 3))
+    store.updateSeries(template.id, { title: 'Career' })
+    expect(useTaskStore.getState().tasks).toEqual([
+      { ...generated, title: 'Job' },
+      movedPast,
+      { ...movedFuture, title: 'Career' },
+    ])
+  })
+  it('leaves tasks unchanged for invalid, unchanged-title, and non-title updates', () => {
+    useTaskStore.setState({ series: [template] })
+    const store = useTaskStore.getState()
+    store.ensureOccurrences(today, 1)
+    const tasks = useTaskStore.getState().tasks
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    store.updateSeries(template.id, { title: ' ' })
+    store.updateSeries(template.id, { title: 'Job', weekdays: [] })
+    expect(useTaskStore.getState().series[0]).toEqual(template)
+    expect(useTaskStore.getState().tasks).toBe(tasks)
+    expect(warn).toHaveBeenCalledTimes(2)
+    warn.mockRestore()
+
+    store.updateSeries(template.id, { title: ' Work ' })
+    store.updateSeries(template.id, { pomoEstimate: 3, active: false })
+    expect(useTaskStore.getState().tasks).toBe(tasks)
   })
   it('validates series creation and defaults its group', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})

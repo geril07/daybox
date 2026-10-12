@@ -102,7 +102,7 @@ describe('App shell boot hydration', () => {
     expect(useTaskStore.getState().tasks).toEqual(existing)
   })
 
-  it('generates newly selected weekdays while preserving existing occurrences', () => {
+  it('renames matching occurrences and generates newly selected weekdays without changing existing estimates', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 9, 9, 12))
     const series = useTaskStore.getState().addSeries({
@@ -120,7 +120,7 @@ describe('App shell boot hydration', () => {
       }),
     )
     expect(useTaskStore.getState().tasks).toEqual([
-      friday,
+      { ...friday, title: 'Stretching' },
       expect.objectContaining({
         title: 'Stretching',
         occurrenceDate: '2026-10-10',
@@ -130,7 +130,10 @@ describe('App shell boot hydration', () => {
     act(() =>
       useTaskStore.getState().updateSeries(series.id, { weekdays: [6] }),
     )
-    expect(useTaskStore.getState().tasks[0]).toEqual(friday)
+    expect(useTaskStore.getState().tasks[0]).toEqual({
+      ...friday,
+      title: 'Stretching',
+    })
     expect(useTaskStore.getState().tasks).toHaveLength(2)
   })
 

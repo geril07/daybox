@@ -6,7 +6,7 @@ import {
   within,
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, expect, it } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 import { useGroupStore } from '@/modules/groups'
 import { usePlannerStore } from '@/modules/planner'
@@ -28,7 +28,40 @@ beforeEach(() => {
     ],
   })
 })
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
+
+it.each(['blur', 'Enter'])(
+  'renames upcoming matching tasks on %s',
+  (commit) => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 6, 12))
+    usePlannerStore.setState({ dayStartMinutes: 0 })
+    const store = useTaskStore.getState()
+    store.addSeries({ title: 'Work', weekdays: [1, 2, 3, 4, 5] })
+    store.ensureOccurrences('2026-10-06', 1)
+    const original = useTaskStore.getState().tasks
+    store.updateTask(original[1].id, { title: 'Work with Alex' })
+    render(<RecurringSettingsPanel />)
+    const input = screen.getByLabelText('Series title')
+    fireEvent.change(input, { target: { value: 'Job' } })
+    if (commit === 'blur') fireEvent.blur(input)
+    else {
+      fireEvent.keyDown(input, { key: 'Enter' })
+      fireEvent.blur(input)
+    }
+
+    expect(useTaskStore.getState().series[0].title).toBe('Job')
+    expect(useTaskStore.getState().tasks).toEqual(
+      original.map((task, index) => ({
+        ...task,
+        title: index === 1 ? 'Work with Alex' : 'Job',
+      })),
+    )
+  },
+)
 
 it('creates, renames, changes weekdays, deactivates and reorders series', async () => {
   const user = userEvent.setup()
