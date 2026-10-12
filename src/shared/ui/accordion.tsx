@@ -26,24 +26,39 @@ function AccordionItem({ className, ...props }: AccordionPrimitive.Item.Props) {
 function AccordionTrigger({
   className,
   children,
+  headerAction,
   ...props
-}: AccordionPrimitive.Trigger.Props) {
+}: AccordionPrimitive.Trigger.Props & { headerAction?: React.ReactNode }) {
   return (
-    <AccordionPrimitive.Header className="flex">
+    <AccordionPrimitive.Header
+      className={
+        headerAction
+          ? 'grid grid-cols-[auto_auto_1fr] items-center gap-1'
+          : 'flex'
+      }
+    >
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
           'group/accordion-trigger focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:after:border-ring **:data-[slot=accordion-trigger-icon]:text-muted-foreground relative flex flex-1 items-start justify-between gap-2 rounded-lg border border-transparent py-2.5 text-left text-sm font-medium transition-colors outline-none hover:underline focus-visible:ring-3 aria-disabled:pointer-events-none aria-disabled:opacity-50 **:data-[slot=accordion-trigger-icon]:ml-auto **:data-[slot=accordion-trigger-icon]:size-4 motion-reduce:transition-none',
           className,
+          headerAction &&
+            'col-span-3 col-start-1 row-start-1 grid grid-cols-subgrid items-center gap-1',
         )}
         {...props}
       >
-        {children}
+        {headerAction ? <span>{children}</span> : children}
         <ChevronDownIcon
           data-slot="accordion-trigger-icon"
-          className="pointer-events-none shrink-0 transition-transform duration-200 group-aria-expanded/accordion-trigger:rotate-180 motion-reduce:transition-none"
+          className={cn(
+            'pointer-events-none shrink-0 transition-transform duration-200 group-aria-expanded/accordion-trigger:rotate-180 motion-reduce:transition-none',
+            headerAction && 'col-start-3 justify-self-end',
+          )}
         />
       </AccordionPrimitive.Trigger>
+      {headerAction && (
+        <div className="relative col-start-2 row-start-1">{headerAction}</div>
+      )}
     </AccordionPrimitive.Header>
   )
 }

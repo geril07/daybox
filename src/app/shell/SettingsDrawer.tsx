@@ -144,24 +144,26 @@ export function SettingsDrawer({
 
           <Accordion aria-label="Recurring task settings">
             <AccordionItem value="recurring">
-              <div className="grid grid-cols-[auto_1fr] items-center gap-1">
-                <Tooltip disableHoverablePopup>
-                  <TooltipTrigger
-                    render={<Button variant="ghost" size="icon-xs" />}
-                    aria-label="About recurring tasks"
-                    className="text-muted-foreground"
-                  >
-                    <Info aria-hidden="true" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Tasks repeat on the selected weekdays. Renaming updates
-                    matching unfinished tasks scheduled for today or later.
-                  </TooltipContent>
-                </Tooltip>
-                <AccordionTrigger className="text-muted-foreground items-center rounded-none py-0 text-xs font-semibold tracking-widest uppercase hover:no-underline">
-                  Recurring tasks
-                </AccordionTrigger>
-              </div>
+              <AccordionTrigger
+                className="text-muted-foreground items-center rounded-none py-0 text-xs font-semibold tracking-widest uppercase hover:no-underline"
+                headerAction={
+                  <Tooltip disableHoverablePopup>
+                    <TooltipTrigger
+                      render={<Button variant="ghost" size="icon-xs" />}
+                      aria-label="About recurring tasks"
+                      className="text-muted-foreground"
+                    >
+                      <Info aria-hidden="true" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Tasks repeat on the selected weekdays. Renaming updates
+                      matching unfinished tasks scheduled for today or later.
+                    </TooltipContent>
+                  </Tooltip>
+                }
+              >
+                Recurring tasks
+              </AccordionTrigger>
               <AccordionContent className="pt-3 pb-0">
                 <RecurringSettingsPanel />
               </AccordionContent>

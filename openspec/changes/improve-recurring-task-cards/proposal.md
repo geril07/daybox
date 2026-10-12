@@ -22,4 +22,4 @@ None.
 
 ## Impact
 
-Settings drawer, recurring-task panel, group picker width and option wrapping, component tests, and browser verification. No persisted state or recurrence behavior changes; shared tooltip behavior stays unchanged elsewhere.
+Settings drawer, recurring-task panel, group picker width and option wrapping, an optional sibling action slot in the shared accordion header, component tests, and browser verification. No persisted state or recurrence behavior changes; shared tooltip behavior stays unchanged elsewhere.

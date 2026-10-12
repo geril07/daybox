@@ -11,7 +11,7 @@ Settings is a narrow drawer. Recurring editors currently wrap weekdays, hide the
 ## Decisions
 
 - Keep the existing components; use recurring-task terminology only in user-facing labels, including deletion confirmation.
-- Place the section help button beside, not inside, the accordion button to avoid nested interactive controls.
+- Place the section help button after the label, not inside the accordion button, to avoid nested interactive controls. The shared accordion trigger accepts a sibling header action; a three-column grid and subgrid align the label, help, and trailing chevron without fixed offsets. Other accordion headers retain their existing layout.
 - Set `disableHoverablePopup` on these tooltips only and keep keyboard-focus support. Use existing TooltipTrigger render composition for actions.
 - Increase the Settings drawer to 380px, capped at the viewport width. Use seven equal-width weekday columns with unchanged readable text and 32px-high controls rather than wrapping one day.
 - Place Group and Estimated pomodoros labels above their controls. Use a flexible group column and fixed estimate column on desktop; stack on mobile.
