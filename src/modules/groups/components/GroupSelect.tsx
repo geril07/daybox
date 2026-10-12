@@ -38,15 +38,15 @@ export function GroupSelect({
       >
         {children}
       </SelectPrimitive.Trigger>
-      <SelectContent align={align}>
+      <SelectContent align={align} className="max-w-(--available-width)">
         {groups.map((g) => (
           <SelectItem key={g.id} value={g.id}>
-            <div className="flex items-center gap-1.5">
+            <div className="flex min-w-0 items-center gap-1.5 whitespace-normal">
               <span
                 className="h-[7px] w-[7px] shrink-0 rounded-full"
                 style={{ background: g.color }}
               />
-              {g.name}
+              <span className="wrap-anywhere">{g.name}</span>
             </div>
           </SelectItem>
         ))}
