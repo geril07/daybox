@@ -8,4 +8,4 @@
 
 - [x] 2.1 Run format, typecheck, lint, tests, build, and OpenSpec validation.
 - [x] 2.2 Verify desktop and narrow layouts, long titles/groups, weekday order, and tooltip dismissal in the browser; capture screenshots.
-- [ ] 2.3 Open a PR with verification details and attached screenshots.
+- [x] 2.3 Open a PR with verification details and attached screenshots.
