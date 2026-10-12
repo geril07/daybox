@@ -68,16 +68,35 @@ describe('SettingsDrawer day-start preference', () => {
 })
 
 describe('SettingsDrawer recurring section', () => {
+  it('provides recurrence help without toggling the accordion', async () => {
+    const user = userEvent.setup()
+    render(<SettingsDrawer open onClose={vi.fn()} />)
+    const trigger = screen.getByRole('button', { name: 'Recurring tasks' })
+    const help = screen.getByRole('button', { name: 'About recurring tasks' })
+    expect(trigger).not.toContainElement(help)
+    await user.hover(help)
+    expect(
+      await screen.findByText(
+        'Tasks repeat on the selected weekdays. Renaming updates matching unfinished tasks scheduled for today or later.',
+      ),
+    ).toBeVisible()
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    await user.click(help)
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  })
+
   it('hides the entire block and expands all editors and the add form together', async () => {
     const user = userEvent.setup()
     useTaskStore.getState().addSeries({ title: 'Work', weekdays: [1] })
     useTaskStore.getState().addSeries({ title: 'Exercise', weekdays: [5] })
     render(<SettingsDrawer open onClose={vi.fn()} />)
     const trigger = screen.getByRole('button', {
-      name: 'Recurring',
+      name: 'Recurring tasks',
     })
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByLabelText('Series title')).not.toBeInTheDocument()
+    expect(
+      screen.queryByLabelText('Recurring task title'),
+    ).not.toBeInTheDocument()
     expect(
       screen.queryByLabelText('New recurring task'),
     ).not.toBeInTheDocument()
@@ -86,11 +105,13 @@ describe('SettingsDrawer recurring section', () => {
     trigger.focus()
     await user.keyboard('{Enter}')
     expect(trigger).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getAllByLabelText('Series title')).toHaveLength(2)
+    expect(screen.getAllByLabelText('Recurring task title')).toHaveLength(2)
     expect(screen.getByLabelText('New recurring task')).toBeVisible()
     await user.click(trigger)
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByLabelText('Series title')).not.toBeInTheDocument()
+    expect(
+      screen.queryByLabelText('Recurring task title'),
+    ).not.toBeInTheDocument()
     expect(
       screen.queryByLabelText('New recurring task'),
     ).not.toBeInTheDocument()
@@ -101,25 +122,25 @@ describe('SettingsDrawer recurring section', () => {
     useTaskStore.getState().addSeries({ title: 'Work', weekdays: [1] })
     render(<SettingsDrawer open onClose={vi.fn()} />)
     const trigger = screen.getByRole('button', {
-      name: 'Recurring',
+      name: 'Recurring tasks',
     })
     await user.click(trigger)
-    const title = screen.getByLabelText('Series title')
+    const title = screen.getByLabelText('Recurring task title')
     await user.clear(title)
     await user.type(title, 'Job')
     await user.click(trigger)
     expect(useTaskStore.getState().series[0].title).toBe('Job')
     await user.click(trigger)
-    expect(screen.getByLabelText('Series title')).toHaveValue('Job')
+    expect(screen.getByLabelText('Recurring task title')).toHaveValue('Job')
     await user.type(screen.getByLabelText('New recurring task'), 'Exercise')
-    await user.click(screen.getByRole('button', { name: 'Add series' }))
+    await user.click(screen.getByRole('button', { name: 'Add recurring task' }))
     expect(trigger).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getAllByLabelText('Series title')).toHaveLength(2)
+    expect(screen.getAllByLabelText('Recurring task title')).toHaveLength(2)
     await user.click(trigger)
     await user.click(trigger)
     expect(
       screen
-        .getAllByLabelText('Series title')
+        .getAllByLabelText('Recurring task title')
         .map((input) => (input as HTMLInputElement).value),
     ).toEqual(['Job', 'Exercise'])
   })

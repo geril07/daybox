@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react'
 import { useRef, useState } from 'react'
 
 import { setThemeWithViewTransition, useTheme } from '@/app/theme'
@@ -33,6 +34,9 @@ import {
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
 } from '@/shared/ui'
 import { downloadAsFile } from '@/shared/utils/download'
 
@@ -130,7 +134,7 @@ export function SettingsDrawer({
         initialFocus={sheetContentRef}
         tabIndex={-1}
         side="right"
-        className="w-[310px] max-w-[85vw] gap-0"
+        className="max-w-full gap-0 data-[side=right]:w-[380px] data-[side=right]:sm:max-w-[380px]"
       >
         <SheetHeader>
           <SheetTitle>Settings</SheetTitle>
@@ -138,11 +142,26 @@ export function SettingsDrawer({
         <div className="flex flex-1 flex-col gap-7 overflow-y-auto p-5">
           <TimerSettingsPanel />
 
-          <Accordion aria-label="Recurring settings">
+          <Accordion aria-label="Recurring task settings">
             <AccordionItem value="recurring">
-              <AccordionTrigger className="text-muted-foreground items-center rounded-none py-0 text-xs font-semibold tracking-widest uppercase hover:no-underline">
-                Recurring
-              </AccordionTrigger>
+              <div className="grid grid-cols-[auto_1fr] items-center gap-1">
+                <Tooltip disableHoverablePopup>
+                  <TooltipTrigger
+                    render={<Button variant="ghost" size="icon-xs" />}
+                    aria-label="About recurring tasks"
+                    className="text-muted-foreground"
+                  >
+                    <Info aria-hidden="true" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Tasks repeat on the selected weekdays. Renaming updates
+                    matching unfinished tasks scheduled for today or later.
+                  </TooltipContent>
+                </Tooltip>
+                <AccordionTrigger className="text-muted-foreground items-center rounded-none py-0 text-xs font-semibold tracking-widest uppercase hover:no-underline">
+                  Recurring tasks
+                </AccordionTrigger>
+              </div>
               <AccordionContent className="pt-3 pb-0">
                 <RecurringSettingsPanel />
               </AccordionContent>
