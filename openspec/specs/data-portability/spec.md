@@ -429,12 +429,13 @@ The tasks slice's `postPrepare` SHALL repair dangling `groupId` references on se
 
 ### Requirement: The history save slice carries the activity event list
 
-The `history` save slice SHALL export the full activity event list at slice version `1`. Import preparation SHALL validate every event against the activity-history event schema and SHALL fail on duplicate event ids. A current envelope without a `history` slice SHALL prepare to an empty event list. Commit SHALL replace the local event list with the prepared list.
+The `history` save slice SHALL export the full activity event list and the tracking start at slice version `1`. Import preparation SHALL validate every event against the activity-history event schema and SHALL fail on duplicate event ids. A current envelope without a `history` slice SHALL prepare to an empty event list whose tracking starts at import time. Commit SHALL replace the local history with the prepared history.
 
 #### Scenario: History round-trips through export and import
 
 - **WHEN** user exports a snapshot that contains activity events and imports it in another browser
 - **THEN** the imported history contains the same events in the same order
+- **AND** the same `trackingStartedAt`
 
 #### Scenario: Invalid history event fails preparation
 
@@ -451,3 +452,4 @@ The `history` save slice SHALL export the full activity event list at slice vers
 
 - **WHEN** a current envelope has no `history` slice
 - **THEN** preparation succeeds with an empty history event list
+- **AND** `trackingStartedAt` is the time of the import
