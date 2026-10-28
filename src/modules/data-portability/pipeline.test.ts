@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import { DEFAULT_GROUP_ID, useGroupStore, type Group } from '@/modules/groups'
+import { useHistoryStore, type HistoryEvent } from '@/modules/history'
 import { usePlannerStore } from '@/modules/planner'
 import { useTaskStore, type Task } from '@/modules/tasks'
 import { DEFAULT_TIMER_SETTINGS, useTimerStore } from '@/modules/timer'
@@ -50,6 +51,7 @@ function currentSnapshot(
       browseDate: string | null
       dayStartMinutes: number
     }
+    history?: HistoryEvent[]
   } = {},
 ): CurrentSnapshot {
   const planner = overrides.planner ?? {
@@ -75,6 +77,7 @@ function currentSnapshot(
         settings: overrides.timerSettings ?? DEFAULT_TIMER_SETTINGS,
       },
       planner: { version: 2, ...planner },
+      history: { version: 1, events: overrides.history ?? [] },
     },
   }
 }
@@ -82,6 +85,7 @@ function currentSnapshot(
 beforeEach(() => {
   localStorage.clear()
   useTaskStore.setState({ tasks: [], series: [] })
+  useHistoryStore.setState({ events: [] })
   useGroupStore.setState({
     groups: [createGroup({ id: DEFAULT_GROUP_ID })],
     stickyGroupId: null,
@@ -235,6 +239,9 @@ describe('buildSnapshot', () => {
     })
     usePlannerStore.getState().setWeekStartDay(0)
     usePlannerStore.getState().setDayStartMinutes(150)
+    useHistoryStore
+      .getState()
+      .recordEvent({ type: 'task.uncompleted', taskId: 'task-1' })
 
     const result = buildSnapshot()
     expect(result.ok).toBe(true)
@@ -250,6 +257,16 @@ describe('buildSnapshot', () => {
     expect(snapshot.slices.timerSettings.settings.focusDuration).toBe(45)
     expect(snapshot.slices.planner.weekStartDay).toBe(0)
     expect(snapshot.slices.planner.dayStartMinutes).toBe(150)
+    expect(snapshot.slices.history.events).toEqual(
+      useHistoryStore.getState().events,
+    )
+    expect(Object.keys(snapshot.slices)).toEqual([
+      'groups',
+      'tasks',
+      'timerSettings',
+      'planner',
+      'history',
+    ])
     expect('theme' in snapshot).toBe(false)
     expect('timer' in snapshot).toBe(false)
     expect('phase' in snapshot.slices.timerSettings).toBe(false)
@@ -321,6 +338,7 @@ describe('prepareSnapshotImport', () => {
     const slices: Record<string, unknown> = { ...snapshot.slices }
     delete slices.timerSettings
     delete slices.planner
+    delete slices.history
 
     const result = prepareSnapshotImport(
       JSON.stringify({ ...snapshot, slices }),
@@ -332,6 +350,47 @@ describe('prepareSnapshotImport', () => {
       DEFAULT_TIMER_SETTINGS,
     )
     expect(result.snapshot.slices.planner.dayStartMinutes).toBe(0)
+    expect(result.snapshot.slices.history.events).toEqual([])
+  })
+
+  it('round-trips history events and replaces local history on commit', () => {
+    const event: HistoryEvent = {
+      id: 'event-1',
+      type: 'task.rescheduled',
+      at: '2026-10-28T10:00:00.000Z',
+      utcOffsetMinutes: 180,
+      taskId: 'task-1',
+      from: '2026-10-28',
+      to: '2026-10-29',
+    }
+    const result = prepareSnapshotImport(
+      JSON.stringify(currentSnapshot({ history: [event] })),
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    useHistoryStore
+      .getState()
+      .recordEvent({ type: 'task.uncompleted', taskId: 'local' })
+    expect(commitSnapshotImport(result.snapshot)).toEqual({ ok: true })
+
+    expect(useHistoryStore.getState().events).toEqual([event])
+  })
+
+  it('rejects an invalid history event without touching stores', () => {
+    const snapshot = currentSnapshot()
+    const slices: Record<string, unknown> = {
+      ...snapshot.slices,
+      history: { version: 1, events: [{ id: 'e1', type: 'task.archived' }] },
+    }
+
+    const result = prepareSnapshotImport(
+      JSON.stringify({ ...snapshot, slices }),
+    )
+
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.reason).toMatch(/^history\./)
   })
 
   it('migrates a version-one planner slice to midnight', () => {

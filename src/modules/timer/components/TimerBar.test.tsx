@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 import { useGroupStore } from '@/modules/groups'
+import { useHistoryStore } from '@/modules/history'
 import { useTaskStore } from '@/modules/tasks'
 import { registerShortcuts } from '@/shared/keyboard'
 
@@ -50,6 +51,7 @@ beforeEach(() => {
     value: 'visible',
   })
   useTaskStore.setState({ tasks: [] })
+  useHistoryStore.setState({ events: [] })
   useGroupStore.setState({
     groups: [
       {
@@ -99,6 +101,116 @@ function fireFocusComplete(taskId: string) {
 }
 
 describe('TimerBar', () => {
+  describe('activity history', () => {
+    const focusMs = DEFAULT_TIMER_SETTINGS.focusDuration * 60_000
+    const events = () => useHistoryStore.getState().events
+
+    it('records a completed focus interval for the focused task', () => {
+      const task = createTask({ groupId: 'work' })
+      useTaskStore.setState({ tasks: [task] })
+      fireFocusComplete(task.id)
+      render(<TimerBar />)
+
+      expect(events()).toMatchObject([
+        {
+          type: 'focus.ended',
+          outcome: 'completed',
+          taskId: task.id,
+          groupId: 'work',
+          plannedMs: focusMs,
+          focusedMs: focusMs,
+        },
+      ])
+    })
+
+    it('records a completed focus interval without a task', () => {
+      useTimerStore.setState({
+        startedAt: Date.now() - 1000,
+        elapsed: focusMs + 1,
+        isRunning: true,
+      })
+      render(<TimerBar />)
+
+      expect(events()).toMatchObject([
+        {
+          type: 'focus.ended',
+          outcome: 'completed',
+          taskId: null,
+          groupId: null,
+        },
+      ])
+    })
+
+    it('records Skip with the elapsed focus time', () => {
+      const task = createTask()
+      useTaskStore.setState({ tasks: [task] })
+      useTimerStore.setState({ focusedTaskId: task.id, elapsed: 600_000 })
+      render(<TimerBar />)
+
+      fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+
+      expect(events()).toMatchObject([
+        {
+          type: 'focus.ended',
+          outcome: 'skipped',
+          taskId: task.id,
+          plannedMs: focusMs,
+          focusedMs: 600_000,
+        },
+      ])
+      expect(useTaskStore.getState().tasks[0]?.pomoCompleted).toBe(1)
+    })
+
+    it('records Restart of a started focus interval as abandoned', () => {
+      useTimerStore.setState({ elapsed: 300_000 })
+      render(<TimerBar />)
+
+      fireEvent.click(screen.getByRole('button', { name: 'Restart' }))
+
+      expect(events()).toMatchObject([
+        { type: 'focus.ended', outcome: 'abandoned', focusedMs: 300_000 },
+      ])
+    })
+
+    it('records a phase switch during focus as abandoned', async () => {
+      const user = userEvent.setup()
+      useTimerStore.setState({ elapsed: 300_000 })
+      render(<TimerBar />)
+
+      fireEvent.click(screen.getByText('FOCUS'))
+      await user.click(
+        screen.getByRole('menuitemradio', { name: 'Short break' }),
+      )
+
+      expect(useTimerStore.getState().phase).toBe('shortBreak')
+      expect(events()).toMatchObject([
+        { type: 'focus.ended', outcome: 'abandoned', focusedMs: 300_000 },
+      ])
+    })
+
+    it('records nothing for an untouched focus interval or a break', async () => {
+      const user = userEvent.setup()
+      render(<TimerBar />)
+
+      fireEvent.click(screen.getByText('FOCUS'))
+      await user.click(
+        screen.getByRole('menuitemradio', { name: 'Short break' }),
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+      act(() => {
+        useTimerStore.setState({
+          phase: 'shortBreak',
+          startedAt: Date.now(),
+          elapsed: DEFAULT_TIMER_SETTINGS.shortBreakDuration * 60_000,
+          isRunning: true,
+        })
+      })
+
+      expect(useTimerStore.getState().phase).toBe('focus')
+      expect(events()).toEqual([])
+    })
+  })
+
   describe('session progress', () => {
     it('uses Space to open and edit progress instead of the timer shortcut', async () => {
       const user = userEvent.setup()

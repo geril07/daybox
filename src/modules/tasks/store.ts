@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import { DEFAULT_GROUP_ID } from '@/modules/groups'
+import { useHistoryStore } from '@/modules/history'
 import { usePlannerStore } from '@/modules/planner'
 import { useTimerStore } from '@/modules/timer'
 import {
@@ -68,6 +69,19 @@ export const useTaskStore = create<TaskStore>()(
         const focused = useTimerStore.getState().focusedTaskId
         if (focused === taskId) {
           useTimerStore.getState().setFocusedTaskId(null)
+        }
+      }
+
+      const recordDeleted = (removed: Task[]) => {
+        const { recordEvent } = useHistoryStore.getState()
+        for (const task of removed) {
+          recordEvent({
+            type: 'task.deleted',
+            taskId: task.id,
+            title: task.title,
+            groupId: task.groupId,
+            completed: task.completed,
+          })
         }
       }
 
@@ -170,6 +184,7 @@ export const useTaskStore = create<TaskStore>()(
             series: get().series.filter((item) => item.id !== id),
             tasks: get().tasks.filter((task) => task.seriesId !== id),
           })
+          recordDeleted(removed)
           for (const task of removed) clearFocusIfMatching(task.id)
         },
 
@@ -221,39 +236,51 @@ export const useTaskStore = create<TaskStore>()(
           return task
         },
 
-        updateTask: (id, updates) =>
-          set((state) => {
-            const existing = state.tasks.find((t) => t.id === id)
-            if (!existing) return state
-            const dateChanged =
-              updates.date !== undefined && updates.date !== existing.date
-            if (dateChanged) {
-              const newDate = updates.date as string | null
-              const merged = {
-                ...updates,
-                sortOrder: nextSortOrder(state.tasks, newDate),
-              }
-              return {
-                tasks: state.tasks.map((t) =>
-                  t.id === id ? { ...t, ...merged } : t,
-                ),
-              }
-            }
-            return {
+        updateTask: (id, updates) => {
+          const existing = get().tasks.find((t) => t.id === id)
+          if (!existing) return
+          const dateChanged =
+            updates.date !== undefined && updates.date !== existing.date
+          if (!dateChanged) {
+            set((state) => ({
               tasks: state.tasks.map((t) =>
                 t.id === id ? { ...t, ...updates } : t,
               ),
-            }
-          }),
+            }))
+            return
+          }
+          const newDate = updates.date as string | null
+          set((state) => ({
+            tasks: state.tasks.map((t) =>
+              t.id === id
+                ? {
+                    ...t,
+                    ...updates,
+                    sortOrder: nextSortOrder(state.tasks, newDate),
+                  }
+                : t,
+            ),
+          }))
+          useHistoryStore.getState().recordEvent({
+            type: 'task.rescheduled',
+            taskId: id,
+            from: existing.date,
+            to: newDate,
+          })
+        },
 
         deleteTask: (id) => {
+          const existing = get().tasks.find((t) => t.id === id)
           clearFocusIfMatching(id)
           set((state) => ({
             tasks: state.tasks.filter((t) => t.id !== id),
           }))
+          if (existing) recordDeleted([existing])
         },
 
-        toggleTask: (id) =>
+        toggleTask: (id) => {
+          const existing = get().tasks.find((t) => t.id === id)
+          if (!existing) return
           set((state) => ({
             tasks: state.tasks.map((t) =>
               t.id === id
@@ -264,7 +291,19 @@ export const useTaskStore = create<TaskStore>()(
                   }
                 : t,
             ),
-          })),
+          }))
+          useHistoryStore.getState().recordEvent(
+            existing.completed
+              ? { type: 'task.uncompleted', taskId: id }
+              : {
+                  type: 'task.completed',
+                  taskId: id,
+                  title: existing.title,
+                  groupId: existing.groupId,
+                  date: existing.date,
+                },
+          )
+        },
 
         reorderTasks: ({ date, taskIds }) =>
           set((state) => {
@@ -340,24 +379,19 @@ export const useTaskStore = create<TaskStore>()(
               .series.filter((item) => item.groupId === groupId)
               .map((item) => item.id),
           )
+          const removed = get().tasks.filter(
+            (t) =>
+              t.groupId === groupId ||
+              (t.seriesId !== null && seriesIds.has(t.seriesId)),
+          )
+          const removedIds = new Set(removed.map((t) => t.id))
           const focused = useTimerStore.getState().focusedTaskId
-          const focusedInGroup =
-            focused !== null &&
-            get().tasks.some(
-              (t) =>
-                t.id === focused &&
-                (t.groupId === groupId ||
-                  (t.seriesId !== null && seriesIds.has(t.seriesId))),
-            )
           set((state) => ({
-            tasks: state.tasks.filter(
-              (t) =>
-                t.groupId !== groupId &&
-                (t.seriesId === null || !seriesIds.has(t.seriesId)),
-            ),
+            tasks: state.tasks.filter((t) => !removedIds.has(t.id)),
             series: state.series.filter((item) => item.groupId !== groupId),
           }))
-          if (focusedInGroup) {
+          recordDeleted(removed)
+          if (focused !== null && removedIds.has(focused)) {
             useTimerStore.getState().setFocusedTaskId(null)
           }
         },
