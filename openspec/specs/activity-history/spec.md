@@ -94,7 +94,7 @@ When a task is removed by task deletion, series deletion, or group deletion with
 
 ### Requirement: Ending a focus interval records focus.ended
 
-When a focus-phase interval ends, the system SHALL record `focus.ended` with `taskId`, `groupId`, and `groupName` of the focused task (or `null` when no task is focused), `outcome`, `plannedMs` (the interval's resolved duration), and `focusedMs` (elapsed focus time, at most `plannedMs`). Outcomes are `completed` (the countdown reached zero), `skipped` (user pressed Skip), and `abandoned` (user restarted the interval or switched phase after focus time elapsed). Break intervals SHALL NOT record events.
+When a focus interval ends, the system SHALL record `focus.ended` with the focused task's `taskId`, `groupId`, and `groupName` (`null` without a task), `outcome`, `plannedMs` (resolved duration), and `focusedMs` (elapsed focus time, at most `plannedMs`). Outcome is `completed` (countdown reached zero), `skipped` (Skip), or `abandoned` (Restart or phase switch after focus time elapsed). Breaks SHALL NOT record events.
 
 #### Scenario: Focus interval completes
 
