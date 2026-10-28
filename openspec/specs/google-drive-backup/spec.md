@@ -42,7 +42,7 @@ The system SHALL allow the user to disconnect at any time from the connected sta
 
 ### Requirement: User can back up manually to Google Drive
 
-The system SHALL allow a connected user to back up all canonical save snapshot data to Google Drive on demand. The system SHALL require explicit user confirmation before performing the backup. Upon confirmation, the backup SHALL call `buildSnapshot` from `@/modules/data-portability` and SHALL write the resulting JSON as a single visible file named `daybox.json` in the user's My Drive root, SHALL store the resulting Drive file id in the persisted `dayboxFileId` field, and SHALL update the `lastBackupAt` timestamp. Subsequent backups SHALL update the existing visible file when possible, not create a duplicate. Google Drive backup SHALL use the same snapshot contract as file Export, including timer settings and excluding timer runtime state and theme.
+The system SHALL allow a connected user to back up all canonical save snapshot data to Google Drive on demand. The system SHALL require explicit user confirmation before performing the backup. Upon confirmation, the backup SHALL call `buildSnapshot` from `@/modules/data-portability` and SHALL write the resulting JSON as a single visible file named `daybox.json` in the user's My Drive root, SHALL store the resulting Drive file id in the persisted `dayboxFileId` field, and SHALL update the `lastBackupAt` timestamp. Subsequent backups SHALL update the existing visible file when possible, not create a duplicate. Google Drive backup SHALL use the same snapshot contract as file Export, including timer settings and activity history and excluding timer runtime state and theme.
 
 #### Scenario: User confirms backup
 
@@ -63,7 +63,7 @@ The system SHALL allow a connected user to back up all canonical save snapshot d
 - **THEN** a new visible file named `daybox.json` is created in the user's My Drive root
 - **AND** the file content is the current envelope produced by `buildSnapshot` from `@/modules/data-portability`
 - **AND** the content includes `envelopeVersion`, `exportedAt`, and `slices`
-- **AND** the `slices` object includes `tasks`, `groups`, `timerSettings`, and `planner`
+- **AND** the `slices` object includes `tasks`, `groups`, `timerSettings`, `planner`, and `history`
 - **AND** the content does not include top-level `timer`, timer runtime fields, or `theme`
 - **AND** the new file id is stored in `dayboxFileId`
 - **AND** `lastBackupAt` is set to the current time

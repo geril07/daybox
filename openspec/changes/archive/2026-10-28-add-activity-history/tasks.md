@@ -23,7 +23,7 @@
 ## 5. Integration checks
 
 - [x] 5.1 Run `npm run format`, `npm run typecheck`, `npm run lint`, and `npm run test`; all pass
-- [ ] 5.2 Verify in the running app (browser) that completing, rescheduling, deleting tasks, and finishing/skipping a focus interval write the expected events to `daybox-history`, and that export contains the `history` slice
+- [x] 5.2 Verify in the running app (browser) that completing, rescheduling, deleting tasks, and finishing/skipping a focus interval write the expected events to `daybox-history`, and that export contains the `history` slice
 
 ## Workflow follow-up
 
