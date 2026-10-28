@@ -77,7 +77,12 @@ function currentSnapshot(
         settings: overrides.timerSettings ?? DEFAULT_TIMER_SETTINGS,
       },
       planner: { version: 2, ...planner },
-      history: { version: 1, events: overrides.history ?? [] },
+      history: {
+        version: 1,
+        trackingStartedAt: '2026-10-01T00:00:00.000Z',
+        trackingUtcOffsetMinutes: 180,
+        events: overrides.history ?? [],
+      },
     },
   }
 }
@@ -260,6 +265,9 @@ describe('buildSnapshot', () => {
     expect(snapshot.slices.history.events).toEqual(
       useHistoryStore.getState().events,
     )
+    expect(snapshot.slices.history.trackingStartedAt).toBe(
+      useHistoryStore.getState().trackingStartedAt,
+    )
     expect(Object.keys(snapshot.slices)).toEqual([
       'groups',
       'tasks',
@@ -339,6 +347,7 @@ describe('prepareSnapshotImport', () => {
     delete slices.timerSettings
     delete slices.planner
     delete slices.history
+    const before = Date.now()
 
     const result = prepareSnapshotImport(
       JSON.stringify({ ...snapshot, slices }),
@@ -351,6 +360,9 @@ describe('prepareSnapshotImport', () => {
     )
     expect(result.snapshot.slices.planner.dayStartMinutes).toBe(0)
     expect(result.snapshot.slices.history.events).toEqual([])
+    expect(
+      Date.parse(result.snapshot.slices.history.trackingStartedAt),
+    ).toBeGreaterThanOrEqual(before)
   })
 
   it('round-trips history events and replaces local history on commit', () => {
@@ -375,6 +387,9 @@ describe('prepareSnapshotImport', () => {
     expect(commitSnapshotImport(result.snapshot)).toEqual({ ok: true })
 
     expect(useHistoryStore.getState().events).toEqual([event])
+    expect(useHistoryStore.getState().trackingStartedAt).toBe(
+      '2026-10-01T00:00:00.000Z',
+    )
   })
 
   it('rejects an invalid history event without touching stores', () => {

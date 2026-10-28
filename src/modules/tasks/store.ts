@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { DEFAULT_GROUP_ID } from '@/modules/groups'
+import { DEFAULT_GROUP_ID, useGroupStore } from '@/modules/groups'
 import { useHistoryStore } from '@/modules/history'
 import { usePlannerStore } from '@/modules/planner'
 import { useTimerStore } from '@/modules/timer'
@@ -72,6 +72,10 @@ export const useTaskStore = create<TaskStore>()(
         }
       }
 
+      const groupNameOf = (groupId: string) =>
+        useGroupStore.getState().groups.find((g) => g.id === groupId)?.name ??
+        null
+
       const recordDeleted = (removed: Task[]) => {
         const { recordEvent } = useHistoryStore.getState()
         for (const task of removed) {
@@ -80,6 +84,7 @@ export const useTaskStore = create<TaskStore>()(
             taskId: task.id,
             title: task.title,
             groupId: task.groupId,
+            groupName: groupNameOf(task.groupId),
             completed: task.completed,
           })
         }
@@ -300,6 +305,7 @@ export const useTaskStore = create<TaskStore>()(
                   taskId: id,
                   title: existing.title,
                   groupId: existing.groupId,
+                  groupName: groupNameOf(existing.groupId),
                   date: existing.date,
                 },
           )

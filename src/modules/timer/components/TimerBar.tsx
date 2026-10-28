@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
+import { useGroupStore } from '@/modules/groups'
 import { useHistoryStore } from '@/modules/history'
 import { useTaskStore, type Task } from '@/modules/tasks'
 import { shouldFireIntervalEndNotification } from '@/shared/notifications'
@@ -42,15 +43,23 @@ function recordFocusEnded(
   outcome: 'completed' | 'skipped' | 'abandoned',
   plannedMs: number,
   focusedMs: number,
+  occurredAt?: Date,
 ) {
-  useHistoryStore.getState().recordEvent({
-    type: 'focus.ended',
-    taskId: task?.id ?? null,
-    groupId: task?.groupId ?? null,
-    outcome,
-    plannedMs,
-    focusedMs: Math.min(Math.round(focusedMs), plannedMs),
-  })
+  const group = task
+    ? useGroupStore.getState().groups.find((g) => g.id === task.groupId)
+    : undefined
+  useHistoryStore.getState().recordEvent(
+    {
+      type: 'focus.ended',
+      taskId: task?.id ?? null,
+      groupId: task?.groupId ?? null,
+      groupName: group?.name ?? null,
+      outcome,
+      plannedMs,
+      focusedMs: Math.min(Math.round(focusedMs), plannedMs),
+    },
+    occurredAt,
+  )
 }
 
 export function TimerBar() {
@@ -136,7 +145,15 @@ export function TimerBar() {
     }
 
     if (phase === 'focus') {
-      recordFocusEnded(focusedTask, 'completed', durationMs, durationMs)
+      // Detection can lag the zero-crossing (sleep, reload); stamp the crossing.
+      const overshootMs = Math.max(0, liveElapsedMs() - durationMs)
+      recordFocusEnded(
+        focusedTask,
+        'completed',
+        durationMs,
+        durationMs,
+        new Date(Date.now() - overshootMs),
+      )
       if (focusedTask) {
         updateTask(focusedTask.id, {
           pomoCompleted: focusedTask.pomoCompleted + 1,
