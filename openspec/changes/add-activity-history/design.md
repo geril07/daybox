@@ -36,13 +36,13 @@ Alternative: subscribe to task/timer store changes and derive events from diffs.
 
 A zod discriminated union on `type`, all sharing `{ id, at, utcOffsetMinutes }`:
 
-| type | payload |
-| --- | --- |
-| `task.rescheduled` | `taskId`, `from: date \| null`, `to: date \| null` |
-| `task.completed` | `taskId`, `title`, `groupId`, `date: date \| null` |
-| `task.uncompleted` | `taskId` |
-| `task.deleted` | `taskId`, `title`, `groupId`, `completed` |
-| `focus.ended` | `taskId \| null`, `groupId \| null`, `outcome: completed \| skipped \| abandoned`, `plannedMs`, `focusedMs` |
+| type               | payload                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `task.rescheduled` | `taskId`, `from: date \| null`, `to: date \| null`                                                          |
+| `task.completed`   | `taskId`, `title`, `groupId`, `date: date \| null`                                                          |
+| `task.uncompleted` | `taskId`                                                                                                    |
+| `task.deleted`     | `taskId`, `title`, `groupId`, `completed`                                                                   |
+| `focus.ended`      | `taskId \| null`, `groupId \| null`, `outcome: completed \| skipped \| abandoned`, `plannedMs`, `focusedMs` |
 
 Snapshots of `title`/`groupId` are kept on completion and deletion so old periods stay readable after the task is gone. `utcOffsetMinutes` lets a later view compute the local day of an event even if the time zone changes; the planner's `dayStartMinutes` can be applied on top at read time.
 

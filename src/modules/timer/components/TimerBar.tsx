@@ -8,7 +8,8 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
-import { useTaskStore } from '@/modules/tasks'
+import { useHistoryStore } from '@/modules/history'
+import { useTaskStore, type Task } from '@/modules/tasks'
 import { shouldFireIntervalEndNotification } from '@/shared/notifications'
 import {
   Button,
@@ -28,6 +29,29 @@ import { useTimerStore } from '../store'
 import type { TimerPhase } from '../types'
 import { CycleProgressPopover } from './CycleProgressPopover'
 import { IntervalDurationPopover } from './IntervalDurationPopover'
+
+function liveElapsedMs() {
+  const { elapsed, isRunning, startedAt } = useTimerStore.getState()
+  return (
+    elapsed + (isRunning && startedAt !== null ? Date.now() - startedAt : 0)
+  )
+}
+
+function recordFocusEnded(
+  task: Task | undefined,
+  outcome: 'completed' | 'skipped' | 'abandoned',
+  plannedMs: number,
+  focusedMs: number,
+) {
+  useHistoryStore.getState().recordEvent({
+    type: 'focus.ended',
+    taskId: task?.id ?? null,
+    groupId: task?.groupId ?? null,
+    outcome,
+    plannedMs,
+    focusedMs: Math.min(Math.round(focusedMs), plannedMs),
+  })
+}
 
 export function TimerBar() {
   const focusedTaskId = useTimerStore((s) => s.focusedTaskId)
@@ -111,10 +135,13 @@ export function TimerBar() {
       )
     }
 
-    if (phase === 'focus' && focusedTask) {
-      updateTask(focusedTask.id, {
-        pomoCompleted: focusedTask.pomoCompleted + 1,
-      })
+    if (phase === 'focus') {
+      recordFocusEnded(focusedTask, 'completed', durationMs, durationMs)
+      if (focusedTask) {
+        updateTask(focusedTask.id, {
+          pomoCompleted: focusedTask.pomoCompleted + 1,
+        })
+      }
     }
 
     advancePhase({
@@ -127,6 +154,7 @@ export function TimerBar() {
     phase,
     focusedTask,
     settings,
+    durationMs,
     updateTask,
     advancePhase,
   ])
@@ -155,8 +183,17 @@ export function TimerBar() {
       ? 'session'
       : 'disabled'
 
+  const recordAbandonedFocus = () => {
+    if (phase !== 'focus') return
+    const focusedMs = liveElapsedMs()
+    if (focusedMs > 0) {
+      recordFocusEnded(focusedTask, 'abandoned', durationMs, focusedMs)
+    }
+  }
+
   const handleReset = () => {
     if (resetMode === 'restart') {
+      recordAbandonedFocus()
       reset()
     } else if (resetMode === 'session') {
       resetSession()
@@ -167,15 +204,19 @@ export function TimerBar() {
   }
 
   const handleSelectPhase = (next: TimerPhase) => {
+    recordAbandonedFocus()
     setPhase(next)
     alarmPlayedRef.current = false
   }
 
   const handleSkip = () => {
-    if (phase === 'focus' && focusedTask) {
-      updateTask(focusedTask.id, {
-        pomoCompleted: focusedTask.pomoCompleted + 1,
-      })
+    if (phase === 'focus') {
+      recordFocusEnded(focusedTask, 'skipped', durationMs, liveElapsedMs())
+      if (focusedTask) {
+        updateTask(focusedTask.id, {
+          pomoCompleted: focusedTask.pomoCompleted + 1,
+        })
+      }
     }
     advancePhase({
       autoStart: false,

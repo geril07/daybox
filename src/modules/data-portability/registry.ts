@@ -1,4 +1,5 @@
 import { groupsSaveSlice } from '@/modules/groups'
+import { historySaveSlice } from '@/modules/history'
 import { plannerSaveSlice } from '@/modules/planner'
 import { tasksSaveSlice } from '@/modules/tasks'
 import { timerSettingsSaveSlice } from '@/modules/timer'
@@ -9,6 +10,7 @@ export const saveSlices = [
   tasksSaveSlice,
   timerSettingsSaveSlice,
   plannerSaveSlice,
+  historySaveSlice,
 ] as const
 
 export type SaveSliceName = (typeof saveSlices)[number]['name']
@@ -21,6 +23,7 @@ type TimerSettingsTCurrent = InferSaveSliceCurrent<
   typeof timerSettingsSaveSlice
 >
 type PlannerTCurrent = InferSaveSliceCurrent<typeof plannerSaveSlice>
+type HistoryTCurrent = InferSaveSliceCurrent<typeof historySaveSlice>
 
 declare module '@/shared/save-slice/map' {
   interface SaveSliceMap {
@@ -28,6 +31,7 @@ declare module '@/shared/save-slice/map' {
     tasks: TasksTCurrent
     timerSettings: TimerSettingsTCurrent
     planner: PlannerTCurrent
+    history: HistoryTCurrent
   }
 }
 
