@@ -106,7 +106,7 @@ describe('TimerBar', () => {
     const events = () => useHistoryStore.getState().events
 
     it('records a completed focus interval for the focused task', () => {
-      const task = createTask({ groupId: 'work' })
+      const task = createTask()
       useTaskStore.setState({ tasks: [task] })
       fireFocusComplete(task.id)
       render(<TimerBar />)
@@ -116,11 +116,28 @@ describe('TimerBar', () => {
           type: 'focus.ended',
           outcome: 'completed',
           taskId: task.id,
-          groupId: 'work',
+          groupId: 'default',
+          groupName: 'General',
           plannedMs: focusMs,
           focusedMs: focusMs,
         },
       ])
+    })
+
+    it('stamps a late-detected completion with the zero-crossing time', () => {
+      const threeHoursMs = 3 * 60 * 60_000
+      useTimerStore.setState({
+        startedAt: Date.now(),
+        elapsed: focusMs + threeHoursMs,
+        isRunning: true,
+      })
+      render(<TimerBar />)
+
+      const [event] = events()
+      expect(event).toMatchObject({ type: 'focus.ended', outcome: 'completed' })
+      const lagMs = Date.now() - threeHoursMs - Date.parse(event.at)
+      expect(lagMs).toBeGreaterThanOrEqual(0)
+      expect(lagMs).toBeLessThan(1000)
     })
 
     it('records a completed focus interval without a task', () => {
@@ -137,6 +154,7 @@ describe('TimerBar', () => {
           outcome: 'completed',
           taskId: null,
           groupId: null,
+          groupName: null,
         },
       ])
     })

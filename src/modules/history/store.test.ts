@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { historySaveSlice } from './save/slice'
-import { useHistoryStore } from './store'
+import { HISTORY_STORAGE_KEY, useHistoryStore } from './store'
 
 beforeEach(() => {
   localStorage.clear()
@@ -40,6 +40,50 @@ describe('History Store', () => {
     expect(
       Object.is(useHistoryStore.getState().events[0].utcOffsetMinutes, 0),
     ).toBe(true)
+  })
+
+  it('stamps an event with the given occurrence time and its offset', () => {
+    vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-120)
+    const occurredAt = new Date('2026-10-28T07:25:00.000Z')
+
+    useHistoryStore
+      .getState()
+      .recordEvent({ type: 'task.uncompleted', taskId: 't1' }, occurredAt)
+
+    expect(useHistoryStore.getState().events[0]).toMatchObject({
+      at: '2026-10-28T07:25:00.000Z',
+      utcOffsetMinutes: 120,
+    })
+  })
+
+  it('persists the tracking start on first launch without events', async () => {
+    localStorage.clear()
+    vi.resetModules()
+    const { useHistoryStore: fresh } = await import('./store')
+
+    const stored = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY)!)
+    expect(stored.state.trackingStartedAt).toBe(
+      fresh.getState().trackingStartedAt,
+    )
+    expect(stored.state.events).toEqual([])
+  })
+
+  it('keeps the stored tracking start on a later launch', async () => {
+    localStorage.setItem(
+      HISTORY_STORAGE_KEY,
+      JSON.stringify({
+        state: {
+          trackingStartedAt: '2026-01-01T00:00:00.000Z',
+          trackingUtcOffsetMinutes: 180,
+          events: [],
+        },
+        version: 0,
+      }),
+    )
+    vi.resetModules()
+    const { useHistoryStore: fresh } = await import('./store')
+
+    expect(fresh.getState().trackingStartedAt).toBe('2026-01-01T00:00:00.000Z')
   })
 
   it('restores persisted events on rehydrate', async () => {
@@ -81,22 +125,31 @@ describe('history save slice', () => {
     utcOffsetMinutes: 180,
     taskId: null,
     groupId: null,
+    groupName: null,
     outcome: 'completed',
     plannedMs: 1_500_000,
     focusedMs: 1_500_000,
   } as const
+  const tracking = {
+    version: 1,
+    trackingStartedAt: '2026-10-01T00:00:00.000Z',
+    trackingUtcOffsetMinutes: 180,
+  } as const
 
   it('accepts a valid event list', () => {
     const result = historySaveSlice.prepareImport({
-      version: 1,
+      ...tracking,
       events: [event],
     })
-    expect(result).toEqual({ ok: true, value: { version: 1, events: [event] } })
+    expect(result).toEqual({
+      ok: true,
+      value: { ...tracking, events: [event] },
+    })
   })
 
   it('rejects an unknown event type', () => {
     const result = historySaveSlice.prepareImport({
-      version: 1,
+      ...tracking,
       events: [{ ...event, type: 'task.archived' }],
     })
     expect(result.ok).toBe(false)
@@ -105,15 +158,26 @@ describe('history save slice', () => {
 
   it('rejects an offset outside the real UTC range', () => {
     const result = historySaveSlice.prepareImport({
-      version: 1,
+      ...tracking,
       events: [{ ...event, utcOffsetMinutes: 900 }],
     })
     expect(result.ok).toBe(false)
   })
 
+  it('starts tracking at import time when the slice is missing', () => {
+    const before = Date.now()
+    const missing = historySaveSlice.missing
+    if (missing.kind !== 'useDefault') throw new Error('expected a default')
+
+    expect(missing.defaultValue.events).toEqual([])
+    expect(
+      Date.parse(missing.defaultValue.trackingStartedAt),
+    ).toBeGreaterThanOrEqual(before)
+  })
+
   it('rejects duplicate event ids', () => {
     const result = historySaveSlice.prepareImport({
-      version: 1,
+      ...tracking,
       events: [event, { ...event }],
     })
     expect(result.ok).toBe(false)
@@ -124,7 +188,11 @@ describe('history save slice', () => {
     useHistoryStore
       .getState()
       .recordEvent({ type: 'task.uncompleted', taskId: 'local' })
-    historySaveSlice.applyImport({ version: 1, events: [event] })
-    expect(useHistoryStore.getState().events).toEqual([event])
+    historySaveSlice.applyImport({ ...tracking, events: [event] })
+    expect(useHistoryStore.getState()).toMatchObject({
+      trackingStartedAt: tracking.trackingStartedAt,
+      trackingUtcOffsetMinutes: tracking.trackingUtcOffsetMinutes,
+      events: [event],
+    })
   })
 })

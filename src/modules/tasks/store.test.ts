@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { z } from 'zod'
 
+import { useGroupStore } from '@/modules/groups'
 import { useHistoryStore } from '@/modules/history'
 import { useTimerStore } from '@/modules/timer'
 import { createValidatedRehydrate } from '@/shared/utils/persistence'
@@ -745,6 +746,48 @@ describe('Task Store - rehydrate compaction (Section 7)', () => {
 describe('Task Store - activity history', () => {
   const historyEvents = () => useHistoryStore.getState().events
 
+  beforeEach(() => {
+    useGroupStore.setState({
+      groups: [
+        {
+          id: 'default',
+          name: 'General',
+          color: '#000000',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'work',
+          name: 'Work',
+          color: '#123456',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    })
+  })
+
+  it('snapshots the group name and keeps it after a rename', () => {
+    useTaskStore.setState({ tasks: [makeTask({ id: 't1', groupId: 'work' })] })
+
+    useTaskStore.getState().toggleTask('t1')
+    useGroupStore.getState().renameGroup('work', 'Job')
+
+    expect(historyEvents()).toMatchObject([
+      { type: 'task.completed', groupId: 'work', groupName: 'Work' },
+    ])
+  })
+
+  it('records a null group name for a missing group', () => {
+    useTaskStore.setState({
+      tasks: [makeTask({ id: 't1', groupId: 'gone' })],
+    })
+
+    useTaskStore.getState().deleteTask('t1')
+
+    expect(historyEvents()).toMatchObject([
+      { type: 'task.deleted', groupId: 'gone', groupName: null },
+    ])
+  })
+
   it('records a reschedule only when the date changes', () => {
     useTaskStore.setState({
       tasks: [makeTask({ id: 't1', date: '2026-10-28' })],
@@ -878,6 +921,9 @@ describe('Task Store - activity history', () => {
       'in-group',
       'series-task',
     ])
+    expect(historyEvents().map((e) => 'groupName' in e && e.groupName)).toEqual(
+      ['Work', 'General'],
+    )
   })
 
   it('records nothing when an occurrence is skipped', () => {

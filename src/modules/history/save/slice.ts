@@ -1,7 +1,7 @@
 import type { SaveSlice } from '@/shared/save-slice'
 import { detectDuplicateId, parseSliceInput } from '@/shared/utils/save-helpers'
 
-import { useHistoryStore } from '../store'
+import { createEmptyHistory, useHistoryStore } from '../store'
 import {
   HistorySaveSliceV1Schema,
   type HistorySaveSliceCurrent,
@@ -27,18 +27,29 @@ function parseHistorySlice(
 export const historySaveSlice: SaveSlice<'history', HistorySaveSliceCurrent> = {
   name: 'history',
   currentVersion: 1,
-  missing: { kind: 'useDefault', defaultValue: { version: 1, events: [] } },
+  missing: {
+    kind: 'useDefault',
+    // A getter so a snapshot without history starts tracking at import time.
+    get defaultValue() {
+      return { version: 1 as const, ...createEmptyHistory() }
+    },
+  },
 
-  exportSlice: () => ({
-    version: 1,
-    events: useHistoryStore.getState().events,
-  }),
+  exportSlice: () => {
+    const { trackingStartedAt, trackingUtcOffsetMinutes, events } =
+      useHistoryStore.getState()
+    return { version: 1, trackingStartedAt, trackingUtcOffsetMinutes, events }
+  },
 
   validateExport: parseHistorySlice,
 
   prepareImport: parseHistorySlice,
 
   applyImport: (value) => {
-    useHistoryStore.setState({ events: value.events })
+    useHistoryStore.setState({
+      trackingStartedAt: value.trackingStartedAt,
+      trackingUtcOffsetMinutes: value.trackingUtcOffsetMinutes,
+      events: value.events,
+    })
   },
 }
