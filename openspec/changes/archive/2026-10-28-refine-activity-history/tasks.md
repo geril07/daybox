@@ -14,7 +14,7 @@
 ## 3. Integration checks
 
 - [x] 3.1 Run `npm run format`, `npm run typecheck`, `npm run lint`, and `npm run test`; all pass
-- [ ] 3.2 Verify in the browser that first launch writes `trackingStartedAt`, events carry `groupName`, and the export contains the tracking start
+- [x] 3.2 Verify in the browser that first launch writes `trackingStartedAt`, events carry `groupName`, and the export contains the tracking start
 
 ## Workflow follow-up
 
