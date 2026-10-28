@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { z } from 'zod'
 
+import { useGroupStore } from '@/modules/groups'
+import { useHistoryStore } from '@/modules/history'
 import { useTimerStore } from '@/modules/timer'
 import { createValidatedRehydrate } from '@/shared/utils/persistence'
 
@@ -29,6 +31,7 @@ function makeTask(overrides: Partial<Task>): Task {
 
 beforeEach(() => {
   useTaskStore.setState({ tasks: [], series: [] })
+  useHistoryStore.setState({ events: [] })
   useTimerStore.setState({
     phase: 'focus',
     startedAt: null,
@@ -737,5 +740,215 @@ describe('Task Store - rehydrate compaction (Section 7)', () => {
     expect(invalid.tasks).toEqual([])
     expect(warnSpy).toHaveBeenCalled()
     warnSpy.mockRestore()
+  })
+})
+
+describe('Task Store - activity history', () => {
+  const historyEvents = () => useHistoryStore.getState().events
+
+  beforeEach(() => {
+    useGroupStore.setState({
+      groups: [
+        {
+          id: 'default',
+          name: 'General',
+          color: '#000000',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          id: 'work',
+          name: 'Work',
+          color: '#123456',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    })
+  })
+
+  it('snapshots the group name and keeps it after a rename', () => {
+    useTaskStore.setState({ tasks: [makeTask({ id: 't1', groupId: 'work' })] })
+
+    useTaskStore.getState().toggleTask('t1')
+    useGroupStore.getState().renameGroup('work', 'Job')
+
+    expect(historyEvents()).toMatchObject([
+      { type: 'task.completed', groupId: 'work', groupName: 'Work' },
+    ])
+  })
+
+  it('records a null group name for a missing group', () => {
+    useTaskStore.setState({
+      tasks: [makeTask({ id: 't1', groupId: 'gone' })],
+    })
+
+    useTaskStore.getState().deleteTask('t1')
+
+    expect(historyEvents()).toMatchObject([
+      { type: 'task.deleted', groupId: 'gone', groupName: null },
+    ])
+  })
+
+  it('records a reschedule only when the date changes', () => {
+    useTaskStore.setState({
+      tasks: [makeTask({ id: 't1', date: '2026-10-28' })],
+    })
+    const { updateTask } = useTaskStore.getState()
+
+    updateTask('t1', { title: 'renamed' })
+    updateTask('t1', { date: '2026-10-28' })
+    updateTask('t1', { date: '2026-10-29' })
+    updateTask('t1', { date: null })
+
+    expect(historyEvents()).toMatchObject([
+      {
+        type: 'task.rescheduled',
+        taskId: 't1',
+        from: '2026-10-28',
+        to: '2026-10-29',
+      },
+      { type: 'task.rescheduled', taskId: 't1', from: '2026-10-29', to: null },
+    ])
+  })
+
+  it('records completion with a snapshot and reopening', () => {
+    useTaskStore.setState({
+      tasks: [
+        makeTask({
+          id: 't1',
+          title: 'Write report',
+          groupId: 'work',
+          date: '2026-10-28',
+        }),
+      ],
+    })
+    const { toggleTask } = useTaskStore.getState()
+
+    toggleTask('t1')
+    toggleTask('t1')
+    toggleTask('t1')
+
+    const completed = {
+      type: 'task.completed',
+      taskId: 't1',
+      title: 'Write report',
+      groupId: 'work',
+      date: '2026-10-28',
+    }
+    expect(historyEvents()).toMatchObject([
+      completed,
+      { type: 'task.uncompleted', taskId: 't1' },
+      completed,
+    ])
+  })
+
+  it('keeps the completion snapshot after the task changes and is deleted', () => {
+    useTaskStore.setState({
+      tasks: [makeTask({ id: 't1', title: 'Old note' })],
+    })
+    const store = useTaskStore.getState()
+
+    store.toggleTask('t1')
+    store.updateTask('t1', { title: 'Edited' })
+    store.deleteTask('t1')
+
+    expect(historyEvents()).toMatchObject([
+      {
+        type: 'task.completed',
+        taskId: 't1',
+        title: 'Old note',
+        groupId: 'default',
+        date: null,
+      },
+      {
+        type: 'task.deleted',
+        taskId: 't1',
+        title: 'Edited',
+        groupId: 'default',
+        completed: true,
+      },
+    ])
+  })
+
+  it('records one deletion per occurrence when a series is deleted', () => {
+    useTaskStore.setState({
+      tasks: [
+        makeTask({ id: 'a', seriesId: 's1', occurrenceDate: '2026-10-27' }),
+        makeTask({ id: 'b', seriesId: 's1', occurrenceDate: '2026-10-28' }),
+        makeTask({ id: 'other' }),
+      ],
+    })
+
+    useTaskStore.getState().deleteSeries('s1')
+
+    expect(
+      historyEvents().map((e) => [e.type, 'taskId' in e && e.taskId]),
+    ).toEqual([
+      ['task.deleted', 'a'],
+      ['task.deleted', 'b'],
+    ])
+  })
+
+  it('records deletions for tasks removed with their group', () => {
+    useTaskStore.setState({
+      tasks: [
+        makeTask({ id: 'in-group', groupId: 'work' }),
+        makeTask({
+          id: 'series-task',
+          seriesId: 's1',
+          occurrenceDate: '2026-10-28',
+        }),
+        makeTask({ id: 'kept' }),
+      ],
+      series: [
+        {
+          id: 's1',
+          title: 'Standup',
+          groupId: 'work',
+          pomoEstimate: 0,
+          weekdays: [1],
+          active: true,
+          skipDates: [],
+          sortOrder: 0,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    })
+
+    useTaskStore.getState().deleteTasksByGroupId('work')
+
+    expect(useTaskStore.getState().tasks.map((t) => t.id)).toEqual(['kept'])
+    expect(historyEvents().map((e) => 'taskId' in e && e.taskId)).toEqual([
+      'in-group',
+      'series-task',
+    ])
+    expect(historyEvents().map((e) => 'groupName' in e && e.groupName)).toEqual(
+      ['Work', 'General'],
+    )
+  })
+
+  it('records nothing when an occurrence is skipped', () => {
+    useTaskStore.setState({
+      tasks: [
+        makeTask({ id: 'a', seriesId: 's1', occurrenceDate: '2026-10-28' }),
+      ],
+      series: [
+        {
+          id: 's1',
+          title: 'Standup',
+          groupId: 'default',
+          pomoEstimate: 0,
+          weekdays: [3],
+          active: true,
+          skipDates: [],
+          sortOrder: 0,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    })
+
+    useTaskStore.getState().skipOccurrence('a')
+
+    expect(useTaskStore.getState().tasks).toEqual([])
+    expect(historyEvents()).toEqual([])
   })
 })
