@@ -6,7 +6,11 @@ import {
   commitSnapshotImport,
   prepareSnapshotImport,
 } from '@/modules/data-portability'
-import { ensureHistoryLoaded } from '@/modules/history'
+import {
+  ensureHistoryLoaded,
+  flushHistoryWrites,
+  historyStorageFailed,
+} from '@/modules/history'
 import {
   downloadDriveFile,
   findDriveRootFile,
@@ -207,6 +211,13 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
             return { ok: false, error }
           }
           commitSnapshotImport(prepared.snapshot)
+          await flushHistoryWrites()
+          const warnings = [...(prepared.warnings ?? [])]
+          if (historyStorageFailed()) {
+            warnings.push(
+              'Data restored, but activity history could not be saved. Reload the page and try again.',
+            )
+          }
           set({
             status: 'idle',
             ...(discoveredFileId
@@ -216,7 +227,7 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
                 }
               : {}),
           })
-          return { ok: true, warnings: prepared.warnings }
+          return { ok: true, warnings: warnings.length ? warnings : undefined }
         } catch (err) {
           const error = classifyDriveError(err)
           set({ status: 'idle', error })

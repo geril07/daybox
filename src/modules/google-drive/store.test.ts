@@ -4,6 +4,18 @@ import { buildSnapshot } from '@/modules/data-portability'
 
 import { useGoogleDriveStore } from './store'
 
+const historyStub = vi.hoisted(() => ({
+  load: 'ready' as 'ready' | 'failed',
+  failed: false,
+}))
+
+vi.mock('@/modules/history', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/modules/history')>()),
+  ensureHistoryLoaded: async () => historyStub.load,
+  flushHistoryWrites: async () => {},
+  historyStorageFailed: () => historyStub.failed,
+}))
+
 const serverAuth = vi.hoisted(() => ({
   startAuth: vi.fn(),
   refreshAccessToken: vi.fn(),
@@ -45,6 +57,8 @@ function resetConnectedState(
 }
 
 beforeEach(() => {
+  historyStub.load = 'ready'
+  historyStub.failed = false
   localStorage.clear()
   fetchMock.mockReset()
   vi.stubGlobal('fetch', fetchMock)
@@ -255,6 +269,43 @@ describe('Google Drive store backup', () => {
       lastBackupAt: '2026-01-01T00:00:00.000Z',
       error: { kind: 'token-expired' },
     })
+  })
+})
+
+describe('Google Drive store history safety', () => {
+  it('refuses to back up when stored history could not be read', async () => {
+    historyStub.load = 'failed'
+
+    const result = await useGoogleDriveStore.getState().backup()
+
+    expect(result.ok).toBe(false)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('says so when restored history could not be written', async () => {
+    historyStub.failed = true
+    const snapshotResult = buildSnapshot()
+    const snapshotJson = JSON.stringify(
+      snapshotResult.ok ? snapshotResult.value : {},
+    )
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ files: [{ id: 'found-root-id' }] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => snapshotJson,
+      })
+
+    const result = await useGoogleDriveStore.getState().restore()
+
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.warnings?.join(' ')).toMatch(/history could not be saved/)
+    }
   })
 })
 

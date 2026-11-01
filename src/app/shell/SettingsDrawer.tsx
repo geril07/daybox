@@ -10,7 +10,11 @@ import {
   type PreparedSnapshot,
 } from '@/modules/data-portability'
 import { GoogleDrivePanel } from '@/modules/google-drive'
-import { ensureHistoryLoaded } from '@/modules/history'
+import {
+  ensureHistoryLoaded,
+  flushHistoryWrites,
+  historyStorageFailed,
+} from '@/modules/history'
 import { usePlannerStore } from '@/modules/planner'
 import { RecurringSettingsPanel } from '@/modules/tasks'
 import { TimerSettingsPanel } from '@/modules/timer'
@@ -82,9 +86,11 @@ export function SettingsDrawer({
     null,
   )
   const [importWarnings, setImportWarnings] = useState<string[]>([])
+  const [importNotice, setImportNotice] = useState<string | null>(null)
 
   const handleExport = async () => {
     setImportError(null)
+    setImportNotice(null)
     // The snapshot reads history from memory, so wait for the stored events.
     if ((await ensureHistoryLoaded()) === 'failed') {
       setImportError(
@@ -102,6 +108,7 @@ export function SettingsDrawer({
 
   const chooseImportFile = () => {
     setImportError(null)
+    setImportNotice(null)
     setPreparedImport(null)
     setImportWarnings([])
     const input = document.createElement('input')
@@ -127,12 +134,20 @@ export function SettingsDrawer({
     input.click()
   }
 
-  const commitImport = () => {
+  const commitImport = async () => {
     if (!preparedImport) return
     commitSnapshotImport(preparedImport)
     setImportConfirmOpen(false)
     setPreparedImport(null)
     setImportWarnings([])
+    // The import already replaced tasks and settings; only the history write is
+    // still in flight, so report it instead of pretending everything landed.
+    await flushHistoryWrites()
+    if (historyStorageFailed()) {
+      setImportNotice(
+        'Data imported, but activity history could not be saved. Reload the page and try again.',
+      )
+    }
   }
 
   return (
@@ -322,6 +337,11 @@ export function SettingsDrawer({
 
             {importError && (
               <div className="text-destructive mt-1 text-xs">{importError}</div>
+            )}
+            {importNotice && (
+              <div className="text-muted-foreground mt-1 text-xs">
+                {importNotice}
+              </div>
             )}
           </div>
 

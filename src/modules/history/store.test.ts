@@ -7,6 +7,7 @@ import { loadStoredHistory, putStoredHistory } from './storage/repository'
 import {
   ensureHistoryLoaded,
   flushHistoryWrites,
+  historyStorageFailed,
   replaceHistory,
   resetHistoryForTests,
   useHistoryStore,
@@ -237,6 +238,20 @@ describe('History Store', () => {
     await ensureHistoryLoaded()
 
     expect(useHistoryStore.getState().events).toEqual([focusEvent])
+  })
+
+  it('reports a storage failure after a write fails', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(historyStorageFailed()).toBe(false)
+    const database = await getHistoryDatabase()
+    database.close()
+
+    useHistoryStore
+      .getState()
+      .recordEvent({ type: 'task.uncompleted', taskId: 't1' })
+    await flushHistoryWrites()
+
+    expect(historyStorageFailed()).toBe(true)
   })
 
   it('warns once when IndexedDB is unavailable and keeps events in memory', async () => {
