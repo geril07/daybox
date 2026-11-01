@@ -14,7 +14,7 @@ The history SHALL store `trackingStartedAt` (UTC ISO timestamp) and `trackingUtc
 
 #### Scenario: First launch persists the tracking start
 
-- **WHEN** the app loads with no `daybox-history` key and the user records no event
+- **WHEN** the app loads with no stored history and the user records no event
 - **THEN** the tracking start is stored even though the event list is empty
 
 #### Scenario: Tracking start survives reloads
