@@ -2,7 +2,7 @@
 
 ### Requirement: Activity history persists in IndexedDB
 
-The system SHALL persist activity events in the IndexedDB database `daybox`, object store `historyEvents`: one record per event, keyed by event `id`, with an index on `at` and a stored record sequence that fixes the order events were recorded in. Recording an event SHALL write only that event and take the next sequence number. Loading SHALL return events in sequence order, not in key order. The running app SHALL NOT read or write the `daybox-history` localStorage key once migration has finished.
+The system SHALL persist activity events in the IndexedDB database `daybox`, object store `historyEvents`: one record per event, keyed by event `id`, with an index on `at` and a stored record sequence that fixes the order events were recorded in. Recording an event SHALL write only that event and take the next sequence number. Loading SHALL return events in sequence order, not in key order. A stored event SHALL keep its sequence when it is written again. The running app SHALL NOT read or write the `daybox-history` localStorage key once migration has finished.
 
 #### Scenario: One event write adds one record
 
@@ -27,7 +27,7 @@ The system SHALL persist activity events in the IndexedDB database `daybox`, obj
 
 ### Requirement: Legacy history migrates once
 
-When localStorage holds a `daybox-history` blob, the system SHALL validate it, write its events and tracking start into IndexedDB, and remove the key only after the write succeeds. Re-running the migration SHALL NOT duplicate events. The migrated records SHALL keep the order of the legacy event array. A blob that fails validation SHALL be removed with one `console.warn`, as the pre-migration app would have reset it on its next write.
+When localStorage holds a `daybox-history` blob, the system SHALL validate it, write its events and tracking start into IndexedDB, and remove the key only after the write succeeds. Re-running the migration SHALL NOT duplicate events. The migrated records SHALL keep the order of the legacy event array. An event that is already stored SHALL keep its position when the migration runs again. A blob that fails validation SHALL be removed with one `console.warn`, as the pre-migration app would have reset it on its next write.
 
 #### Scenario: Migration keeps events and tracking start
 
@@ -54,7 +54,7 @@ When localStorage holds a `daybox-history` blob, the system SHALL validate it, w
 
 ### Requirement: History loads before it is exported
 
-Snapshot export and Google Drive backup SHALL build the `history` slice only after the in-memory history has finished loading. When the load fails, both SHALL refuse to save and SHALL report the failure, because a snapshot without history would replace a complete backup.
+Snapshot export and Google Drive backup SHALL build the `history` slice only after the in-memory history has finished loading. When the load fails, both SHALL refuse to save and SHALL report the failure, because a snapshot without history would replace a complete backup. A snapshot import or restore SHALL still run, and SHALL report that history could not be saved when its write fails.
 
 #### Scenario: Export immediately after startup
 
@@ -72,3 +72,9 @@ Snapshot export and Google Drive backup SHALL build the `history` slice only aft
 - **WHEN** stored history cannot be read and the user starts a backup
 - **THEN** the backup is cancelled with an error
 - **AND** the existing remote backup is left untouched
+
+#### Scenario: A partial import is reported
+
+- **WHEN** stored history cannot be written after a confirmed import
+- **THEN** the imported tasks and settings are in place
+- **AND** the user is told that activity history could not be saved

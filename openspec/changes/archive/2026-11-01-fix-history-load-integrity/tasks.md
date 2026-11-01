@@ -18,6 +18,9 @@
 - [x] 3.2 Release the connection on `versionchange` and drop the cached promise on `terminated`
 - [x] 3.3 Abort the transaction when a write helper fails, keeping the legacy blob when a migration write fails; verify
 
+- [x] 3.4 Report a history write failure after a confirmed import or restore instead of reporting plain success; verify with drawer and Drive tests
+- [x] 3.5 Keep a stored record's sequence on rewrite and add the missing index when upgrading a version 1 database; verify with repository tests
+
 ## 4. Integration checks
 
 - [x] 4.1 Run `npm run format`, `npm run typecheck`, `npm run lint`, and `npm run test`; all pass
