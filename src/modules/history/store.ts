@@ -12,7 +12,7 @@ import {
 } from './storage/repository'
 import type { HistoryEvent, HistoryEventInput, TrackingStart } from './types'
 
-export type HistoryLoadState = 'loading' | 'ready' | 'failed'
+export type HistoryLoadState = 'ready' | 'failed'
 
 interface HistoryState extends TrackingStart {
   events: HistoryEvent[]
@@ -40,12 +40,13 @@ export function createEmptyHistory(now = new Date()): HistoryState {
 const historyInit = createEmptyHistory()
 
 let loadPromise: Promise<HistoryLoadState> | null = null
-let loadState: HistoryLoadState = 'loading'
 let warnedStorageFailure = false
+let storageFailed = false
 let replacedByImport = false
 const inFlight = new Set<Promise<void>>()
 
 function reportStorageFailure(error: unknown) {
+  storageFailed = true
   if (warnedStorageFailure) return
   warnedStorageFailure = true
   console.warn('[daybox] Activity history storage unavailable', error)
@@ -94,12 +95,11 @@ async function loadHistory(): Promise<HistoryLoadState> {
         events: mergeEvents(events, state.events),
       }))
     }
-    loadState = 'ready'
+    return 'ready'
   } catch (error) {
-    loadState = 'failed'
     reportStorageFailure(error)
+    return 'failed'
   }
-  return loadState
 }
 
 /**
@@ -116,6 +116,11 @@ export function flushHistoryWrites(): Promise<void> {
   return Promise.all([...inFlight]).then(() => undefined)
 }
 
+/** True once any load or write of the stored history has failed. */
+export function historyStorageFailed(): boolean {
+  return storageFailed
+}
+
 /** Replaces both memory and storage, used by a confirmed snapshot import. */
 export function replaceHistory(history: HistoryState) {
   replacedByImport = true
@@ -130,8 +135,8 @@ export function replaceHistory(history: HistoryState) {
 
 export function resetHistoryForTests() {
   loadPromise = null
-  loadState = 'loading'
   warnedStorageFailure = false
+  storageFailed = false
   replacedByImport = false
   inFlight.clear()
   resetHistoryDatabase()

@@ -159,4 +159,73 @@ describe('history repository', () => {
     expect(warn).toHaveBeenCalledTimes(1)
     expect((await loadStoredHistory()).trackingStart).toEqual(tracking)
   })
+
+  it('keeps an already migrated event in place when migration runs again', async () => {
+    await putStoredHistory([event('a')], tracking)
+    await appendStoredEvent(event('new'))
+    await putStoredHistory([event('a'), event('b')], tracking)
+
+    expect((await loadStoredHistory()).events.map((e) => e.id)).toEqual([
+      'a',
+      'new',
+      'b',
+    ])
+  })
+
+  it('upgrades a version 1 database that lacks the sequence index', async () => {
+    const factory = new IDBFactory()
+    vi.stubGlobal('indexedDB', factory)
+    vi.stubGlobal('IDBKeyRange', IDBKeyRange)
+    resetHistoryDatabase()
+    const legacy = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = factory.open('daybox', 1)
+      request.onupgradeneeded = () => {
+        const database = request.result
+        database.createObjectStore('historyEvents', { keyPath: 'id' })
+        database.createObjectStore('historyMeta', { keyPath: 'key' })
+      }
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    await new Promise<void>((resolve) => {
+      const transaction = legacy.transaction('historyEvents', 'readwrite')
+      transaction.objectStore('historyEvents').put(event('old'))
+      transaction.oncomplete = () => resolve()
+    })
+    legacy.close()
+
+    await appendStoredEvent(event('fresh'))
+
+    expect((await loadStoredHistory()).events.map((e) => e.id)).toEqual([
+      'old',
+      'fresh',
+    ])
+  })
+
+  it('upgrades a version 1 database that already has the sequence index', async () => {
+    const factory = new IDBFactory()
+    vi.stubGlobal('indexedDB', factory)
+    vi.stubGlobal('IDBKeyRange', IDBKeyRange)
+    resetHistoryDatabase()
+    const legacy = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = factory.open('daybox', 1)
+      request.onupgradeneeded = () => {
+        const database = request.result
+        const events = database.createObjectStore('historyEvents', {
+          keyPath: 'id',
+        })
+        events.createIndex('seq', 'seq', { unique: true })
+        database.createObjectStore('historyMeta', { keyPath: 'key' })
+      }
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => reject(request.error)
+    })
+    legacy.close()
+
+    await appendStoredEvent(event('fresh'))
+
+    expect((await loadStoredHistory()).events.map((e) => e.id)).toEqual([
+      'fresh',
+    ])
+  })
 })

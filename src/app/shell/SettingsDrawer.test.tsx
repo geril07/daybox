@@ -13,6 +13,23 @@ import { useTaskStore } from '@/modules/tasks'
 
 import { SettingsDrawer } from './SettingsDrawer'
 
+const historyStub = vi.hoisted(() => ({
+  load: 'ready' as 'ready' | 'failed',
+}))
+
+vi.mock('@/modules/history', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/modules/history')>()),
+  ensureHistoryLoaded: async () => historyStub.load,
+  flushHistoryWrites: async () => {},
+  historyStorageFailed: () => false,
+}))
+
+const download = vi.hoisted(() => vi.fn())
+
+vi.mock('@/shared/utils/download', () => ({
+  downloadAsFile: download,
+}))
+
 vi.mock('@/app/theme', () => ({
   setThemeWithViewTransition: vi.fn(),
   useTheme: () => ({
@@ -34,6 +51,8 @@ vi.mock('@/modules/timer', async (importOriginal) => ({
 }))
 
 beforeEach(() => {
+  historyStub.load = 'ready'
+  download.mockReset()
   useTaskStore.setState({ tasks: [], series: [] })
   usePlannerStore.setState({
     weekStartDay: 1,
@@ -160,5 +179,25 @@ describe('SettingsDrawer recurring section', () => {
         .getAllByLabelText('Recurring task title')
         .map((input) => (input as HTMLInputElement).value),
     ).toEqual(['Job', 'Exercise'])
+  })
+})
+
+describe('SettingsDrawer export', () => {
+  it('refuses to export when stored history could not be read', async () => {
+    historyStub.load = 'failed'
+    render(<SettingsDrawer open onClose={vi.fn()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export' }))
+
+    expect(await screen.findByText(/export was cancelled/)).toBeInTheDocument()
+    expect(download).not.toHaveBeenCalled()
+  })
+
+  it('exports when history loaded', async () => {
+    render(<SettingsDrawer open onClose={vi.fn()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export' }))
+
+    await waitFor(() => expect(download).toHaveBeenCalledTimes(1))
   })
 })

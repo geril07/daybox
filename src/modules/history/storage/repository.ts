@@ -111,14 +111,18 @@ export async function putStoredHistory(
   )
   const eventStore = transaction.objectStore(EVENTS_STORE)
   const last = await eventStore.index('seq').openCursor(null, 'prev')
-  const start = last?.value.seq ?? 0
+  const storedSeqs = new Map(
+    (await eventStore.getAll()).map((record) => [record.id, record.seq]),
+  )
+  let next = (last?.value.seq ?? 0) + 1
   const writes = [
-    ...events.map((event, index) =>
-      eventStore.put({
-        ...event,
-        seq: start + index + 1,
-      } satisfies HistoryRecord),
-    ),
+    ...events.map((event) => {
+      // An event that is already stored keeps its position, so re-running a
+      // migration cannot push migrated events behind newer ones.
+      const seq = storedSeqs.get(event.id) ?? next
+      if (!storedSeqs.has(event.id)) next += 1
+      return eventStore.put({ ...event, seq } satisfies HistoryRecord)
+    }),
     transaction
       .objectStore(META_STORE)
       .put({ key: TRACKING_START_KEY, ...trackingStart }),
