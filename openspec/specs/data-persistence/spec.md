@@ -6,7 +6,7 @@ Persist all user data (tasks, groups, timer runtime/configuration, planner prefe
 
 ### Requirement: All state persisted to localStorage
 
-The system SHALL save tasks, groups, timer state, planner preferences, activity history, and theme to localStorage in six independent keys: `daybox-tasks`, `daybox-groups`, `daybox-timer`, `daybox-planner`, `daybox-history`, and `daybox-theme`. The timer store SHALL persist its full state (runtime: `phase`, `startedAt`, `elapsed`, `isRunning`, `focusedTaskId`; configuration: `settings`) under `daybox-timer`. To prevent the timer's 1Hz `tick` from producing 1Hz localStorage writes, the timer store's persistence layer SHALL be debounced (the debounce policy and the rehydrate wall-clock-correction behaviour are defined in the `pomodoro-timer` capability). The planner's preferences (`weekStartDay`, `browseDate`, and `dayStartMinutes`) SHALL be persisted under `daybox-planner`, where `dayStartMinutes` is an integer from `0` through `1439` and defaults to `0`. The activity history event list SHALL be persisted under `daybox-history` (event rules are defined in the `activity-history` capability). The theme SHALL be persisted under `daybox-theme` as a JSON object with `{ mode: 'light' | 'dark' | 'system', preset: string }`. The running app SHALL NOT read from or write to obsolete localStorage keys `daybox-app-store` or `daybox-settings`.
+The system SHALL save tasks, groups, timer state, planner preferences, and theme to localStorage in five independent keys: `daybox-tasks`, `daybox-groups`, `daybox-timer`, `daybox-planner`, and `daybox-theme`. The timer store SHALL persist its full state (runtime: `phase`, `startedAt`, `elapsed`, `isRunning`, `focusedTaskId`; configuration: `settings`) under `daybox-timer`. To prevent the timer's 1Hz `tick` from producing 1Hz localStorage writes, the timer store's persistence layer SHALL be debounced (the debounce policy and the rehydrate wall-clock-correction behaviour are defined in the `pomodoro-timer` capability). The planner's preferences (`weekStartDay`, `browseDate`, and `dayStartMinutes`) SHALL be persisted under `daybox-planner`, where `dayStartMinutes` is an integer from `0` through `1439` and defaults to `0`. Activity history SHALL NOT be stored in localStorage; it persists in IndexedDB as defined by the `activity-history` capability. The theme SHALL be persisted under `daybox-theme` as a JSON object with `{ mode: 'light' | 'dark' | 'system', preset: string }`. The running app SHALL NOT read from or write to obsolete localStorage keys `daybox-app-store` or `daybox-settings`.
 
 The tasks store SHALL persist both its `tasks` array and its `series` array under the unchanged `daybox-tasks` key. Recurrence SHALL NOT introduce an additional key, a renamed key, or a nested envelope inside the tasks blob.
 
@@ -26,7 +26,7 @@ The tasks store SHALL persist both its `tasks` array and its `series` array unde
 #### Scenario: Recurrence adds no storage key
 
 - **WHEN** user inspects localStorage after using recurring series
-- **THEN** the app still writes exactly the six known keys
+- **THEN** the app still writes exactly the five known keys
 - **AND** `daybox-tasks` contains both `tasks` and `series`
 
 #### Scenario: Tasks persist on reload
@@ -60,7 +60,7 @@ The tasks store SHALL persist both its `tasks` array and its `series` array unde
 #### Scenario: Activity history persists on reload
 
 - **WHEN** user completes a task and reloads the page
-- **THEN** the recorded `task.completed` event is restored from `daybox-history`
+- **THEN** the recorded `task.completed` event is restored from IndexedDB
 
 #### Scenario: Theme persists on reload
 
@@ -170,7 +170,7 @@ The system SHALL prepare imported snapshot JSON through the data-portability pip
 
 ### Requirement: Persist rehydration validates and falls back
 
-The system SHALL validate the persisted blob for each of the five feature stores (`daybox-tasks`, `daybox-groups`, `daybox-timer`, `daybox-planner`, `daybox-history`) on app load using its feature's schema. On failure, the store SHALL be initialized to its default state and a `console.warn` SHALL be emitted once. The on-disk blob SHALL NOT be deleted automatically; the next successful write replaces it.
+The system SHALL validate the persisted blob for each of the four zustand-persisted feature stores (`daybox-tasks`, `daybox-groups`, `daybox-timer`, `daybox-planner`) on app load using its feature's schema. On failure, the store SHALL be initialized to its default state and a `console.warn` SHALL be emitted once. The on-disk blob SHALL NOT be deleted automatically; the next successful write replaces it. Activity history validates per record instead of per blob, as defined by the `activity-history` capability.
 
 #### Scenario: Corrupt tasks blob resets to empty
 
@@ -187,12 +187,13 @@ The system SHALL validate the persisted blob for each of the five feature stores
 #### Scenario: Corrupt history blob resets to empty
 
 - **WHEN** `localStorage.getItem('daybox-history')` returns a blob that fails the history schema
-- **THEN** the history store starts with an empty event list
+- **THEN** the migration drops it
+- **AND** the history starts with an empty event list
 - **AND** `console.warn` is called once
 
 ### Requirement: Persist configuration is statically type-checked
 
-The shared `createValidatedRehydrate` helper SHALL return a value typed as the `onRehydrateStorage` shape of zustand's `PersistOptions<S>` for the store type `S` it is configured for (re-exported from the helper module as `OnRehydrateStorage<S>`), and each feature store (`daybox-tasks`, `daybox-groups`, `daybox-timer`, `daybox-planner`, `daybox-history`, `daybox-google-drive`) SHALL construct its `persist` call-site options object with `name` set to its storage key and `onRehydrateStorage` set to the result of `createValidatedRehydrate` for its store type. Stores SHALL NOT cast the helper's return value with `as any` and SHALL NOT suppress `@typescript-eslint/no-explicit-any` for that call. A misconfigured persist option (wrong `name` type, `storage` shape, `partialize` shape, or `onRehydrateStorage` shape) SHALL therefore surface as a TypeScript compile error rather than being silently accepted. This requirement constrains only the static typing of persistence configuration; the runtime rehydrate-validate-and-reset behaviour is unchanged and remains defined by the "Persist rehydration validates and falls back" requirement.
+The shared `createValidatedRehydrate` helper SHALL return a value typed as the `onRehydrateStorage` shape of zustand's `PersistOptions<S>` for the store type `S` it is configured for (re-exported from the helper module as `OnRehydrateStorage<S>`), and each persisted feature store (`daybox-tasks`, `daybox-groups`, `daybox-timer`, `daybox-planner`, `daybox-google-drive`) SHALL construct its `persist` call-site options object with `name` set to its storage key and `onRehydrateStorage` set to the result of `createValidatedRehydrate` for its store type. Stores SHALL NOT cast the helper's return value with `as any` and SHALL NOT suppress `@typescript-eslint/no-explicit-any` for that call. A misconfigured persist option (wrong `name` type, `storage` shape, `partialize` shape, or `onRehydrateStorage` shape) SHALL therefore surface as a TypeScript compile error rather than being silently accepted. This requirement constrains only the static typing of persistence configuration; the runtime rehydrate-validate-and-reset behaviour is unchanged and remains defined by the "Persist rehydration validates and falls back" requirement.
 
 #### Scenario: Stores wire persistence without escape hatches
 
