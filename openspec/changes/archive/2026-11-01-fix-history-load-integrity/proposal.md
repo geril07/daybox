@@ -10,7 +10,9 @@ A failed load (unavailable storage, closed connection, corrupt profile) resolved
 
 - Stored records carry a `seq` that fixes the order they were recorded in. Load returns events in that order, and migration keeps the legacy array order as the sequence. Recording an event takes the next sequence number.
 - The history load reports whether it succeeded. Snapshot export and Google Drive backup refuse to run when the load failed and report the failure instead of saving an incomplete snapshot.
+- A confirmed import or restore still runs when the load failed, and reports that history could not be saved instead of reporting plain success.
 - The stored tracking start is validated; an unreadable one is replaced with a fresh value and one warning.
+- A record keeps its sequence when it is written again, so re-running a migration cannot push migrated events behind newer ones. The database version rises to 2 so a database created by the earlier build of this branch gains the missing index.
 - The database connection is released on `versionchange` from another tab and recreated after a `terminated` event, so a later version upgrade cannot deadlock on this build's open connection.
 - Test coverage for the record order, a write failure after a successful load, an interrupted migration, and the raw meta record shape.
 

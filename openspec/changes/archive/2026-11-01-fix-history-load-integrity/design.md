@@ -33,9 +33,15 @@ Alternative: an auto-increment store key with `id` as a unique index. Rejected: 
 
 An unreadable tracking start becomes `null` on load, and `ensureStoredTrackingStart` replaces it with the current time in one readwrite transaction. Doing the read and the write in one transaction also closes a window where an import could commit between them and be overwritten.
 
+### Import is not blocked by a failed load
+
+Export refuses, import does not. A user whose browser cannot read IndexedDB is most likely restoring data on purpose, and blocking the restore would leave them with no way in or out. The import runs, and the history write failure is reported as a warning next to the success — never as a silent success.
+
 ### Connection lifecycle
 
 `blocking` closes the connection when another tab opens a higher version; `terminated` drops the cached promise so the next call reopens. Without both, this build's open connection would block any future version upgrade of the shared `daybox` database forever, and a terminated connection would keep failing writes behind one warning.
+
+The database version was also raised to 2 with an upgrade that adds a missing index, so an origin that ran the earlier build of this branch keeps working instead of failing every write behind one warning.
 
 ## Risks / Trade-offs
 
