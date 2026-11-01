@@ -10,6 +10,7 @@ import {
   type PreparedSnapshot,
 } from '@/modules/data-portability'
 import { GoogleDrivePanel } from '@/modules/google-drive'
+import { ensureHistoryLoaded } from '@/modules/history'
 import { usePlannerStore } from '@/modules/planner'
 import { RecurringSettingsPanel } from '@/modules/tasks'
 import { TimerSettingsPanel } from '@/modules/timer'
@@ -82,8 +83,10 @@ export function SettingsDrawer({
   )
   const [importWarnings, setImportWarnings] = useState<string[]>([])
 
-  const handleExport = () => {
+  const handleExport = async () => {
     setImportError(null)
+    // The snapshot reads history from memory, so wait for the stored events.
+    await ensureHistoryLoaded()
     const result = buildSnapshot()
     if (!result.ok) {
       setImportError(result.reason)
@@ -293,8 +296,8 @@ export function SettingsDrawer({
               <AlertDialogContent>
                 <AlertDialogTitle>Import data</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will replace all current data (tasks, groups, settings).
-                  This cannot be undone.
+                  This will replace all current data (tasks, groups, settings,
+                  history). This cannot be undone.
                 </AlertDialogDescription>
                 {importWarnings.length > 0 && (
                   <div className="text-muted-foreground rounded-md border p-3 text-xs">

@@ -6,6 +6,7 @@ import {
   commitSnapshotImport,
   prepareSnapshotImport,
 } from '@/modules/data-portability'
+import { ensureHistoryLoaded } from '@/modules/history'
 import {
   downloadDriveFile,
   findDriveRootFile,
@@ -127,6 +128,7 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
         set({ status: 'backing-up', error: null })
         try {
           const token = await ensureActionToken(get, set)
+          await ensureHistoryLoaded()
           const snapshotResult = buildSnapshot()
           if (!snapshotResult.ok) {
             const error = {

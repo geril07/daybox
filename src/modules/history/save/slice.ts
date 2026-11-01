@@ -1,7 +1,7 @@
 import type { SaveSlice } from '@/shared/save-slice'
 import { detectDuplicateId, parseSliceInput } from '@/shared/utils/save-helpers'
 
-import { createEmptyHistory, useHistoryStore } from '../store'
+import { createEmptyHistory, replaceHistory, useHistoryStore } from '../store'
 import {
   HistorySaveSliceV1Schema,
   type HistorySaveSliceCurrent,
@@ -46,7 +46,8 @@ export const historySaveSlice: SaveSlice<'history', HistorySaveSliceCurrent> = {
   prepareImport: parseHistorySlice,
 
   applyImport: (value) => {
-    useHistoryStore.setState({
+    // Memory first so the store is immediately correct; storage follows.
+    replaceHistory({
       trackingStartedAt: value.trackingStartedAt,
       trackingUtcOffsetMinutes: value.trackingUtcOffsetMinutes,
       events: value.events,
