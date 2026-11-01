@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 import { generateId } from '@/shared/id'
 
-import { resetHistoryDatabase, type TrackingStart } from './storage/db'
+import { resetHistoryDatabase } from './storage/db'
 import { migrateLegacyHistory } from './storage/legacy'
 import {
   appendStoredEvent,
@@ -10,7 +10,9 @@ import {
   loadStoredHistory,
   replaceStoredHistory,
 } from './storage/repository'
-import type { HistoryEvent, HistoryEventInput } from './types'
+import type { HistoryEvent, HistoryEventInput, TrackingStart } from './types'
+
+export type HistoryLoadState = 'loading' | 'ready' | 'failed'
 
 interface HistoryState extends TrackingStart {
   events: HistoryEvent[]
@@ -37,10 +39,11 @@ export function createEmptyHistory(now = new Date()): HistoryState {
 
 const historyInit = createEmptyHistory()
 
-let loadPromise: Promise<void> | null = null
-let pendingWrites: Promise<void> = Promise.resolve()
+let loadPromise: Promise<HistoryLoadState> | null = null
+let loadState: HistoryLoadState = 'loading'
 let warnedStorageFailure = false
 let replacedByImport = false
+const inFlight = new Set<Promise<void>>()
 
 function reportStorageFailure(error: unknown) {
   if (warnedStorageFailure) return
@@ -49,7 +52,9 @@ function reportStorageFailure(error: unknown) {
 }
 
 function trackWrite(write: Promise<void>) {
-  pendingWrites = pendingWrites.then(() => write).catch(reportStorageFailure)
+  const tracked = write.catch(reportStorageFailure)
+  inFlight.add(tracked)
+  void tracked.finally(() => inFlight.delete(tracked))
 }
 
 function mergeEvents(stored: HistoryEvent[], current: HistoryEvent[]) {
@@ -72,7 +77,7 @@ export const useHistoryStore = create<HistoryStore>()((set) => ({
   },
 }))
 
-async function loadHistory() {
+async function loadHistory(): Promise<HistoryLoadState> {
   try {
     await migrateLegacyHistory()
     const { events, trackingStart } = await loadStoredHistory()
@@ -83,25 +88,32 @@ async function loadHistory() {
         trackingUtcOffsetMinutes: historyInit.trackingUtcOffsetMinutes,
       }))
     // A data import restates the history; loaded records must not come back.
-    if (replacedByImport) return
-    useHistoryStore.setState((state) => ({
-      ...tracking,
-      events: mergeEvents(events, state.events),
-    }))
+    if (!replacedByImport) {
+      useHistoryStore.setState((state) => ({
+        ...tracking,
+        events: mergeEvents(events, state.events),
+      }))
+    }
+    loadState = 'ready'
   } catch (error) {
+    loadState = 'failed'
     reportStorageFailure(error)
   }
+  return loadState
 }
 
-/** Resolves once stored history is in memory; export paths await it. */
-export function ensureHistoryLoaded(): Promise<void> {
+/**
+ * Resolves once stored history is in memory. Callers that write a snapshot must
+ * treat `failed` as "history is missing", not as "history is empty".
+ */
+export function ensureHistoryLoaded(): Promise<HistoryLoadState> {
   loadPromise ??= loadHistory()
   return loadPromise
 }
 
 /** Resolves once every queued storage write has settled. */
 export function flushHistoryWrites(): Promise<void> {
-  return pendingWrites
+  return Promise.all([...inFlight]).then(() => undefined)
 }
 
 /** Replaces both memory and storage, used by a confirmed snapshot import. */
@@ -118,9 +130,10 @@ export function replaceHistory(history: HistoryState) {
 
 export function resetHistoryForTests() {
   loadPromise = null
-  pendingWrites = Promise.resolve()
+  loadState = 'loading'
   warnedStorageFailure = false
   replacedByImport = false
+  inFlight.clear()
   resetHistoryDatabase()
   useHistoryStore.setState({ ...createEmptyHistory(), events: [] })
 }

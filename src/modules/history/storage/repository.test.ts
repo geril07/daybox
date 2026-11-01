@@ -79,8 +79,12 @@ describe('history repository', () => {
   it('skips an invalid record and reports how many were dropped', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const database = await getHistoryDatabase()
-    await database.put(EVENTS_STORE, event('a'))
-    await database.put(EVENTS_STORE, { id: 'b', type: 'task.unknown' } as never)
+    await database.put(EVENTS_STORE, { ...event('a'), seq: 1 })
+    await database.put(EVENTS_STORE, {
+      id: 'b',
+      type: 'task.unknown',
+      seq: 2,
+    } as never)
 
     const { events } = await loadStoredHistory()
 
@@ -98,6 +102,61 @@ describe('history repository', () => {
 
     expect(first).toEqual(tracking)
     expect(second).toEqual(tracking)
+    expect((await loadStoredHistory()).trackingStart).toEqual(tracking)
+  })
+
+  it('returns events in record order, not in key order', async () => {
+    // Ids sort differently from the order the events were recorded in.
+    await appendStoredEvent(event('z'))
+    await appendStoredEvent(event('a'))
+    await appendStoredEvent(event('m'))
+
+    expect((await loadStoredHistory()).events.map((e) => e.id)).toEqual([
+      'z',
+      'a',
+      'm',
+    ])
+  })
+
+  it('keeps appending after the last stored record', async () => {
+    await appendStoredEvent(event('z'))
+    await putStoredHistory([event('a'), event('b')], tracking)
+    await appendStoredEvent(event('m'))
+
+    expect((await loadStoredHistory()).events.map((e) => e.id)).toEqual([
+      'z',
+      'a',
+      'b',
+      'm',
+    ])
+  })
+
+  it('stores only the known meta fields', async () => {
+    await ensureStoredTrackingStart(tracking)
+    const database = await getHistoryDatabase()
+    const [meta] = await database.getAll('historyMeta')
+
+    expect(Object.keys(meta).sort()).toEqual([
+      'key',
+      'trackingStartedAt',
+      'trackingUtcOffsetMinutes',
+    ])
+  })
+
+  it('replaces an invalid tracking start and warns once', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const database = await getHistoryDatabase()
+    await database.put('historyMeta', {
+      key: 'trackingStarted',
+      trackingStartedAt: 'not-a-date',
+      trackingUtcOffsetMinutes: 0,
+    })
+
+    expect((await loadStoredHistory()).trackingStart).toBeNull()
+    const replaced = await ensureStoredTrackingStart(tracking)
+
+    expect(replaced).toEqual(tracking)
+    expect(warn).toHaveBeenCalledTimes(1)
     expect((await loadStoredHistory()).trackingStart).toEqual(tracking)
   })
 })
