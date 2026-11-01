@@ -1,4 +1,6 @@
+// jsdom has no IndexedDB; the history store needs it in every test file.
 import '@testing-library/jest-dom/vitest'
+import 'fake-indexeddb/auto'
 import { vi } from 'vitest'
 
 class ResizeObserverMock {

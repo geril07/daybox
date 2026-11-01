@@ -148,8 +148,8 @@ export function GoogleDrivePanel() {
           <AlertDialogContent>
             <AlertDialogTitle>Restore from Google Drive</AlertDialogTitle>
             <AlertDialogDescription>
-              This will replace all current data (tasks, groups, settings). This
-              cannot be undone.
+              This will replace all current data (tasks, groups, settings,
+              history). This cannot be undone.
             </AlertDialogDescription>
             <div className="flex flex-col gap-2">
               <AlertDialogAction
