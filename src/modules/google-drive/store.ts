@@ -128,7 +128,15 @@ export const useGoogleDriveStore = create<GoogleDriveStore>()(
         set({ status: 'backing-up', error: null })
         try {
           const token = await ensureActionToken(get, set)
-          await ensureHistoryLoaded()
+          if ((await ensureHistoryLoaded()) === 'failed') {
+            const error = {
+              kind: 'unknown' as const,
+              message:
+                'Activity history storage is unavailable, so the backup was cancelled. Reload the page and try again.',
+            }
+            set({ status: 'idle', error })
+            return { ok: false, error }
+          }
           const snapshotResult = buildSnapshot()
           if (!snapshotResult.ok) {
             const error = {

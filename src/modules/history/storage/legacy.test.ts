@@ -81,4 +81,29 @@ describe('legacy history migration', () => {
     expect((await loadStoredHistory()).events).toEqual([])
     expect(warn).not.toHaveBeenCalled()
   })
+
+  it('keeps the legacy array order as the record order', async () => {
+    writeLegacyBlob({ ...tracking, events: [event('z'), event('a')] })
+
+    await migrateLegacyHistory()
+
+    expect((await loadStoredHistory()).events.map((e) => e.id)).toEqual([
+      'z',
+      'a',
+    ])
+  })
+
+  it('keeps the legacy blob when the write fails', async () => {
+    vi.stubGlobal('indexedDB', {
+      open() {
+        throw new Error('storage disabled')
+      },
+    })
+    resetHistoryDatabase()
+    writeLegacyBlob({ ...tracking, events: [event('a')] })
+
+    await expect(migrateLegacyHistory()).rejects.toThrow('storage disabled')
+
+    expect(localStorage.getItem(LEGACY_HISTORY_KEY)).not.toBeNull()
+  })
 })

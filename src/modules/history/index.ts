@@ -1,4 +1,5 @@
-export * from './store'
+export { ensureHistoryLoaded, useHistoryStore } from './store'
+export type { HistoryLoadState, HistoryStore } from './store'
 export * from './types'
 export * from './schema'
-export * from './save/slice'
+export { historySaveSlice } from './save/slice'

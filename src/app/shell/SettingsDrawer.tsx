@@ -86,7 +86,12 @@ export function SettingsDrawer({
   const handleExport = async () => {
     setImportError(null)
     // The snapshot reads history from memory, so wait for the stored events.
-    await ensureHistoryLoaded()
+    if ((await ensureHistoryLoaded()) === 'failed') {
+      setImportError(
+        'Activity history storage is unavailable, so the export was cancelled. Reload the page and try again.',
+      )
+      return
+    }
     const result = buildSnapshot()
     if (!result.ok) {
       setImportError(result.reason)

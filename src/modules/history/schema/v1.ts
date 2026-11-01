@@ -48,8 +48,11 @@ export const HistoryEventV1Schema = z.discriminatedUnion('type', [
   }),
 ])
 
-export const HistoryStateV1Schema = z.object({
+export const TrackingStartSchema = z.object({
   trackingStartedAt: z.string().datetime(),
   trackingUtcOffsetMinutes: UtcOffsetMinutesSchema,
+})
+
+export const HistoryStateV1Schema = TrackingStartSchema.extend({
   events: z.array(HistoryEventV1Schema),
 })

@@ -103,7 +103,7 @@ describe('History Store', () => {
     })
   })
 
-  it('writes exactly one stored record per event', async () => {
+  it('adds one stored record per event and leaves existing ones alone', async () => {
     await putStoredHistory([completedEvent], stored)
     const { recordEvent } = useHistoryStore.getState()
 
@@ -167,10 +167,11 @@ describe('History Store', () => {
   it('drops an invalid stored record and keeps the valid ones', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const database = await getHistoryDatabase()
-    await database.put(EVENTS_STORE, completedEvent)
+    await database.put(EVENTS_STORE, { ...completedEvent, seq: 1 })
     await database.put(EVENTS_STORE, {
       id: 'broken',
       type: 'task.unknown',
+      seq: 2,
     } as never)
 
     resetHistoryForTests()
@@ -178,6 +179,50 @@ describe('History Store', () => {
 
     expect(useHistoryStore.getState().events).toEqual([completedEvent])
     expect(warn).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the record order after a reload', async () => {
+    const { recordEvent } = useHistoryStore.getState()
+    // Ids are random, so key order cannot be trusted to restore the order.
+    for (const taskId of ['t1', 't2', 't3', 't4', 't5', 't6']) {
+      recordEvent({ type: 'task.uncompleted', taskId })
+    }
+    const recorded = useHistoryStore.getState().events.map((e) => e.id)
+    await flushHistoryWrites()
+
+    resetHistoryForTests()
+    await ensureHistoryLoaded()
+
+    expect(useHistoryStore.getState().events.map((e) => e.id)).toEqual(recorded)
+  })
+
+  it('reports a failed load instead of pretending history is empty', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.stubGlobal('indexedDB', {
+      open() {
+        throw new Error('storage disabled')
+      },
+    })
+    resetHistoryForTests()
+
+    await expect(ensureHistoryLoaded()).resolves.toBe('failed')
+  })
+
+  it('warns once when a write fails after a successful load', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const database = await getHistoryDatabase()
+    database.close()
+
+    useHistoryStore
+      .getState()
+      .recordEvent({ type: 'task.uncompleted', taskId: 't1' })
+    useHistoryStore
+      .getState()
+      .recordEvent({ type: 'task.uncompleted', taskId: 't2' })
+    await flushHistoryWrites()
+
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(useHistoryStore.getState().events).toHaveLength(2)
   })
 
   it('ignores stored events once an import replaced the history', async () => {
