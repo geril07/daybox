@@ -31,7 +31,11 @@ export function DayView({ view, selectedGroupId = null }: DayViewProps) {
       {filteredOverdue.length > 0 && (
         <div>
           <SectionHeader label="Overdue" tone="destructive" />
-          <TaskList tasks={filteredOverdue} dayStartMinutes={dayStartMinutes} />
+          <TaskList
+            tasks={filteredOverdue}
+            dayStartMinutes={dayStartMinutes}
+            className="flex flex-col gap-0.5"
+          />
         </div>
       )}
       <SectionHeader label={meta.title} />
