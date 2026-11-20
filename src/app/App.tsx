@@ -21,7 +21,14 @@ import {
 import { getPlannerDate } from '@/shared/dates'
 import { getAuthStatus } from '@/shared/google-drive/server-auth'
 import { registerShortcuts } from '@/shared/keyboard'
-import { Button, Sheet, SheetContent, workspaceColumnClass } from '@/shared/ui'
+import {
+  Button,
+  Sheet,
+  SheetContent,
+  scrollGutterMirrorClass,
+  workspaceColumnClass,
+} from '@/shared/ui'
+import { cn } from '@/shared/utils/cn'
 
 import { Brand } from './Brand'
 import { Sidebar } from './Sidebar'
@@ -190,8 +197,15 @@ export function App() {
             </main>
             <div
               aria-hidden="true"
-              className="from-card/0 to-card pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-b"
-            />
+              className={cn(
+                'pointer-events-none absolute inset-x-0 bottom-0',
+                scrollGutterMirrorClass,
+              )}
+            >
+              <div className={workspaceColumnClass}>
+                <div className="from-card/0 to-card h-5 bg-gradient-to-b" />
+              </div>
+            </div>
           </div>
 
           <AppUpdateNotice />
