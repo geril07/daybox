@@ -192,7 +192,7 @@ The system SHALL show session dots indicating how many focus intervals have comp
 
 ### Requirement: Phase identity is shown on the timer
 
-The system SHALL convey the current phase on the timer itself rather than on the focused-task label. The timer bar background SHALL take a faint phase tint during break phases (focus stays neutral), and a phase label (FOCUS / SHORT BREAK / LONG BREAK) SHALL be shown as a caption above the time digits. The focused-task label SHALL NOT carry the phase label.
+The system SHALL convey the current phase on the timer itself rather than on the focused-task label. The timer bar background SHALL take a faint phase tint during break phases, using the break colors. During focus, the bar SHALL render a neutral surface derived from the active theme tokens so it separates from the workspace without using a break tint; it is not required to be the literal card color. A phase label (FOCUS / SHORT BREAK / LONG BREAK) SHALL be shown as a caption above the time digits. The focused-task label SHALL NOT carry the phase label.
 
 #### Scenario: Break phase is visible at a glance
 
@@ -203,7 +203,8 @@ The system SHALL convey the current phase on the timer itself rather than on the
 #### Scenario: Focus phase background is neutral
 
 - **WHEN** the timer is in the focus phase
-- **THEN** the bar background is neutral (no break tint)
+- **THEN** the bar background is a neutral surface derived from the theme tokens
+- **AND** it carries no break tint
 - **AND** the phase chip reads FOCUS
 
 #### Scenario: Task label is independent of phase
@@ -596,6 +597,8 @@ The system SHALL attempt to play a short click sound when the user toggles the t
 ### Requirement: User can clear the focused task from the timer bar
 
 The timer bar's "Working on…" row SHALL render an inline clear affordance (an ✕ icon) immediately after the task title whenever `useTimerStore.focusedTaskId` is non-null. The affordance SHALL be visible regardless of whether the focused task is still resolvable from the tasks store — it is the user's way out of both an off-screen focus and a stale focus. Activating the affordance SHALL call `useTimerStore.setFocusedTaskId(null)` and SHALL NOT mutate `phase`, `elapsed`, `startedAt`, `isRunning`, or `sessionPomoCount`. The affordance SHALL NOT be rendered when `focusedTaskId` is `null`.
+
+The focused title SHALL appear on one line and truncate when it exceeds the available width. When truncated or containing line breaks, its complete text SHALL be available in a tooltip on hover and keyboard focus. Links in the title SHALL remain usable.
 
 The clear affordance is a peer of the existing `TaskRow` focus toggle: both paths converge on `setFocusedTaskId(null)`. The `focusTask(id)` toggle semantics on `TaskRow` SHALL NOT change.
 

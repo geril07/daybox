@@ -65,7 +65,7 @@ export function SidebarAddGroupInput({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="Add group..."
-        className="text-foreground min-w-0 flex-1 border-none bg-transparent px-0 py-0 text-sm outline-none"
+        className="focus-indicator text-foreground min-w-0 flex-1 border-none bg-transparent px-0 py-0 text-sm"
       />
       <div className="flex shrink-0 items-center gap-1">
         <Button

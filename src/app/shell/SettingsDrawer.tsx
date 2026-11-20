@@ -227,7 +227,7 @@ export function SettingsDrawer({
                   const minutes = parseDayStartTime(event.target.value)
                   if (minutes !== null) setDayStartMinutes(minutes)
                 }}
-                className="border-border bg-background text-foreground rounded border px-2 py-1.5 text-xs"
+                className="border-border bg-background text-foreground rounded-md border px-2 py-1.5 text-xs"
               />
             </SettingRow>
             <SettingRow label="Theme">

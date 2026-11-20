@@ -137,7 +137,7 @@ describe('Sidebar navigation', () => {
     const workRow = rowFor('Work')
 
     expect(allBtn.className).toMatch(/(^|\s)text-muted-foreground($|\s)/)
-    expect(workRow.className).toMatch(/(^|\s)bg-muted($|\s)/)
+    expect(workRow.className).toMatch(/(^|\s)bg-card($|\s)/)
     expect(workRow.className).toMatch(/(^|\s)text-foreground($|\s)/)
   })
 

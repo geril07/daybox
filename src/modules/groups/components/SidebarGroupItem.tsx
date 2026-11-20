@@ -143,9 +143,9 @@ export function SidebarGroupItem({
       tabIndex={0}
       aria-pressed={isActive}
       className={cn(
-        'group/row flex cursor-pointer items-center justify-start gap-2.5 rounded-md px-2 py-2 text-sm font-medium outline-none',
+        'group/row focus-indicator flex cursor-pointer items-center justify-start gap-2.5 rounded-md px-2 py-2 text-sm font-medium',
         isActive
-          ? 'bg-muted text-foreground'
+          ? 'bg-card text-foreground'
           : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
       )}
       onClick={() => onSelect(group.id)}
@@ -212,7 +212,7 @@ export function SidebarGroupItem({
             handleSave()
           }}
           onKeyDown={handleKeyDown}
-          className="text-foreground min-w-0 flex-1 border-none bg-transparent text-sm outline-none"
+          className="focus-indicator text-foreground min-w-0 flex-1 border-none bg-transparent text-sm"
         />
       ) : (
         <span className="min-w-0 flex-1 truncate">{group.name}</span>
@@ -252,7 +252,7 @@ export function SidebarGroupItem({
           <MenuTrigger
             aria-label="Group actions"
             className={cn(
-              'text-muted-foreground hover:text-foreground flex size-6 shrink-0 cursor-pointer items-center justify-center rounded opacity-0 transition-opacity duration-120 outline-none group-hover/row:opacity-100 pointer-coarse:opacity-100',
+              'focus-indicator text-muted-foreground hover:text-foreground flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md opacity-0 transition-opacity duration-120 group-hover/row:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100',
               editing && 'hidden',
             )}
             onClick={(e) => e.stopPropagation()}

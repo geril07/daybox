@@ -1,4 +1,10 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { usePlannerStore } from '@/modules/planner'
@@ -51,5 +57,23 @@ describe('ViewTabs counts', () => {
     const tabs = screen.getAllByRole('tab')
     expect(within(tabs[0]).getByText('1')).toBeTruthy()
     expect(within(tabs[1]).getByText('1')).toBeTruthy()
+  })
+
+  it('keeps every view tab available and reports the selected view', () => {
+    const onChange = vi.fn()
+    render(<ViewTabs value="today" onChange={onChange} />)
+
+    const tabs = screen.getAllByRole('tab')
+    expect(tabs).toHaveLength(5)
+    expect(tabs.map((tab) => tab.getAttribute('aria-selected'))).toEqual([
+      'true',
+      'false',
+      'false',
+      'false',
+      'false',
+    ])
+
+    fireEvent.click(tabs[4])
+    expect(onChange).toHaveBeenCalledWith('unscheduled')
   })
 })

@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { DEFAULT_GROUP_ID, GROUP_COLORS, useGroupStore } from '@/modules/groups'
 import { usePlannerStore } from '@/modules/planner'
 import { useTaskStore } from '@/modules/tasks'
 
@@ -47,6 +48,17 @@ beforeEach(() => {
     weekStartDay: 1,
     dayStartMinutes: 0,
     browseDate: null,
+  })
+  useGroupStore.setState({
+    groups: [
+      {
+        id: DEFAULT_GROUP_ID,
+        name: 'General',
+        color: GROUP_COLORS[0],
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    stickyGroupId: null,
   })
   getAudioContextMock().reset()
   serverAuth.getAuthStatus.mockReset().mockResolvedValue({
@@ -248,5 +260,41 @@ describe('App shell boot hydration', () => {
     ;(pointerListener as EventListener)({ isTrusted: true } as Event)
 
     expect(getAudioContextMock().instances).toHaveLength(1)
+  })
+})
+
+describe('App shell navigation', () => {
+  it('opens group navigation in the mobile drawer and closes it after selecting a group', async () => {
+    useGroupStore.setState({
+      groups: [
+        {
+          id: DEFAULT_GROUP_ID,
+          name: 'General',
+          color: GROUP_COLORS[0],
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: 'work',
+          name: 'Work',
+          color: GROUP_COLORS[1],
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    })
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open navigation' }))
+    const drawer = await screen.findByRole('dialog')
+    expect(within(drawer).getByText('Groups')).toBeTruthy()
+
+    fireEvent.click(within(drawer).getByText('Work'))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+    expect(screen.getByText('Work').closest('[role="button"]')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
   })
 })

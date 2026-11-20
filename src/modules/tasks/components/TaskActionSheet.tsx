@@ -45,7 +45,7 @@ export function TaskActionSheet({
           <Button
             variant="ghost"
             size="none"
-            className="w-full justify-start gap-2 rounded px-3 py-2 text-left text-sm duration-100"
+            className="w-full justify-start gap-2 rounded-md px-3 py-2 text-left text-sm duration-100"
             onClick={handleFocus}
           >
             Focus this task
@@ -53,7 +53,7 @@ export function TaskActionSheet({
           <Button
             variant="ghost"
             size="none"
-            className="w-full justify-start gap-2 rounded px-3 py-2 text-left text-sm duration-100"
+            className="w-full justify-start gap-2 rounded-md px-3 py-2 text-left text-sm duration-100"
             onClick={handleDelete}
           >
             Delete

@@ -26,7 +26,7 @@ export function CycleProgressPopover({
   return (
     <Popover>
       <PopoverTrigger
-        className="hover:bg-bg-hover focus-visible:ring-ring ms-auto flex min-h-11 min-w-11 items-center justify-end gap-2 rounded-md px-2 outline-none focus-visible:ring-2"
+        className="focus-indicator hover:bg-bg-hover ms-auto flex min-h-11 min-w-11 items-center justify-end gap-2 rounded-md px-2"
         aria-label={`Adjust cycle progress, ${count} of ${target} completed`}
         title="Adjust cycle progress"
         onKeyDown={(event) => {

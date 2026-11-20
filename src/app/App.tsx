@@ -21,8 +21,9 @@ import {
 import { getPlannerDate } from '@/shared/dates'
 import { getAuthStatus } from '@/shared/google-drive/server-auth'
 import { registerShortcuts } from '@/shared/keyboard'
-import { Button, Sheet, SheetContent } from '@/shared/ui'
+import { Button, Sheet, SheetContent, workspaceColumnClass } from '@/shared/ui'
 
+import { Brand } from './Brand'
 import { Sidebar } from './Sidebar'
 import { ViewTabs } from './ViewTabs'
 import { AppUpdateNotice } from './updates/AppUpdateNotice'
@@ -128,8 +129,9 @@ export function App() {
     }
   }
 
-  const sidebarNav = (
+  const sidebarNav = (inDrawer = false) => (
     <Sidebar
+      inDrawer={inDrawer}
       selectedGroupId={selectedGroupId}
       onSelectGroup={(id) => {
         setSelectedGroupId(id)
@@ -139,107 +141,58 @@ export function App() {
   )
 
   return (
-    <div className="app-shell bg-background text-foreground flex h-dvh flex-col overflow-hidden">
-      <header className="border-border bg-card border-b">
-        <div className="mx-auto flex max-w-[680px] items-center justify-between px-4 py-3.5 md:max-w-none md:px-5">
-          <div className="flex items-center gap-2.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open navigation"
-            >
-              <Menu size={18} />
-            </Button>
-            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center">
-              <svg
-                width="26"
-                height="26"
-                viewBox="0 0 256 256"
-                role="img"
-                aria-label="DayBox"
-              >
-                <defs>
-                  <mask
-                    id="daybox-logo-clock-cutout"
-                    maskUnits="userSpaceOnUse"
-                  >
-                    <rect width="256" height="256" fill="#fff" />
-                    <circle cx="183" cy="177" r="57" fill="#000" />
-                  </mask>
-                </defs>
-                <g mask="url(#daybox-logo-clock-cutout)">
-                  <rect
-                    x="38"
-                    y="44"
-                    width="152"
-                    height="168"
-                    rx="28"
-                    fill="none"
-                    stroke="#d65332"
-                    strokeWidth="18"
-                  />
-                  <path
-                    d="M76 93h70M76 132h48"
-                    stroke="#d65332"
-                    strokeWidth="16"
-                    strokeLinecap="round"
-                  />
-                </g>
-                <circle
-                  cx="183"
-                  cy="177"
-                  r="48"
-                  fill="none"
-                  stroke="#d65332"
-                  strokeWidth="18"
-                />
-                <path
-                  d="M183 153v27l18 12"
-                  fill="none"
-                  stroke="#d65332"
-                  strokeWidth="14"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <span className="text-foreground text-base font-semibold tracking-tight">
-              DayBox
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSettingsOpen(true)}
-              aria-label="Settings"
-            >
-              <Settings size={18} />
-            </Button>
-          </div>
+    <div className="app-shell bg-rail text-foreground flex h-dvh overflow-hidden">
+      <aside className="bg-rail hidden shrink-0 flex-col md:flex md:w-[240px]">
+        <div className="px-5 pt-6 pb-2">
+          <Brand />
         </div>
-      </header>
+        {sidebarNav()}
+      </aside>
 
-      <div className="flex min-h-0 flex-1">
-        <aside className="border-border hidden w-[220px] shrink-0 border-r md:block">
-          {sidebarNav}
-        </aside>
-
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <main className="flex-1 scrollbar-gutter-stable overflow-y-auto">
-            <div className="container mx-auto w-full max-w-[680px] px-4 md:px-7">
-              <ViewTabs value={view} onChange={setView} />
-              <div className="task-list-area py-1 pb-4">
-                <AddTaskRow
-                  defaultDate={defaultDate}
-                  defaultGroupId={selectedGroupId}
-                />
-                {renderView()}
-              </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col md:py-2 md:pr-2">
+        <div className="bg-card flex min-h-0 flex-1 flex-col overflow-hidden md:rounded-2xl">
+          <header className="bg-rail flex shrink-0 items-center justify-between px-4 py-3.5 md:justify-end md:bg-transparent md:px-5 md:py-3">
+            <div className="flex items-center gap-2.5 md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open navigation"
+              >
+                <Menu size={18} />
+              </Button>
+              <Brand />
             </div>
-          </main>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Settings"
+              >
+                <Settings size={18} />
+              </Button>
+            </div>
+          </header>
+
+          <div className="relative min-h-0 flex-1">
+            <main className="h-full scrollbar-gutter-stable overflow-y-auto">
+              <div className={workspaceColumnClass}>
+                <ViewTabs value={view} onChange={setView} />
+                <div className="task-list-area py-1 pb-4">
+                  <AddTaskRow
+                    defaultDate={defaultDate}
+                    defaultGroupId={selectedGroupId}
+                  />
+                  {renderView()}
+                </div>
+              </div>
+            </main>
+            <div
+              aria-hidden="true"
+              className="from-card/0 to-card pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-b"
+            />
+          </div>
 
           <AppUpdateNotice />
           <TimerBar />
@@ -247,8 +200,11 @@ export function App() {
       </div>
 
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent side="left" className="w-[260px] max-w-[85vw] gap-0 p-0">
-          {sidebarNav}
+        <SheetContent
+          side="left"
+          className="bg-rail w-[260px] max-w-[85vw] gap-0 p-0"
+        >
+          {sidebarNav(true)}
         </SheetContent>
       </Sheet>
 

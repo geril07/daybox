@@ -6,6 +6,7 @@ import { useGroupStore } from '@/modules/groups'
 import { useHistoryStore } from '@/modules/history'
 import { useTaskStore } from '@/modules/tasks'
 import { registerShortcuts } from '@/shared/keyboard'
+import { TooltipProvider } from '@/shared/ui'
 
 import { unlockAudio } from '../alarm'
 import { clearIntervalNotification } from '../notifications'
@@ -436,20 +437,56 @@ describe('TimerBar', () => {
     })
   })
 
-  it('preserves the full multiline focused title and links', () => {
+  it('truncates a multiline focused title while preserving its links and full tooltip', async () => {
+    const user = userEvent.setup()
     const title = 'Review\nhttps://example.com/proposal'
     const task = createTask({ title })
     useTaskStore.setState({ tasks: [task] })
     useTimerStore.setState({ focusedTaskId: task.id })
-    render(<TimerBar />)
+    render(
+      <TooltipProvider>
+        <TimerBar />
+      </TooltipProvider>,
+    )
     const link = screen.getByRole('link', {
       name: 'https://example.com/proposal',
     })
     const container = link.parentElement
     expect(container?.textContent).toBe(title)
-    expect(container).toHaveClass('whitespace-pre-wrap', 'break-words')
-    expect(container).not.toHaveClass('truncate')
+    expect(container).toHaveClass('truncate')
     expect(link).toHaveAttribute('target', '_blank')
+    await user.hover(container!)
+    expect(
+      (await screen.findByText('Review https://example.com/proposal'))
+        .textContent,
+    ).toBe(title)
+  })
+
+  it('only shows a single-line title tooltip when the title overflows', async () => {
+    const user = userEvent.setup()
+    const task = createTask({ title: 'A focused task' })
+    useTaskStore.setState({ tasks: [task] })
+    useTimerStore.setState({ focusedTaskId: task.id })
+    render(
+      <TooltipProvider>
+        <TimerBar />
+      </TooltipProvider>,
+    )
+    const title = screen.getByText('A focused task').parentElement!
+    Object.defineProperties(title, {
+      clientWidth: { configurable: true, value: 100 },
+      scrollWidth: { configurable: true, value: 100 },
+    })
+    await user.hover(title)
+    expect(screen.getAllByText('A focused task')).toHaveLength(1)
+
+    await user.unhover(title)
+    Object.defineProperty(title, 'scrollWidth', {
+      configurable: true,
+      value: 200,
+    })
+    await user.hover(title)
+    expect(await screen.findAllByText('A focused task')).toHaveLength(2)
   })
 
   it('increments pomoCompleted past pomoEstimate = 0 on focus complete', () => {

@@ -85,7 +85,7 @@ function SeriesRow({
   }
   return (
     <div
-      className="border-border flex min-w-0 flex-col gap-3 rounded border p-3"
+      className="border-border flex min-w-0 flex-col gap-3 rounded-lg border p-3"
       role="group"
       aria-label={series.title}
     >
@@ -99,7 +99,7 @@ function SeriesRow({
           if (event.key === 'Enter') rename()
           if (event.key === 'Escape') setTitle(series.title)
         }}
-        className="border-border bg-background w-full min-w-0 rounded border px-2 py-1.5 text-sm"
+        className="border-border bg-background w-full min-w-0 rounded-md border px-2 py-1.5 text-sm"
       />
       <Weekdays
         value={series.weekdays}
@@ -115,7 +115,7 @@ function SeriesRow({
             triggerProps={{
               'aria-label': `Group: ${group?.name ?? 'Group'}`,
               className:
-                'border-border bg-background flex h-7 min-w-0 items-center gap-2 rounded border px-2 text-sm',
+                'border-border bg-background flex h-7 min-w-0 items-center gap-2 rounded-md border px-2 text-sm',
             }}
           >
             <span
@@ -249,7 +249,7 @@ export function RecurringSettingsPanel() {
           value={title}
           maxLength={280}
           onChange={(event) => setTitle(event.target.value)}
-          className="border-border bg-background rounded border px-2 py-1.5 text-sm"
+          className="border-border bg-background rounded-md border px-2 py-1.5 text-sm"
         />
         <Weekdays value={weekdays} onChange={setWeekdays} />
         <Button

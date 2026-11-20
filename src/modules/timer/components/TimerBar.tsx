@@ -6,7 +6,7 @@ import {
   SkipForward,
   X,
 } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useGroupStore } from '@/modules/groups'
 import { useHistoryStore } from '@/modules/history'
@@ -20,6 +20,11 @@ import {
   MenuContent,
   MenuRadioGroup,
   MenuRadioItem,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  scrollGutterMirrorClass,
+  workspaceColumnClass,
 } from '@/shared/ui'
 import { cn } from '@/shared/utils/cn'
 
@@ -259,11 +264,12 @@ export function TimerBar() {
         ? 'SHORT BREAK'
         : 'LONG BREAK'
 
-  // Ambient phase tint: focus stays neutral (bg-card), breaks get a faint
-  // wash of their phase color so the mode reads at a glance.
+  // Ambient phase tint: focus stays neutral, breaks get a faint wash of their
+  // phase color. The neutral focus surface is derived from the theme tokens so
+  // the rounded footer still separates from the workspace card.
   const tintBg =
     phase === 'focus'
-      ? undefined
+      ? 'color-mix(in oklch, var(--card) 95%, var(--fg) 5%)'
       : `color-mix(in oklch, ${phaseColor} 8%, var(--card))`
 
   const cycleLabel =
@@ -281,110 +287,145 @@ export function TimerBar() {
   ]
 
   return (
-    <div
-      className="bg-card transition-colors duration-300"
-      style={tintBg ? { background: tintBg } : undefined}
-    >
-      <div className="bg-border h-0.5 overflow-hidden">
+    <div className={cn('shrink-0 pb-3 md:pb-4', scrollGutterMirrorClass)}>
+      <div className={workspaceColumnClass}>
         <div
-          className="linear h-full rounded-r-xs transition-[width] duration-900"
-          style={{ width: `${progress * 100}%`, background: phaseColor }}
-        />
-      </div>
-      <div className="mx-auto flex max-w-[680px] flex-col gap-1 px-4 py-2.5 sm:px-7">
-        <div>
-          <PhaseChip
-            label={phaseLabel}
-            color={phaseColor}
-            current={phase}
-            options={phaseOptions}
-            onSelect={handleSelectPhase}
-          />
-          <div className="grid grid-cols-3">
-            <div className="flex items-center gap-3">
-              <IntervalDurationPopover
-                display={clockDisplay}
-                isIdle={isIdle}
-                isCustom={isCustomDuration}
-                disabled={isRunning}
-              />
-            </div>
-            <div className="mx-auto flex items-center gap-1">
-              <Button
-                variant="none"
-                size="none"
-                disabled={resetMode === 'disabled'}
-                className="text-muted-foreground hover:bg-bg-hover hover:text-fg h-[34px] w-[34px] rounded-full border-0 duration-140 disabled:pointer-events-none disabled:opacity-40"
-                onClick={handleReset}
-                title={resetMode === 'session' ? 'Reset session' : 'Restart'}
-                aria-label={
-                  resetMode === 'session' ? 'Reset session' : 'Restart'
-                }
-              >
-                {resetMode === 'session' ? (
-                  <RefreshCcw size={14} />
-                ) : (
-                  <RotateCcw size={14} />
-                )}
-              </Button>
-              <Button
-                variant="none"
-                size="none"
-                className="size-10 rounded-full border-0 text-white shadow-sm duration-140 hover:scale-105 hover:opacity-90"
-                style={{ background: phaseColor }}
-                onClick={togglePlayPauseWithClick}
-                title={isRunning ? 'Pause' : 'Start'}
-              >
-                {isRunning ? (
-                  <Pause size={16} fill="currentColor" />
-                ) : (
-                  <Play size={16} fill="currentColor" />
-                )}
-              </Button>
-              <Button
-                variant="none"
-                size="none"
-                className="text-muted-foreground hover:bg-bg-hover hover:text-fg h-[34px] w-[34px] rounded-full border-0 duration-140"
-                onClick={handleSkip}
-                title="Skip"
-              >
-                <SkipForward size={14} />
-              </Button>
-            </div>
-            <CycleProgressPopover label={cycleLabel} color={phaseColor} />
+          className="bg-card overflow-hidden rounded-2xl transition-colors duration-300"
+          style={{ background: tintBg }}
+        >
+          <div className="bg-border h-0.5 overflow-hidden">
+            <div
+              className="linear h-full rounded-r-xs transition-[width] duration-900"
+              style={{ width: `${progress * 100}%`, background: phaseColor }}
+            />
           </div>
-        </div>
-        <div className="flex min-h-[20px] min-w-0 items-center gap-1.5">
-          <span className="text-fg-3 shrink-0 text-xs font-semibold tracking-widest uppercase">
-            Working on
-          </span>
-          <span
-            className={cn(
-              'min-w-0 shrink text-xs break-words whitespace-pre-wrap',
-              focusedTask ? 'text-fg-2' : 'text-fg-3',
-            )}
-          >
-            {focusedTask ? (
-              <LinkifiedText text={focusedTask.title} />
-            ) : (
-              'No task focused'
-            )}
-          </span>
-          {focusedTaskId && (
-            <Button
-              variant="ghost"
-              size="none"
-              className="text-muted-foreground hover:text-fg size-5 shrink-0 rounded-full p-0"
-              onClick={handleClearFocus}
-              title="Clear focus"
-              aria-label="Clear focus"
-            >
-              <X size={12} />
-            </Button>
-          )}
+          <div className="flex flex-col gap-1 px-3 py-2.5 md:px-5 md:py-3">
+            <div>
+              <PhaseChip
+                label={phaseLabel}
+                color={phaseColor}
+                current={phase}
+                options={phaseOptions}
+                onSelect={handleSelectPhase}
+              />
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:grid sm:grid-cols-3 sm:gap-0">
+                <div className="flex items-center gap-3">
+                  <IntervalDurationPopover
+                    display={clockDisplay}
+                    isIdle={isIdle}
+                    isCustom={isCustomDuration}
+                    disabled={isRunning}
+                  />
+                </div>
+                <div className="mx-auto flex items-center gap-1">
+                  <Button
+                    variant="none"
+                    size="none"
+                    disabled={resetMode === 'disabled'}
+                    className="text-muted-foreground hover:bg-bg-hover hover:text-fg h-[34px] w-[34px] rounded-full border-0 duration-140 disabled:pointer-events-none disabled:opacity-40"
+                    onClick={handleReset}
+                    title={
+                      resetMode === 'session' ? 'Reset session' : 'Restart'
+                    }
+                    aria-label={
+                      resetMode === 'session' ? 'Reset session' : 'Restart'
+                    }
+                  >
+                    {resetMode === 'session' ? (
+                      <RefreshCcw size={14} />
+                    ) : (
+                      <RotateCcw size={14} />
+                    )}
+                  </Button>
+                  <Button
+                    variant="none"
+                    size="none"
+                    className="size-10 rounded-full border-0 text-white shadow-sm duration-140 hover:scale-105 hover:opacity-90 focus-visible:outline-offset-2"
+                    style={{ background: phaseColor }}
+                    onClick={togglePlayPauseWithClick}
+                    title={isRunning ? 'Pause' : 'Start'}
+                  >
+                    {isRunning ? (
+                      <Pause size={16} fill="currentColor" />
+                    ) : (
+                      <Play size={16} fill="currentColor" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="none"
+                    size="none"
+                    className="text-muted-foreground hover:bg-bg-hover hover:text-fg h-[34px] w-[34px] rounded-full border-0 duration-140"
+                    onClick={handleSkip}
+                    title="Skip"
+                  >
+                    <SkipForward size={14} />
+                  </Button>
+                </div>
+                <CycleProgressPopover label={cycleLabel} color={phaseColor} />
+              </div>
+            </div>
+            <div className="flex min-h-[20px] min-w-0 items-center gap-1.5">
+              <span className="text-fg-3 shrink-0 text-xs font-semibold tracking-widest uppercase">
+                Working on
+              </span>
+              {focusedTask ? (
+                <FocusedTaskTitle title={focusedTask.title} />
+              ) : (
+                <span className="text-fg-3 truncate text-xs">
+                  No task focused
+                </span>
+              )}
+              {focusedTaskId && (
+                <Button
+                  variant="ghost"
+                  size="none"
+                  className="text-muted-foreground hover:text-fg size-5 shrink-0 rounded-full p-0"
+                  onClick={handleClearFocus}
+                  title="Clear focus"
+                  aria-label="Clear focus"
+                >
+                  <X size={12} />
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  )
+}
+
+function FocusedTaskTitle({ title }: { title: string }) {
+  const titleRef = useRef<HTMLSpanElement>(null)
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Tooltip
+      open={open}
+      onOpenChange={(nextOpen) => {
+        const element = titleRef.current
+        setOpen(
+          nextOpen &&
+            !!element &&
+            (element.scrollWidth > element.clientWidth || title.includes('\n')),
+        )
+      }}
+    >
+      <TooltipTrigger
+        render={
+          <span
+            ref={titleRef}
+            tabIndex={0}
+            className="focus-indicator text-fg-2 min-w-0 shrink truncate rounded-sm text-xs"
+          />
+        }
+      >
+        <LinkifiedText text={title} />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[min(24rem,90vw)] break-words whitespace-pre-wrap">
+        {title}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -409,7 +450,7 @@ function PhaseChip({
   return (
     <Menu>
       <MenuTrigger
-        className="flex w-fit cursor-pointer items-center rounded-md py-0.5 text-xs font-semibold tracking-widest uppercase transition-colors duration-140 outline-none"
+        className="focus-indicator flex w-fit cursor-pointer items-center rounded-md py-0.5 text-xs font-semibold tracking-widest uppercase transition-colors duration-140"
         style={{ color }}
       >
         {label}

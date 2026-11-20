@@ -67,8 +67,8 @@ export function IntervalDurationPopover({
       <PopoverTrigger
         className={cn(
           clockClassName,
-          'cursor-pointer rounded-md outline-none',
-          'hover:bg-bg-hover focus-visible:ring-ring focus-visible:ring-2',
+          'focus-indicator cursor-pointer rounded-md',
+          'hover:bg-bg-hover',
         )}
         aria-label="Adjust interval duration"
         title="Adjust interval duration"

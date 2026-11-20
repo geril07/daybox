@@ -83,11 +83,8 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
   }
 
   return (
-    <form
-      className="add-task-wrap border-border border-b pt-3.5 pb-1.5"
-      onSubmit={handleSubmit}
-    >
-      <div className="flex items-center gap-2.5">
+    <form className="add-task-wrap pt-3.5 pb-1.5" onSubmit={handleSubmit}>
+      <div className="border-border-strong/50 has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:outline-ring flex items-center gap-2.5 rounded-xl border px-3 py-1.5 transition-colors has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:-outline-offset-2">
         <textarea
           ref={inputRef}
           value={title}
@@ -97,7 +94,7 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
           placeholder="Add a task…"
           aria-label="Add task (Shift+Enter for new line)"
           title="Shift+Enter for a new line"
-          className="text-foreground min-h-9 flex-1 resize-none overflow-hidden border-none bg-transparent py-2 text-sm leading-5 outline-none"
+          className="text-foreground min-h-8 flex-1 resize-none overflow-hidden border-none bg-transparent py-1 text-sm leading-5 outline-none"
         />
         {showGroupUi && (
           <GroupSelect
@@ -106,15 +103,16 @@ export function AddTaskRow({ defaultDate, defaultGroupId }: AddTaskRowProps) {
             onChange={setStickyGroupId}
             triggerProps={{
               className:
-                'border-border text-muted-foreground flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs transition-colors duration-140',
+                'focus-indicator border-border-strong/60 text-muted-foreground hover:border-border-strong hover:text-fg flex min-w-0 max-w-[45%] shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors duration-140',
+              title: currentGroup.name,
             }}
           >
             <span
               className="h-[7px] w-[7px] shrink-0 rounded-full"
               style={{ background: currentGroup.color }}
             />
-            {currentGroup.name}
-            <ChevronDown size={10} />
+            <span className="min-w-0 truncate">{currentGroup.name}</span>
+            <ChevronDown size={10} className="shrink-0" />
           </GroupSelect>
         )}
         <Button
