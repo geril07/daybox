@@ -3,6 +3,8 @@ import { DragDropProvider, PointerSensor } from '@dnd-kit/react'
 import type { DragEndEvent } from '@dnd-kit/react'
 import { isSortable, useSortable } from '@dnd-kit/react/sortable'
 
+import { cn } from '@/shared/utils/cn'
+
 import { useTaskStore } from '../store'
 import type { Task } from '../types'
 import { TaskRow } from './TaskRow'
@@ -14,6 +16,7 @@ interface TaskListProps {
   date?: string | null
   sortable?: boolean
   dayStartMinutes?: number
+  className?: string
 }
 
 export function TaskList({
@@ -22,6 +25,7 @@ export function TaskList({
   date,
   sortable,
   dayStartMinutes = 0,
+  className,
 }: TaskListProps) {
   const reorderTasks = useTaskStore((s) => s.reorderTasks)
 
@@ -53,7 +57,7 @@ export function TaskList({
   }
 
   return (
-    <div className="relative">
+    <div className={cn('relative', className)}>
       {isDraggable && groupKey ? (
         <DragDropProvider onDragEnd={handleDragEnd}>
           {tasks.map((task, index) => (

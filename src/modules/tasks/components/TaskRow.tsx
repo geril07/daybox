@@ -254,8 +254,8 @@ export function TaskRow({
     <div className="@container">
       <div
         className={cn(
-          'border-border group grid min-h-[46px] grid-cols-[auto_auto_minmax(0,1fr)_auto] grid-rows-[auto_auto] items-center gap-x-2.5 gap-y-1 rounded border-b px-1.5 py-2 transition-[background-color,transform,box-shadow] duration-200 ease-out @min-[36rem]:flex @min-[36rem]:items-center @min-[36rem]:gap-2.5',
-          overdue && 'bg-overdue-bg',
+          'border-border group grid min-h-[46px] grid-cols-[auto_auto_minmax(0,1fr)_auto] grid-rows-[auto_auto] items-center gap-x-2.5 gap-y-1 border-b px-1.5 py-2 transition-[background-color,transform,box-shadow] duration-200 ease-out @min-[36rem]:flex @min-[36rem]:items-center @min-[36rem]:gap-2.5',
+          overdue && 'bg-overdue-bg rounded',
           isFocused && 'border-l-accent border-l-[3px]',
           isDragSource && 'relative z-10 -translate-y-1 scale-[1.02] shadow-lg',
         )}
