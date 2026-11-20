@@ -14,9 +14,14 @@ import { cn } from '@/shared/utils/cn'
 interface SidebarProps {
   selectedGroupId: string | null
   onSelectGroup: (id: string | null) => void
+  inDrawer?: boolean
 }
 
-export function Sidebar({ selectedGroupId, onSelectGroup }: SidebarProps) {
+export function Sidebar({
+  selectedGroupId,
+  onSelectGroup,
+  inDrawer = false,
+}: SidebarProps) {
   const groups = useGroupStore((s) => s.groups)
   const renameGroup = useGroupStore((s) => s.renameGroup)
   const setGroupColor = useGroupStore((s) => s.setGroupColor)
@@ -46,7 +51,12 @@ export function Sidebar({ selectedGroupId, onSelectGroup }: SidebarProps) {
   return (
     <nav className="flex flex-col gap-4 p-3">
       <div className="flex flex-col gap-0.5">
-        <div className="text-muted-foreground flex items-center justify-between px-2 py-1.5 text-[11px] font-semibold tracking-widest uppercase">
+        <div
+          className={cn(
+            'text-muted-foreground flex items-center justify-between px-2 py-1.5 text-[11px] font-semibold tracking-widest uppercase',
+            inDrawer && 'pr-10',
+          )}
+        >
           <span>Groups</span>
           <Button
             variant="ghost"
@@ -66,7 +76,7 @@ export function Sidebar({ selectedGroupId, onSelectGroup }: SidebarProps) {
             className={cn(
               'justify-start gap-2.5 rounded-md px-2 py-2 text-sm font-medium',
               selectedGroupId === null
-                ? 'bg-muted text-foreground'
+                ? 'bg-card text-foreground'
                 : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
             )}
             onClick={() => onSelectGroup(null)}

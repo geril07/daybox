@@ -105,10 +105,10 @@ export function ViewTabs({ value, onChange }: ViewTabsProps) {
     <div
       ref={listRef}
       role="tablist"
-      className="bg-muted relative mt-2 flex w-full justify-between gap-2 rounded-lg p-1"
+      className="@container relative mt-2 flex w-full items-stretch justify-between gap-0.5"
     >
       <div
-        className="bg-background absolute inset-y-1 rounded-md border shadow-xs transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+        className="absolute inset-y-0 rounded-lg bg-[color-mix(in_oklch,var(--card)_95%,var(--fg)_5%)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
         style={{ left: indicator.left, width: indicator.width }}
       />
       {viewTabs.map((tab) => (
@@ -117,16 +117,18 @@ export function ViewTabs({ value, onChange }: ViewTabsProps) {
           role="tab"
           aria-selected={value === tab.value}
           onClick={() => onChange(tab.value)}
-          className="aria-selected:text-foreground text-muted-foreground relative z-10 inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-1.5 py-1 text-sm font-medium whitespace-nowrap transition-colors"
+          className="focus-indicator aria-selected:text-foreground text-muted-foreground hover:text-foreground relative z-10 inline-flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1.5 text-xs font-medium whitespace-nowrap transition-colors @min-[32rem]:flex-row @min-[32rem]:gap-1.5 @min-[32rem]:px-1.5 @min-[32rem]:py-2.5 @min-[32rem]:text-sm"
         >
-          <tab.Icon className="size-3.5" />
-          <span className="hidden sm:inline">{tab.label}</span>
-          <span className="sm:hidden">{tab.shortLabel}</span>
-          {counts[tab.value as keyof typeof counts] > 0 && (
-            <span className="bg-muted-foreground/15 ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] leading-none font-medium tabular-nums">
-              {counts[tab.value as keyof typeof counts]}
-            </span>
-          )}
+          <tab.Icon className="size-3.5 shrink-0" />
+          <span className="flex min-w-0 items-center gap-1">
+            <span className="hidden @min-[32rem]:inline">{tab.label}</span>
+            <span className="@min-[32rem]:hidden">{tab.shortLabel}</span>
+            {counts[tab.value as keyof typeof counts] > 0 && (
+              <span className="bg-card text-fg-2 ring-border-strong/30 rounded-full px-1 py-0.5 text-[10px] leading-none font-medium tabular-nums ring-1 @min-[32rem]:px-1.5">
+                {counts[tab.value as keyof typeof counts]}
+              </span>
+            )}
+          </span>
         </button>
       ))}
     </div>

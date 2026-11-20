@@ -84,6 +84,8 @@ export { EmptyState } from './EmptyState'
 
 export { LinkifiedText } from './LinkifiedText'
 
+export { workspaceColumnClass, scrollGutterMirrorClass } from './workspace'
+
 export {
   Tooltip,
   TooltipTrigger,

@@ -251,157 +251,167 @@ export function TaskRow({
   }
 
   return (
-    <div
-      className={cn(
-        'border-border group flex min-h-[46px] items-center gap-2.5 rounded border-b px-1.5 py-2 transition-[background-color,transform,box-shadow] duration-200 ease-out',
-        overdue && 'bg-overdue-bg',
-        isFocused && 'border-l-accent border-l-[3px]',
-        isDragSource && 'relative z-10 -translate-y-1 scale-[1.02] shadow-lg',
-      )}
-    >
+    <div className="@container">
       <div
-        ref={dragHandleRef}
         className={cn(
-          'text-muted-foreground flex w-4 shrink-0 justify-center p-0.5',
-          // eslint-disable-next-line react-hooks/refs -- checking presence of callback ref, not reading .current
-          dragHandleRef &&
-            'cursor-grab opacity-0 transition-opacity duration-120 group-hover:opacity-100 active:cursor-grabbing pointer-coarse:opacity-100',
+          'border-border group grid min-h-[46px] grid-cols-[auto_auto_minmax(0,1fr)_auto] grid-rows-[auto_auto] items-center gap-x-2.5 gap-y-1 rounded border-b px-1.5 py-2 transition-[background-color,transform,box-shadow] duration-200 ease-out @min-[36rem]:flex @min-[36rem]:items-center @min-[36rem]:gap-2.5',
+          overdue && 'bg-overdue-bg',
+          isFocused && 'border-l-accent border-l-[3px]',
+          isDragSource && 'relative z-10 -translate-y-1 scale-[1.02] shadow-lg',
         )}
-        onClick={(e) => e.stopPropagation()}
       >
-        {dragHandleRef && <GripVertical size={12} />}
-      </div>
-
-      <Button
-        variant="ghost"
-        size="none"
-        className={cn(
-          'h-[19px] w-[19px] shrink-0 rounded-full border p-0 duration-140',
-          task.completed
-            ? 'border-success bg-success text-white'
-            : 'border-border-strong bg-transparent text-transparent',
-        )}
-        onClick={() => toggleTask(task.id)}
-      >
-        {task.completed && <Check size={10} strokeWidth={3} />}
-      </Button>
-
-      <div className="min-w-0 flex-1">
-        {editing ? (
-          <textarea
-            ref={editRef}
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            onBlur={handleSaveEdit}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            aria-label="Edit task title (Shift+Enter for new line)"
-            title="Shift+Enter for a new line"
-            className="text-foreground m-0 block min-h-[19px] w-full resize-none overflow-hidden border-none bg-transparent p-0 text-sm leading-[19px] font-[450] outline-none"
-            style={{ caretColor: 'var(--accent)' }}
-          />
-        ) : (
-          <span
-            className={cn(
-              'block cursor-text text-sm leading-[19px] font-[450] break-words whitespace-pre-wrap',
-              task.completed ? 'text-fg-3 line-through' : 'text-fg',
-            )}
-            onClick={handleStartEdit}
-            onMouseDown={(e) => {
-              if (e.button === 0) selectionGestureRef.current = e.currentTarget
-            }}
-          >
-            <LinkifiedText text={task.title} />
-          </span>
-        )}
-      </div>
-
-      {showGroupUi && group && (
-        <GroupSelect
-          groupId={task.groupId}
-          groups={groups}
-          onChange={(newGroupId) =>
-            updateTask(task.id, { groupId: newGroupId })
-          }
-          triggerProps={{ className: 'flex shrink-0 items-center gap-1.5' }}
+        <div
+          ref={dragHandleRef}
+          className={cn(
+            'text-muted-foreground col-start-1 row-start-1 flex w-4 shrink-0 justify-center p-0.5',
+            // eslint-disable-next-line react-hooks/refs -- checking presence of callback ref, not reading .current
+            dragHandleRef &&
+              'cursor-grab opacity-0 transition-opacity duration-120 group-hover:opacity-100 active:cursor-grabbing pointer-coarse:opacity-100',
+          )}
+          onClick={(e) => e.stopPropagation()}
         >
-          <span
-            className="h-[7px] w-[7px] shrink-0 rounded-full"
-            style={{ background: group.color }}
-          />
-          <span className="text-muted-foreground text-xs">{group.name}</span>
-        </GroupSelect>
-      )}
-
-      {task.seriesId && (
-        <Repeat
-          size={14}
-          className="text-muted-foreground shrink-0"
-          aria-label="Recurring task"
-        />
-      )}
-      <PomoArea task={task} />
-      <DatePickerButton task={task} dayStartMinutes={dayStartMinutes} />
-
-      <>
-        <div className="group/actions flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 group-hover:opacity-100 pointer-coarse:hidden">
-          <Button
-            variant="ghostDestructive"
-            size="icon-sm"
-            onClick={() => focusTask(task.id)}
-            title="Focus"
-          >
-            <Target />
-          </Button>
-          <Button
-            variant="ghostDestructive"
-            size="icon-sm"
-            onClick={handleDelete}
-            title="Delete"
-          >
-            <Trash2 />
-          </Button>
+          {dragHandleRef && <GripVertical size={12} />}
         </div>
-        <div className="flex shrink-0 items-center gap-0.5 pointer-fine:hidden">
-          <Button
-            variant="ghostDestructive"
-            size="icon-sm"
-            onClick={() => setActionSheetOpen(true)}
-            title="More actions"
-          >
-            <MoreHorizontal />
-          </Button>
-          <TaskActionSheet
-            task={task}
-            open={actionSheetOpen}
-            onOpenChange={setActionSheetOpen}
-            onDelete={handleDelete}
-          />
+
+        <Button
+          variant="ghost"
+          size="none"
+          className={cn(
+            'col-start-2 row-start-1 h-[19px] w-[19px] shrink-0 rounded-full border p-0 duration-140',
+            task.completed
+              ? 'border-success bg-success text-white'
+              : 'border-border-strong bg-transparent text-transparent',
+          )}
+          onClick={() => toggleTask(task.id)}
+        >
+          {task.completed && <Check size={10} strokeWidth={3} />}
+        </Button>
+
+        <div className="col-start-3 row-start-1 min-w-0 flex-1">
+          {editing ? (
+            <textarea
+              ref={editRef}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleSaveEdit}
+              onKeyDown={handleKeyDown}
+              rows={1}
+              aria-label="Edit task title (Shift+Enter for new line)"
+              title="Shift+Enter for a new line"
+              className="focus-indicator text-foreground m-0 block min-h-[19px] w-full resize-none overflow-hidden border-none bg-transparent p-0 text-sm leading-[19px] font-[450]"
+              style={{ caretColor: 'var(--accent)' }}
+            />
+          ) : (
+            <span
+              className={cn(
+                'block cursor-text text-sm leading-[19px] font-[450] break-words whitespace-pre-wrap',
+                task.completed ? 'text-fg-3 line-through' : 'text-fg',
+              )}
+              onClick={handleStartEdit}
+              onMouseDown={(e) => {
+                if (e.button === 0)
+                  selectionGestureRef.current = e.currentTarget
+              }}
+            >
+              <LinkifiedText text={task.title} />
+            </span>
+          )}
         </div>
-      </>
-      <AlertDialog open={deleteChoiceOpen} onOpenChange={setDeleteChoiceOpen}>
-        <AlertDialogContent>
-          <AlertDialogTitle>Delete recurring task?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Skip this occurrence, or delete the series and all its occurrences.
-            This cannot be undone.
-          </AlertDialogDescription>
-          <AlertDialogAction
-            onClick={() => useTaskStore.getState().skipOccurrence(task.id)}
-          >
-            Skip this occurrence
-          </AlertDialogAction>
-          <AlertDialogAction
-            onClick={() => {
-              if (task.seriesId)
-                useTaskStore.getState().deleteSeries(task.seriesId)
-            }}
-          >
-            Delete whole series
-          </AlertDialogAction>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-        </AlertDialogContent>
-      </AlertDialog>
+
+        <div className="col-start-1 col-end-5 row-start-2 flex flex-wrap items-center gap-x-2 gap-y-1 @min-[36rem]:contents">
+          {showGroupUi && group && (
+            <GroupSelect
+              groupId={task.groupId}
+              groups={groups}
+              onChange={(newGroupId) =>
+                updateTask(task.id, { groupId: newGroupId })
+              }
+              triggerProps={{ className: 'flex shrink-0 items-center gap-1.5' }}
+            >
+              <span
+                className="h-[7px] w-[7px] shrink-0 rounded-full"
+                style={{ background: group.color }}
+              />
+              <span
+                className="text-muted-foreground max-w-[8rem] truncate text-xs"
+                title={group.name}
+              >
+                {group.name}
+              </span>
+            </GroupSelect>
+          )}
+
+          {task.seriesId && (
+            <Repeat
+              size={14}
+              className="text-muted-foreground shrink-0"
+              aria-label="Recurring task"
+            />
+          )}
+          <PomoArea task={task} />
+          <DatePickerButton task={task} dayStartMinutes={dayStartMinutes} />
+        </div>
+
+        <>
+          <div className="group/actions col-start-4 row-start-1 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-120 group-hover:opacity-100 @max-[36rem]:hidden pointer-coarse:hidden">
+            <Button
+              variant="ghostDestructive"
+              size="icon-sm"
+              onClick={() => focusTask(task.id)}
+              title="Focus"
+            >
+              <Target />
+            </Button>
+            <Button
+              variant="ghostDestructive"
+              size="icon-sm"
+              onClick={handleDelete}
+              title="Delete"
+            >
+              <Trash2 />
+            </Button>
+          </div>
+          <div className="col-start-4 row-start-1 flex shrink-0 items-center gap-0.5 @min-[36rem]:pointer-fine:hidden">
+            <Button
+              variant="ghostDestructive"
+              size="icon-sm"
+              onClick={() => setActionSheetOpen(true)}
+              title="More actions"
+            >
+              <MoreHorizontal />
+            </Button>
+            <TaskActionSheet
+              task={task}
+              open={actionSheetOpen}
+              onOpenChange={setActionSheetOpen}
+              onDelete={handleDelete}
+            />
+          </div>
+        </>
+        <AlertDialog open={deleteChoiceOpen} onOpenChange={setDeleteChoiceOpen}>
+          <AlertDialogContent>
+            <AlertDialogTitle>Delete recurring task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Skip this occurrence, or delete the series and all its
+              occurrences. This cannot be undone.
+            </AlertDialogDescription>
+            <AlertDialogAction
+              onClick={() => useTaskStore.getState().skipOccurrence(task.id)}
+            >
+              Skip this occurrence
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                if (task.seriesId)
+                  useTaskStore.getState().deleteSeries(task.seriesId)
+              }}
+            >
+              Delete whole series
+            </AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   )
 }
@@ -478,7 +488,7 @@ function DatePickerButton({
     <Popover>
       <PopoverTrigger>
         <span
-          className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded transition-all duration-120"
+          className="text-muted-foreground flex h-7 w-7 items-center justify-center rounded-md transition-all duration-120"
           title="Schedule"
         >
           <Calendar size={14} />
@@ -501,7 +511,7 @@ function DatePickerButton({
               key={preset.label}
               variant="ghost"
               size="none"
-              className="border-border hover:border-accent hover:text-accent hover:bg-accent-bg flex-1 shrink rounded px-1 py-1.5 text-center text-xs duration-120"
+              className="border-border hover:border-accent hover:text-accent hover:bg-accent-bg flex-1 shrink rounded-md px-1 py-1.5 text-center text-xs duration-120"
               onClick={() => updateTask(task.id, { date: preset.value })}
             >
               {preset.label}
@@ -510,7 +520,7 @@ function DatePickerButton({
         </div>
         <input
           type="date"
-          className="border-border bg-background text-foreground w-full rounded border px-2 py-1.5 text-xs transition-colors duration-140 outline-none"
+          className="focus-indicator border-border bg-background text-foreground w-full rounded-md border px-2 py-1.5 text-xs transition-colors duration-140"
           onChange={(e) =>
             updateTask(task.id, { date: e.target.value || null })
           }

@@ -574,6 +574,34 @@ describe('TaskRow', () => {
     expect(screen.getByText('2/5')).toBeTruthy()
   })
 
+  it('keeps group, pomodoro, date and actions usable with a long group name', async () => {
+    const user = userEvent.setup()
+    const longGroup = {
+      id: 'long',
+      name: 'Very Long Group Name For Testing',
+      color: 'oklch(0.7 0.15 200)',
+      createdAt: new Date().toISOString(),
+    }
+    useGroupStore.setState((state) => ({
+      groups: [...state.groups, longGroup],
+    }))
+    const task = createMockTask({ groupId: longGroup.id })
+    useTaskStore.setState({ tasks: [task] })
+    render(<TaskRow task={task} />)
+
+    expect(screen.getByText(longGroup.name)).toBeTruthy()
+    expect(screen.getByText('1/3')).toBeTruthy()
+    expect(screen.getByTitle('Schedule')).toBeTruthy()
+
+    await user.click(screen.getByText(longGroup.name))
+    await user.click(screen.getByRole('option', { name: 'General' }))
+    expect(useTaskStore.getState().tasks[0]?.groupId).toBe('default')
+
+    await user.click(screen.getByTitle('More actions'))
+    expect(screen.getByText('Focus this task')).toBeTruthy()
+    expect(screen.getAllByText('Delete').length).toBeGreaterThan(0)
+  })
+
   it('renders 0/0 on the pomo trigger when both fields are zero', () => {
     const task = createMockTask({ pomoEstimate: 0, pomoCompleted: 0 })
     useTaskStore.setState({ tasks: [task] })

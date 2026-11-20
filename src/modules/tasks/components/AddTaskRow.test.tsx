@@ -157,6 +157,29 @@ describe('AddTaskRow', () => {
     expect(input.value).toBe('a'.repeat(281))
   })
 
+  it('stays usable with a long selected group name', async () => {
+    const user = userEvent.setup()
+    const longGroup = {
+      id: 'long',
+      name: 'Very Long Group Name For Testing',
+      color: 'oklch(0.7 0.15 200)',
+      createdAt: new Date().toISOString(),
+    }
+    useGroupStore.setState((state) => ({
+      groups: [...state.groups, longGroup],
+      stickyGroupId: longGroup.id,
+    }))
+    render(<AddTaskRow />)
+
+    const input = getAddInput()
+    expect(screen.getByText(longGroup.name)).toBeTruthy()
+    await user.type(input, 'Task with a long group name')
+    await user.keyboard('{Enter}')
+
+    expect(useTaskStore.getState().tasks[0]?.groupId).toBe(longGroup.id)
+    expect(input.value).toBe('')
+  })
+
   it('Enter with #group syntax submits the form', async () => {
     const user = userEvent.setup()
     render(<AddTaskRow />)

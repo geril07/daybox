@@ -4,8 +4,23 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@utility focus-indicator {
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+  }
+}
+
 :root {
   color-scheme: light;
+
+  /* Base radius for the shared `rounded-sm/md/lg/xl` scale. Without this,
+     every derived token resolves to nothing and controls render square. */
+  --radius: 0.625rem;
+
+  /* Chrome surface derived from the active theme so the workspace card and
+     the rail separate by color alone, without a border. */
+  --rail: color-mix(in oklch, var(--bg-card) 92%, var(--fg) 8%);
 
   --bg: oklch(0.97 0.008 72);
   --bg-card: oklch(0.996 0.003 72);
@@ -119,6 +134,7 @@
   --color-bg: var(--bg);
   --color-bg-card: var(--bg-card);
   --color-bg-hover: var(--bg-hover);
+  --color-rail: var(--rail);
   --color-fg: var(--fg);
   --color-fg-2: var(--fg-2);
   --color-fg-3: var(--fg-3);
