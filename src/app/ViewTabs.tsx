@@ -105,7 +105,7 @@ export function ViewTabs({ value, onChange }: ViewTabsProps) {
     <div
       ref={listRef}
       role="tablist"
-      className="@container relative mt-2 flex w-full items-stretch justify-between gap-0.5"
+      className="@container relative flex w-full items-stretch justify-between gap-0.5"
     >
       <div
         className="absolute inset-y-0 rounded-lg bg-[color-mix(in_oklch,var(--card)_95%,var(--fg)_5%)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
